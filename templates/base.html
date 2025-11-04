@@ -5,7 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}AgroControl - Sistema de Gestión Agrícola{% endblock %}</title>
     
+<<<<<<< HEAD
+=======
     <!-- Bootstrap 5.3.0 -->
+>>>>>>> 45ec01aa04e8b7c823306d24fc4db20639502916
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
     
@@ -79,12 +82,26 @@
             background-color: var(--agro-light);
             border-bottom: 2px solid var(--agro-primary);
         }
+<<<<<<< HEAD
+        
+        /* Estilo para enlaces deshabilitados temporalmente */
+        .nav-link.disabled-temp {
+            color: #6c757d !important;
+            pointer-events: none;
+            cursor: default;
+            opacity: 0.6;
+        }
+=======
+>>>>>>> 45ec01aa04e8b7c823306d24fc4db20639502916
     </style>
     
     {% block extra_css %}{% endblock %}
 </head>
 <body>
+<<<<<<< HEAD
+=======
     <!-- Navbar Principal -->
+>>>>>>> 45ec01aa04e8b7c823306d24fc4db20639502916
     <nav class="navbar navbar-expand-lg navbar-dark bg-agro-primary shadow-sm">
         <div class="container-fluid">
             <a class="navbar-brand" href="{% url 'cuarteles:lista_cuarteles' %}">
@@ -108,6 +125,19 @@
                             <i class="bi bi-map me-1"></i>Cuarteles
                         </a>
                     </li>
+<<<<<<< HEAD
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'inventario:lista_productos' %}">
+                            <i class="bi bi-box-seam me-1"></i>Inventario
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.resolver_match.app_name == 'aplicaciones' %}active{% endif %}" href="{% url 'aplicaciones:lista_aplicaciones' %}">
+                            <i class="bi bi-droplet-half me-1"></i>Aplicaciones
+                        </a>
+                    </li>
+=======
+>>>>>>> 45ec01aa04e8b7c823306d24fc4db20639502916
                 </ul>
                 
                 <ul class="navbar-nav">
@@ -136,7 +166,10 @@
 
     <div class="container-fluid">
         <div class="row">
+<<<<<<< HEAD
+=======
             <!-- Sidebar -->
+>>>>>>> 45ec01aa04e8b7c823306d24fc4db20639502916
             <div class="col-md-3 col-lg-2 sidebar d-none d-md-block">
                 <div class="pt-3">
                     <div class="nav flex-column">
@@ -147,37 +180,67 @@
                            href="{% url 'cuarteles:lista_cuarteles' %}">
                             <i class="bi bi-map me-2"></i>Cuarteles
                         </a>
+<<<<<<< HEAD
+                        <a class="nav-link disabled-temp" href="#" title="Módulo temporalmente deshabilitado">
+                            <i class="bi bi-droplet me-2"></i>Riego
+                        </a>
+                        <a class="nav-link {% if request.resolver_match.app_name == 'aplicaciones' %}active{% endif %}" href="{% url 'aplicaciones:lista_aplicaciones' %}">
+                            <i class="bi bi-droplet-half me-2"></i>Aplicaciones
+=======
                         <a class="nav-link" href="#">
                             <i class="bi bi-droplet me-2"></i>Riego
                         </a>
                         <a class="nav-link" href="#">
                             <i class="bi bi-flower1 me-2"></i>Aplicaciones
+>>>>>>> 45ec01aa04e8b7c823306d24fc4db20639502916
                         </a>
                         
                         <div class="nav-item mt-3 mb-2">
                             <small class="text-muted px-3">INVENTARIO</small>
                         </div>
+<<<<<<< HEAD
+                        <a class="nav-link {% if request.resolver_match.app_name == 'inventario' and 'producto' in request.resolver_match.url_name %}active{% endif %}" 
+                           href="{% url 'inventario:lista_productos' %}">
+                            <i class="bi bi-box-seam me-2"></i>Productos
+                        </a>
+                        <a class="nav-link {% if request.resolver_match.app_name == 'inventario' and 'movimiento' in request.resolver_match.url_name %}active{% endif %}" 
+                           href="{% url 'inventario:historial_movimientos' %}">
+                            <i class="bi bi-clock-history me-2"></i>Movimientos
+                        </a>
+                        <a class="nav-link disabled-temp" href="#" title="Módulo temporalmente deshabilitado">
+=======
                         <a class="nav-link" href="#">
                             <i class="bi bi-box-seam me-2"></i>Productos
                         </a>
                         <a class="nav-link" href="#">
+>>>>>>> 45ec01aa04e8b7c823306d24fc4db20639502916
                             <i class="bi bi-tools me-2"></i>Mantenimiento
                         </a>
                         
                         <div class="nav-item mt-3 mb-2">
                             <small class="text-muted px-3">REPORTES</small>
                         </div>
+<<<<<<< HEAD
+                        <a class="nav-link disabled-temp" href="#" title="Módulo temporalmente deshabilitado">
+                            <i class="bi bi-graph-up me-2"></i>Dashboard
+                        </a>
+                        <a class="nav-link disabled-temp" href="#" title="Módulo temporalmente deshabilitado">
+=======
                         <a class="nav-link" href="#">
                             <i class="bi bi-graph-up me-2"></i>Dashboard
                         </a>
                         <a class="nav-link" href="#">
+>>>>>>> 45ec01aa04e8b7c823306d24fc4db20639502916
                             <i class="bi bi-file-text me-2"></i>Reportes
                         </a>
                     </div>
                 </div>
             </div>
 
+<<<<<<< HEAD
+=======
             <!-- Contenido Principal -->
+>>>>>>> 45ec01aa04e8b7c823306d24fc4db20639502916
             <main class="col-md-9 col-lg-10 ms-sm-auto px-md-4 py-4">
                 {% if messages %}
                     {% for message in messages %}
@@ -195,7 +258,10 @@
         </div>
     </div>
 
+<<<<<<< HEAD
+=======
     <!-- Bootstrap JS -->
+>>>>>>> 45ec01aa04e8b7c823306d24fc4db20639502916
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     
     {% block extra_js %}{% endblock %}

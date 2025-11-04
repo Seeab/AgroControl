@@ -1,0 +1,229 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}Aplicaciones - AgroControl{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="h3 mb-1">
+            <i class="bi bi-droplet-half text-agro-primary me-2"></i>Gestión de Aplicaciones
+        </h1>
+        <p class="text-muted">Control de aplicaciones fitosanitarias programadas y realizadas.</p>
+    </div>
+    <div>
+        <a href="{% url 'aplicaciones:crear_aplicacion' %}" class="btn btn-agro-primary">
+            <i class="bi bi-plus-circle me-2"></i>Nueva Aplicación
+        </a>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-xl-4 col-md-6 mb-4">
+        <div class="card card-agro border-start border-agro-primary border-4">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col">
+                        <div class="text-xs fw-bold text-agro-primary text-uppercase mb-1">
+                            Total Aplicaciones
+                        </div>
+                        <div class="h5 mb-0 fw-bold text-gray-800">{{ total_aplicaciones }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-droplet-half text-agro-primary fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-4 col-md-6 mb-4">
+        <div class="card card-agro border-start border-warning border-4">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col">
+                        <div class="text-xs fw-bold text-warning text-uppercase mb-1">
+                            Tareas Programadas
+                        </div>
+                        <div class="h5 mb-0 fw-bold text-gray-800">{{ total_programadas }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-clock-history text-warning fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-4 col-md-6 mb-4">
+        <div class="card card-agro border-start border-success border-4">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col">
+                        <div class="text-xs fw-bold text-success text-uppercase mb-1">
+                            Tareas Realizadas
+                        </div>
+                        <div class="h5 mb-0 fw-bold text-gray-800">{{ total_realizadas }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-check-circle-fill text-success fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card card-agro mb-4">
+    <div class="card-header bg-agro-light">
+        <h5 class="card-title mb-0">
+            <i class="bi bi-funnel me-2"></i>Filtros de Búsqueda
+        </h5>
+    </div>
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <div class="col-md-4">
+                <label class="form-label fw-semibold">Estado</label>
+                <select name="estado" class="form-select">
+                    <option value="">Todos los estados</option>
+                    <option value="programada" {% if filtro_estado == 'programada' %}selected{% endif %}>Programada</option>
+                    <option value="realizada" {% if filtro_estado == 'realizada' %}selected{% endif %}>Realizada</option>
+                    <option value="cancelada" {% if filtro_estado == 'cancelada' %}selected{% endif %}>Cancelada</option>
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label fw-semibold">Producto</label>
+                <select name="producto" class="form-select">
+                    <option value="">Todos los productos</option>
+                    {% for p in todos_los_productos %}
+                        <option value="{{ p.id }}" {% if filtro_producto == p.id %}selected{% endif %}>{{ p.nombre }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-4 d-flex align-items-end">
+                <button type="submit" class="btn btn-agro-primary me-2">
+                    <i class="bi bi-funnel me-1"></i>Filtrar
+                </button>
+                <a href="{% url 'aplicaciones:lista_aplicaciones' %}" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-clockwise me-1"></i>Limpiar
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card card-agro">
+    <div class="card-header bg-agro-light d-flex justify-content-between align-items-center">
+        <h5 class="card-title mb-0">
+            <i class="bi bi-list-ul me-2"></i>Lista de Aplicaciones
+        </h5>
+        <span class="badge bg-agro-primary">{{ aplicaciones|length }} registros</span>
+    </div>
+    
+    <div class="card-body">
+        {% if aplicaciones %}
+        <div class="table-responsive">
+            <table class="table table-hover table-agro">
+                <thead>
+                    <tr>
+                        <th><i class="bi bi-calendar-event me-1"></i>Aplicación</th>
+                        <th><i class="bi bi-box-seam me-1"></i>Producto (Aplicador)</th>
+                        <th><i class="bi bi-speedometer2 me-1"></i>Dosis/Ha</th>
+                        <th><i class="bi bi-droplet-fill me-1"></i>Total Utilizado</th>
+                        <th><i class="bi bi-activity me-1"></i>Estado</th>
+                        <th class="text-end"><i class="bi bi-gear me-1"></i>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for app in aplicaciones %}
+                    <tr>
+                        <td>
+                            <div class="fw-bold text-agro-primary">APL-{{ app.id }}</div>
+                            <small class="text-muted">{{ app.fecha_aplicacion|date:"d/m/Y H:i" }}</small>
+                        </td>
+                        <td>
+                            <div class="fw-bold">{{ app.producto.nombre }}</div>
+                            <small class="text-muted">{{ app.aplicador.username }}</small>
+                        </td>
+                        <td>
+                            <span class="text-muted">{{ app.dosis_por_hectarea|floatformat:2 }} {{ app.producto.unidad_medida }}/Ha</span>
+                        </td>
+                        <td>
+                            <span class="fw-bold">{{ app.cantidad_utilizada|floatformat:2 }}</span>
+                            <small class="text-muted">{{ app.producto.unidad_medida }}</small>
+                        </td>
+                        <td>
+                            {% if app.estado == 'realizada' %}
+                                <span class="badge bg-success-subtle text-success-emphasis border border-success-subtle">
+                                    <i class="bi bi-check-circle me-1"></i>Realizada
+                                </span>
+                            {% elif app.estado == 'programada' %}
+                                <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle">
+                                    <i class="bi bi-clock-history me-1"></i>Programada
+                                </span>
+                            {% else %}
+                                <span class="badge bg-danger-subtle text-danger-emphasis border border-danger-subtle">
+                                    <i class="bi bi-x-circle me-1"></i>Cancelada
+                                </span>
+                            {% endif %}
+                        </td>
+                        <td class="text-end">
+                            <div class="btn-group btn-group-sm">
+                                {% if app.estado == 'programada' %}
+                                    <form action="{% url 'aplicaciones:finalizar_aplicacion' app.id %}" method="POST" class="d-inline">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-outline-success" 
+                                                data-bs-toggle="tooltip" title="Finalizar Tarea (Descontar Stock)">
+                                            <i class="bi bi-check-lg"></i>
+                                        </button>
+                                    </form>
+                                    
+                                    <a href="{% url 'aplicaciones:editar_aplicacion' app.id %}" class="btn btn-outline-primary"
+                                       data-bs-toggle="tooltip" title="Editar Tarea">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                    
+                                    <form action="{% url 'aplicaciones:cancelar_aplicacion' app.id %}" method="POST" class="d-inline">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-outline-danger" 
+                                                data-bs-toggle="tooltip" title="Cancelar Tarea">
+                                            <i class="bi bi-x-lg"></i>
+                                        </button>
+                                    </form>
+
+                                {% else %}
+                                    <a href="{% url 'aplicaciones:detalle_aplicacion' app.id %}" class="btn btn-outline-info" 
+                                       data-bs-toggle="tooltip" title="Ver Detalle">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-5">
+            <i class="bi bi-inboxes display-1 text-muted"></i>
+            <h4 class="text-muted mt-3">No se encontraron aplicaciones</h4>
+            <p class="text-muted">Comienza registrando la primera aplicación.</p>
+            <a href="{% url 'aplicaciones:crear_aplicacion' %}" class="btn btn-agro-primary mt-2">
+                <i class="bi bi-plus-circle me-2"></i>Registrar Primera Aplicación
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Inicializar tooltips de Bootstrap
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl)
+    })
+</script>
+{% endblock %}
