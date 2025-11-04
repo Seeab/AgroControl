@@ -1,0 +1,263 @@
+{% extends 'autenticacion/base.html' %}
+
+{% block title %}{{ titulo }} - AgroControl{% endblock %}
+{% block page_title %}{{ titulo }}{% endblock %}
+
+{% block page_actions %}
+<a href="{% url 'operario_lista' %}" class="btn btn-outline-secondary">
+    <i class="bi bi-arrow-left me-2"></i>Volver
+</a>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-10">
+        <div class="card">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0">
+                    <i class="bi bi-person-badge me-2"></i>{{ titulo }}
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="post" novalidate enctype="multipart/form-data">
+                    {% csrf_token %}
+                    
+                    {% if form.non_field_errors %}
+                    <div class="alert alert-danger">
+                        {{ form.non_field_errors }}
+                    </div>
+                    {% endif %}
+                    
+                    <div class="row">
+                        <!-- Usuario Asociado (Opcional) -->
+                        {% if usuarios_disponibles %}
+                        <div class="col-12">
+                            <h6 class="border-bottom pb-2 mb-3">Usuario Asociado (Opcional)</h6>
+                        </div>
+                        
+                        <div class="col-md-12 mb-3">
+                            <label for="usuario_id" class="form-label">
+                                Vincular con Usuario Existente
+                            </label>
+                            <select name="usuario_id" id="usuario_id" class="form-control">
+                                <option value="">-- Ninguno --</option>
+                                {% for usr in usuarios_disponibles %}
+                                <option value="{{ usr.id }}" {% if operario.usuario_id == usr.id %}selected{% endif %}>
+                                    {{ usr.get_full_name }} ({{ usr.nombre_usuario }})
+                                </option>
+                                {% endfor %}
+                            </select>
+                            <small class="form-text text-muted">
+                                Puedes vincular este operario con un usuario existente del sistema
+                            </small>
+                        </div>
+                        
+                        <div class="col-12 mt-3">
+                            <h6 class="border-bottom pb-2 mb-3">Información Personal</h6>
+                        </div>
+                        {% else %}
+                        <div class="col-12">
+                            <h6 class="border-bottom pb-2 mb-3">Información Personal</h6>
+                        </div>
+                        {% endif %}
+                        
+                        <div class="col-md-12 mb-3">
+                            <label for="{{ form.nombre_completo.id_for_label }}" class="form-label">
+                                Nombre Completo <span class="text-danger">*</span>
+                            </label>
+                            {{ form.nombre_completo }}
+                            {% if form.nombre_completo.errors %}
+                            <div class="text-danger small mt-1">{{ form.nombre_completo.errors }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.cargo.id_for_label }}" class="form-label">
+                                Cargo <span class="text-danger">*</span>
+                            </label>
+                            {{ form.cargo }}
+                            {% if form.cargo.errors %}
+                            <div class="text-danger small mt-1">{{ form.cargo.errors }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.telefono.id_for_label }}" class="form-label">
+                                Teléfono
+                            </label>
+                            {{ form.telefono }}
+                            {% if form.telefono.errors %}
+                            <div class="text-danger small mt-1">{{ form.telefono.errors }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Carnet de Identificación -->
+                        <div class="col-12 mt-3">
+                            <h6 class="border-bottom pb-2 mb-3">Carnet de Identificación</h6>
+                        </div>
+                        
+                        <div class="col-md-12 mb-3">
+                            <label for="{{ form.rut.id_for_label }}" class="form-label">
+                                RUT <span class="text-danger">*</span>
+                            </label>
+                            {{ form.rut }}
+                            <small class="form-text text-muted">RUT del operario (Formato: 12345678-9)</small>
+                            {% if form.rut.errors %}
+                            <div class="text-danger small mt-1">{{ form.rut.errors }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Certificación Profesional -->
+                        <div class="col-12 mt-3">
+                            <h6 class="border-bottom pb-2 mb-3">Certificación Profesional</h6>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.fecha_emision_certificacion.id_for_label }}" class="form-label">
+                                Fecha de Emisión
+                            </label>
+                            {{ form.fecha_emision_certificacion }}
+                            <small class="form-text text-muted">Fecha cuando se emitió la certificación</small>
+                            {% if form.fecha_emision_certificacion.errors %}
+                            <div class="text-danger small mt-1">{{ form.fecha_emision_certificacion.errors }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.fecha_vencimiento_certificacion.id_for_label }}" class="form-label">
+                                Fecha de Vencimiento
+                            </label>
+                            {{ form.fecha_vencimiento_certificacion }}
+                            <small class="form-text text-muted">Fecha cuando vence la certificación (para alertas)</small>
+                            {% if form.fecha_vencimiento_certificacion.errors %}
+                            <div class="text-danger small mt-1">{{ form.fecha_vencimiento_certificacion.errors }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="col-md-12 mb-3">
+                            <label for="{{ form.certificacion_documento.id_for_label }}" class="form-label">
+                                Documento de Certificación
+                            </label>
+                            {{ form.certificacion_documento }}
+                            <small class="form-text text-muted">
+                                Subir documento de certificación (PDF, JPG, PNG, GIF). Tamaño máximo: 5MB
+                            </small>
+                            {% if form.certificacion_documento.errors %}
+                            <div class="text-danger small mt-1">{{ form.certificacion_documento.errors }}</div>
+                            {% endif %}
+                            
+                            {% if operario and operario.certificacion_documento %}
+                            <div class="mt-2">
+                                <small class="text-success">Documento actual:</small>
+                                <a href="{{ operario.certificacion_documento.url }}" target="_blank" class="btn btn-sm btn-outline-primary ms-2">
+                                    <i class="bi bi-eye me-1"></i>Ver documento
+                                </a>
+                                <div class="form-check mt-2">
+                                    {{ form.clear_certificacion }}
+                                    <label class="form-check-label text-danger" for="{{ form.clear_certificacion.id_for_label }}">
+                                        <i class="bi bi-trash me-1"></i>Eliminar documento actual
+                                    </label>
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Estado -->
+                        <div class="col-12 mt-3">
+                            <h6 class="border-bottom pb-2 mb-3">Estado</h6>
+                        </div>
+                        
+                        <div class="col-md-12 mb-3">
+                            <div class="form-check">
+                                {{ form.esta_activo }}
+                                <label class="form-check-label" for="{{ form.esta_activo.id_for_label }}">
+                                    Operario Activo
+                                </label>
+                            </div>
+                            <small class="form-text text-muted">
+                                Los operarios inactivos no aparecerán en los listados de selección
+                            </small>
+                        </div>
+                    </div>
+                    
+                    <hr class="my-4">
+                    
+                    <div class="d-flex justify-content-between">
+                        <a href="{% url 'operario_lista' %}" class="btn btn-outline-secondary">
+                            <i class="bi bi-x-circle me-2"></i>Cancelar
+                        </a>
+                        <button type="submit" class="btn btn-success">
+                            <i class="bi bi-check-circle me-2"></i>{{ boton_texto }}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        {% if operario %}
+        <div class="card mt-3">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="bi bi-info-circle me-2"></i>Información Adicional</h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4">
+                        <small class="text-muted">Fecha de Creación:</small>
+                        <p>{{ operario.creado_en|date:"d/m/Y H:i" }}</p>
+                    </div>
+                    <div class="col-md-4">
+                        <small class="text-muted">Última Actualización:</small>
+                        <p>{{ operario.actualizado_en|date:"d/m/Y H:i" }}</p>
+                    </div>
+                    <div class="col-md-4">
+                        <small class="text-muted">Estado Certificación:</small>
+                        <p>
+                            {% if operario.certificacion_vencida %}
+                                <span class="badge bg-danger">Vencida</span>
+                            {% elif operario.carnet_por_vencer %}
+                                <span class="badge bg-warning">Por vencer</span>
+                            {% elif operario.fecha_vencimiento_certificacion %}
+                                <span class="badge bg-success">Vigente</span>
+                            {% else %}
+                                <span class="badge bg-secondary">Sin certificación</span>
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const rutInput = document.getElementById('{{ form.rut.id_for_label }}');
+    
+    if (rutInput) {
+        rutInput.addEventListener('input', function(e) {
+            let value = e.target.value.replace(/[^\dkK]/gi, '').toUpperCase();
+            
+            if (value.length > 1) {
+                const numero = value.slice(0, -1);
+                const dv = value.slice(-1);
+                value = numero + '-' + dv;
+            }
+            
+            e.target.value = value;
+        });
+        
+        rutInput.addEventListener('blur', function(e) {
+            const value = e.target.value;
+            const rutPattern = /^\d{7,8}-[\dkK]$/i;
+            
+            if (value && !rutPattern.test(value)) {
+                this.classList.add('is-invalid');
+            } else {
+                this.classList.remove('is-invalid');
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

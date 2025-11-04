@@ -1,0 +1,248 @@
+{% extends 'autenticacion/base.html' %}
+
+{% block title %}{{ titulo }} - AgroControl{% endblock %}
+{% block page_title %}{{ titulo }}{% endblock %}
+
+{% block page_actions %}
+<a href="{% url 'usuario_lista' %}" class="btn btn-outline-secondary">
+    <i class="bi bi-arrow-left me-2"></i>Volver
+</a>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">
+                    <i class="bi bi-person me-2"></i>{{ titulo }}
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="post" novalidate>
+                    {% csrf_token %}
+                    
+                    {% if form.non_field_errors %}
+                    <div class="alert alert-danger">
+                        {{ form.non_field_errors }}
+                    </div>
+                    {% endif %}
+                    
+                    <div class="row">
+                        <!-- Información de Acceso -->
+                        <div class="col-12">
+                            <h6 class="border-bottom pb-2 mb-3">Información de Acceso</h6>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.nombre_usuario.id_for_label }}" class="form-label">
+                                Usuario <span class="text-danger">*</span>
+                            </label>
+                            {{ form.nombre_usuario }}
+                            {% if form.nombre_usuario.errors %}
+                            <div class="text-danger small mt-1">{{ form.nombre_usuario.errors }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.correo_electronico.id_for_label }}" class="form-label">
+                                Correo Electrónico
+                            </label>
+                            {{ form.correo_electronico }}
+                            {% if form.correo_electronico.errors %}
+                            <div class="text-danger small mt-1">{{ form.correo_electronico.errors }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- ✅ ACTUALIZADO: Campo contraseña con ojito -->
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.password.id_for_label }}" class="form-label">
+                                Contraseña {% if not usuario %}<span class="text-danger">*</span>{% endif %}
+                            </label>
+                            <div class="input-group">
+                                {{ form.password }}
+                                <button class="btn btn-outline-secondary toggle-password" type="button" data-target="{{ form.password.id_for_label }}">
+                                    <i class="bi bi-eye"></i>
+                                </button>
+                            </div>
+                            {% if form.password.help_text %}
+                            <small class="form-text text-muted">{{ form.password.help_text }}</small>
+                            {% endif %}
+                            {% if form.password.errors %}
+                            <div class="text-danger small mt-1">{{ form.password.errors }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- ✅ ACTUALIZADO: Campo confirmar contraseña con ojito -->
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.password_confirm.id_for_label }}" class="form-label">
+                                Confirmar Contraseña {% if not usuario %}<span class="text-danger">*</span>{% endif %}
+                            </label>
+                            <div class="input-group">
+                                {{ form.password_confirm }}
+                                <button class="btn btn-outline-secondary toggle-password" type="button" data-target="{{ form.password_confirm.id_for_label }}">
+                                    <i class="bi bi-eye"></i>
+                                </button>
+                            </div>
+                            {% if form.password_confirm.errors %}
+                            <div class="text-danger small mt-1">{{ form.password_confirm.errors }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Información Personal -->
+                        <div class="col-12 mt-3">
+                            <h6 class="border-bottom pb-2 mb-3">Información Personal</h6>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.nombres.id_for_label }}" class="form-label">
+                                Nombres <span class="text-danger">*</span>
+                            </label>
+                            {{ form.nombres }}
+                            {% if form.nombres.errors %}
+                            <div class="text-danger small mt-1">{{ form.nombres.errors }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.apellidos.id_for_label }}" class="form-label">
+                                Apellidos <span class="text-danger">*</span>
+                            </label>
+                            {{ form.apellidos }}
+                            {% if form.apellidos.errors %}
+                            <div class="text-danger small mt-1">{{ form.apellidos.errors }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Permisos y Roles -->
+                        <div class="col-12 mt-3">
+                            <h6 class="border-bottom pb-2 mb-3">Permisos y Roles</h6>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.rol.id_for_label }}" class="form-label">
+                                Rol <span class="text-danger">*</span>
+                            </label>
+                            {{ form.rol }}
+                            {% if form.rol.errors %}
+                            <div class="text-danger small mt-1">{{ form.rol.errors }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label d-block">Opciones</label>
+                            <div class="form-check form-check-inline">
+                                {{ form.esta_activo }}
+                                <label class="form-check-label" for="{{ form.esta_activo.id_for_label }}">
+                                    Usuario Activo
+                                </label>
+                            </div>
+                            <div class="form-check form-check-inline">
+                                {{ form.es_administrador }}
+                                <label class="form-check-label" for="{{ form.es_administrador.id_for_label }}">
+                                    Administrador
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <hr class="my-4">
+                    
+                    <div class="d-flex justify-content-between">
+                        <a href="{% url 'usuario_lista' %}" class="btn btn-outline-secondary">
+                            <i class="bi bi-x-circle me-2"></i>Cancelar
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-circle me-2"></i>{{ boton_texto }}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ✅ AGREGAR: JavaScript para el ojito de contraseña -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Función para mostrar/ocultar contraseña
+    function togglePasswordVisibility(button) {
+        const targetId = button.getAttribute('data-target');
+        if (!targetId) return; // Salir si no hay target
+        
+        const passwordInput = document.getElementById(targetId);
+        if (!passwordInput) return; // Salir si no se encuentra el input
+
+        const icon = button.querySelector('i');
+        
+        if (passwordInput.type === 'password') {
+            passwordInput.type = 'text';
+            icon.classList.remove('bi-eye');
+            icon.classList.add('bi-eye-slash');
+            button.setAttribute('title', 'Ocultar contraseña');
+        } else {
+            passwordInput.type = 'password';
+            icon.classList.remove('bi-eye-slash');
+            icon.classList.add('bi-eye');
+            button.setAttribute('title', 'Mostrar contraseña');
+        }
+    }
+    
+    // Agregar evento a todos los botones de mostrar/ocultar (para este formulario)
+    document.querySelectorAll('.toggle-password').forEach(button => {
+        button.addEventListener('click', function() {
+            togglePasswordVisibility(this);
+        });
+        
+        // Agregar tooltip
+        button.setAttribute('title', 'Mostrar contraseña');
+    });
+    
+    // ✅ MEJORA: También agregar el ojito al campo de login si existe
+    const loginPasswordInput = document.querySelector('input[type="password"][name="password"]');
+    if (loginPasswordInput && !loginPasswordInput.closest('.input-group')) {
+        const wrapper = document.createElement('div');
+        wrapper.className = 'input-group';
+        
+        loginPasswordInput.parentNode.insertBefore(wrapper, loginPasswordInput);
+        wrapper.appendChild(loginPasswordInput);
+        
+        const toggleBtn = document.createElement('button');
+        toggleBtn.className = 'btn btn-outline-secondary toggle-password';
+        toggleBtn.type = 'button';
+        toggleBtn.innerHTML = '<i class="bi bi-eye"></i>';
+        
+        // V V V LÍNEA CORREGIDA V V V
+        // Faltaba esto: decirle al nuevo botón a qué input apuntar
+        toggleBtn.setAttribute('data-target', loginPasswordInput.id); 
+        // ^ ^ ^ LÍNEA CORREGIDA ^ ^ ^
+        
+        wrapper.appendChild(toggleBtn);
+        
+        toggleBtn.addEventListener('click', function() {
+            togglePasswordVisibility(this);
+        });
+    }
+});
+</script>
+
+<style>
+/* ✅ ESTILOS PARA MEJORAR LA APARIENCIA */
+.input-group .form-control {
+    border-right: 0;
+}
+
+.input-group .btn {
+    border-left: 0;
+    border-color: #ced4da;
+}
+
+.input-group .btn:hover {
+    background-color: #e9ecef;
+    border-color: #ced4da;
+}
+
+
+
+</style>
+{% endblock %}

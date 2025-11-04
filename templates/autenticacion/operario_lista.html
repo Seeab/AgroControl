@@ -1,0 +1,295 @@
+{% extends 'autenticacion/base.html' %}
+
+{% block title %}Gestión de Operarios - AgroControl{% endblock %}
+{% block page_title %}Gestión de Operarios{% endblock %}
+
+{% block page_actions %}
+<a href="{% url 'operario_crear' %}" class="btn btn-success">
+    <i class="bi bi-plus-circle me-2"></i>Nuevo Operario
+</a>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-3">
+    <div class="col-md-6">
+        <form method="get" class="d-flex">
+            <input type="text" name="q" class="form-control me-2" placeholder="Buscar operarios..." value="{{ query }}">
+            <button type="submit" class="btn btn-outline-primary">
+                <i class="bi bi-search"></i>
+            </button>
+            {% if query %}
+            <a href="{% url 'operario_lista' %}" class="btn btn-outline-secondary ms-2">
+                <i class="bi bi-x-circle"></i>
+            </a>
+            {% endif %}
+        </form>
+    </div>
+</div>
+
+<!-- ✅ ACTUALIZADO: Alertas de Certificaciones por Vencer (RF008) -->
+{% if request.session.es_administrador %}
+<div class="row mb-3">
+    <div class="col-12">
+        <div class="alert alert-warning d-flex align-items-center">
+            <i class="bi bi-exclamation-triangle me-2 fs-4"></i>
+            <div>
+                <strong>Alertas de Certificaciones:</strong>
+                <span class="badge bg-danger ms-2">{{ operarios_por_vencer }} certificación{{ operarios_por_vencer|pluralize:"es" }} por vencer</span>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<div class="card">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Nombre Completo</th>
+                        <th>Cargo</th>
+                        <th>RUT</th>
+                        <!-- ✅ ACTUALIZADO: Vencimiento de Certificación -->
+                        <th>Vencimiento Certificación</th>
+                        <th>Documento</th>
+                        <th>Teléfono</th>
+                        <th>Estado</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for operario in page_obj %}
+                    <tr class="{% if operario.carnet_por_vencer %}table-warning{% endif %}">
+                        <td>
+                            <strong>{{ operario.nombre_completo }}</strong>
+                            {% if operario.usuario %}
+                            <br><small class="text-muted">Usuario: {{ operario.usuario.nombre_usuario }}</small>
+                            {% endif %}
+                        </td>
+                        <td>{{ operario.cargo }}</td>
+                        <td>
+                            <code>{{ operario.get_rut_formateado }}</code>
+                        </td>
+                        <td>
+                            <!-- ✅ ACTUALIZADO: Usar fecha_vencimiento_certificacion -->
+                            {% if operario.fecha_vencimiento_certificacion %}
+                            <span class="{% if operario.carnet_por_vencer %}text-warning fw-bold{% endif %}">
+                                {{ operario.fecha_vencimiento_certificacion|date:"d/m/Y" }}
+                            </span>
+                            {% if operario.carnet_por_vencer %}
+                            <span class="badge bg-warning ms-1" title="Certificación por vencer">
+                                <i class="bi bi-exclamation-triangle"></i> Por vencer
+                            </span>
+                            {% endif %}
+                            {% else %}
+                            <span class="text-muted">-</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if operario.certificacion_documento %}
+                            <a href="{{ operario.certificacion_documento.url }}" target="_blank" class="btn btn-sm btn-outline-primary" title="Ver documento">
+                                <i class="bi bi-eye"></i> Ver
+                            </a>
+                            {% else %}
+                            <span class="text-muted">-</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if operario.telefono %}
+                            {{ operario.telefono }}
+                            {% else %}
+                            <span class="text-muted">-</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if operario.esta_activo %}
+                            <span class="badge bg-success">Activo</span>
+                            {% else %}
+                            <span class="badge bg-secondary">Inactivo</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="btn-group btn-group-sm">
+                                <a href="{% url 'operario_editar' operario.id %}" class="btn btn-outline-primary" title="Editar">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                                {% if operario.esta_activo %}
+                                <a href="{% url 'operario_eliminar' operario.id %}" class="btn btn-outline-danger" title="Desactivar">
+                                    <i class="bi bi-trash"></i>
+                                </a>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="8" class="text-center text-muted py-4">
+                            {% if query %}
+                            No se encontraron operarios que coincidan con "{{ query }}"
+                            {% else %}
+                            No hay operarios registrados
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Paginación -->
+        {% if page_obj.has_other_pages %}
+        <nav>
+            <ul class="pagination justify-content-center">
+                {% if page_obj.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page=1{% if query %}&q={{ query }}{% endif %}">
+                        <i class="bi bi-chevron-double-left"></i> Primera
+                    </a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if query %}&q={{ query }}{% endif %}">
+                        <i class="bi bi-chevron-left"></i> Anterior
+                    </a>
+                </li>
+                {% endif %}
+                
+                {% for num in page_obj.paginator.page_range %}
+                    {% if page_obj.number == num %}
+                    <li class="page-item active">
+                        <span class="page-link">{{ num }}</span>
+                    </li>
+                    {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ num }}{% if query %}&q={{ query }}{% endif %}">{{ num }}</a>
+                    </li>
+                    {% endif %}
+                {% endfor %}
+                
+                {% if page_obj.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if query %}&q={{ query }}{% endif %}">
+                        Siguiente <i class="bi bi-chevron-right"></i>
+                    </a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if query %}&q={{ query }}{% endif %}">
+                        Última <i class="bi bi-chevron-double-right"></i>
+                    </a>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+    </div>
+</div>
+
+<!-- ✅ ACTUALIZADO: Script para alertas de certificaciones -->
+{% if request.session.es_administrador %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Contar certificaciones por vencer
+    function actualizarContadorAlertas() {
+        const filas = document.querySelectorAll('tbody tr');
+        let porVencer = 0;
+        
+        filas.forEach(fila => {
+            const celdas = fila.querySelectorAll('td');
+            if (celdas.length >= 4) {
+                const vencimientoCell = celdas[3];
+                if (vencimientoCell.querySelector('.badge.bg-warning')) {
+                    porVencer++;
+                }
+            }
+        });
+        
+        const contador = document.getElementById('contador-alertas');
+        if (contador) {
+            if (porVencer === 0) {
+                contador.textContent = 'Sin alertas';
+                contador.className = 'badge bg-success';
+            } else {
+                contador.textContent = `${porVencer} certificación${porVencer > 1 ? 'es' : ''} por vencer`;
+                contador.className = 'badge bg-warning text-dark';
+            }
+        }
+    }
+    
+    // Filtro rápido por estado de certificación
+    const filtroRapido = document.createElement('div');
+    filtroRapido.className = 'row mb-3';
+    filtroRapido.innerHTML = `
+        <div class="col-md-12">
+            <div class="btn-group btn-group-sm">
+                <button type="button" class="btn btn-outline-secondary active" data-filtro="todos">
+                    <i class="bi bi-people"></i> Todos
+                </button>
+                <button type="button" class="btn btn-outline-warning" data-filtro="por_vencer">
+                    <i class="bi bi-exclamation-triangle"></i> Cert. por Vencer
+                </button>
+                <button type="button" class="btn btn-outline-info" data-filtro="con_documento">
+                    <i class="bi bi-file-earmark"></i> Con Documento
+                </button>
+                <button type="button" class="btn btn-outline-success" data-filtro="activos">
+                    <i class="bi bi-check-circle"></i> Solo Activos
+                </button>
+            </div>
+        </div>
+    `;
+    
+    document.querySelector('.row.mb-3').after(filtroRapido);
+    
+    // Manejar filtros rápidos
+    document.querySelectorAll('[data-filtro]').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const filtro = this.getAttribute('data-filtro');
+            
+            // Actualizar botones activos
+            document.querySelectorAll('[data-filtro]').forEach(b => {
+                b.classList.remove('active');
+            });
+            this.classList.add('active');
+            
+            // Filtrar filas
+            const filas = document.querySelectorAll('tbody tr');
+            filas.forEach(fila => {
+                let mostrar = true;
+                const celdas = fila.querySelectorAll('td');
+                
+                if (celdas.length >= 7) {
+                    const vencimientoCell = celdas[3];
+                    const documentoCell = celdas[4];
+                    const estadoCell = celdas[6];
+                    
+                    switch(filtro) {
+                        case 'por_vencer':
+                            mostrar = vencimientoCell.querySelector('.badge.bg-warning') !== null;
+                            break;
+                        case 'con_documento':
+                            mostrar = !documentoCell.querySelector('.text-muted');
+                            break;
+                        case 'activos':
+                            mostrar = estadoCell.querySelector('.badge.bg-success') !== null;
+                            break;
+                        case 'todos':
+                        default:
+                            mostrar = true;
+                    }
+                }
+                
+                fila.style.display = mostrar ? '' : 'none';
+            });
+        });
+    });
+    
+    actualizarContadorAlertas();
+});
+</script>
+
+<style>
+.table-warning {
+    background-color: rgba(255, 193, 7, 0.1) !important;
+}
+</style>
+{% endif %}
+{% endblock %}
