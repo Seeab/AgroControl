@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib import messages
@@ -214,3 +215,8 @@ def cancelar_aplicacion(request, app_id):
         messages.info(request, f'Aplicación APL-{aplicacion.id} ha sido cancelada.')
         
     return redirect('aplicaciones:lista_aplicaciones')
+=======
+from django.shortcuts import render
+
+# Create your views here.
+>>>>>>> 45ec01aa04e8b7c823306d24fc4db20639502916

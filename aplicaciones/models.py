@@ -1,4 +1,5 @@
 from django.db import models
+<<<<<<< HEAD
 from django.contrib.auth.models import User
 from inventario.models import Producto
 from cuarteles.models import Cuartel # ¡Importante! Asume que este modelo existe
@@ -114,3 +115,7 @@ class AplicacionFitosanitaria(models.Model):
         # La lógica de cálculo (dosis, area) se maneja en AplicacionForm
         # para asegurar que los datos M2M (cuarteles) sean correctos.
         super().save(*args, **kwargs)
+=======
+
+# Create your models here.
+>>>>>>> 45ec01aa04e8b7c823306d24fc4db20639502916

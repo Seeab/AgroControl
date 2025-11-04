@@ -37,7 +37,10 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+<<<<<<< HEAD
     'django.contrib.humanize',
+=======
+>>>>>>> 45ec01aa04e8b7c823306d24fc4db20639502916
     'autenticacion',
     'cuarteles', 
     'riego',
@@ -138,7 +141,11 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
+<<<<<<< HEAD
         'DIRS': [os.path.join(BASE_DIR, 'templates')],  
+=======
+        'DIRS': [os.path.join(BASE_DIR, 'templates')],  # ← Agrega esta línea
+>>>>>>> 45ec01aa04e8b7c823306d24fc4db20639502916
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [

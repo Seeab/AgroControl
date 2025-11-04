@@ -22,6 +22,9 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('', RedirectView.as_view(pattern_name='cuarteles:lista_cuarteles'), name='home'),
     path('cuarteles/', include('cuarteles.urls')),
+<<<<<<< HEAD
     path('inventario/', include('inventario.urls')),
     path('aplicaciones/', include('aplicaciones.urls')),    
+=======
+>>>>>>> 45ec01aa04e8b7c823306d24fc4db20639502916
 ]
