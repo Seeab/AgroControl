@@ -1,5 +1,4 @@
 from django.contrib import admin
-<<<<<<< HEAD
 from .models import AplicacionFitosanitaria
 from .forms import AplicacionForm # <-- 1. IMPORTA EL FORMULARIO
 
@@ -66,7 +65,3 @@ class AplicacionFitosanitariaAdmin(admin.ModelAdmin):
         
         super().save_model(request, obj, form, change)
         # (La señal post_save se disparará después de esto)
-=======
-
-# Register your models here.
->>>>>>> 45ec01aa04e8b7c823306d24fc4db20639502916

@@ -1,5 +1,4 @@
 from django.contrib import admin
-<<<<<<< HEAD
 from django.utils.html import format_html
 from django.db import models
 from .models import Producto, MovimientoInventario
@@ -108,7 +107,3 @@ class MovimientoInventarioAdmin(admin.ModelAdmin):
         if not obj.realizado_por:
             obj.realizado_por = request.user
         super().save_model(request, obj, form, change)
-=======
-
-# Register your models here.
->>>>>>> 45ec01aa04e8b7c823306d24fc4db20639502916

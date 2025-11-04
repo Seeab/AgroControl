@@ -1,5 +1,4 @@
 from django.db import models
-<<<<<<< HEAD
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 
@@ -225,7 +224,3 @@ class MovimientoInventario(models.Model):
             if is_new:
                 self.producto.stock_actual = self.stock_posterior
                 self.producto.save(update_fields=['stock_actual', 'fecha_actualizacion'])
-=======
-
-# Create your models here.
->>>>>>> 45ec01aa04e8b7c823306d24fc4db20639502916
