@@ -1,0 +1,153 @@
+{% extends 'base.html' %}
+
+{% block title %}{% if form.instance.id %}Editar{% else %}Crear{% endif %} Producto - AgroControl{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="h3 mb-1">
+            <i class="bi bi-{% if form.instance.id %}pencil-square{% else %}plus-circle{% endif %} text-agro-primary me-2"></i>
+            {% if form.instance.id %}Editar{% else %}Crear Nuevo{% endif %} Producto
+        </h1>
+        <p class="text-muted">Complete la información del producto</p>
+    </div>
+    <a href="{% url 'inventario:lista_productos' %}" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left me-2"></i>Volver al inventario
+    </a>
+</div>
+
+<div class="card card-agro">
+    <div class="card-header bg-agro-light">
+        <h5 class="card-title mb-0">
+            <i class="bi bi-info-circle me-2"></i>Información del Producto
+        </h5>
+    </div>
+    <div class="card-body">
+        <form method="post" novalidate>
+            {% csrf_token %}
+            
+            {% if form.errors %}
+            <div class="alert alert-danger">
+                <i class="bi bi-exclamation-triangle me-2"></i>
+                Por favor, corrija los errores below.
+                <ul class="mb-0 mt-2">
+                    {% for field, errors in form.errors.items %}
+                        {% for error in errors %}
+                            <li>{{ error }}</li>
+                        {% endfor %}
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+            
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label for="{{ form.nombre.id_for_label }}" class="form-label fw-semibold">
+                        Nombre del producto *
+                    </label>
+                    {{ form.nombre }}
+                    {% if form.nombre.errors %}
+                    <div class="text-danger small mt-1">
+                        {% for error in form.nombre.errors %}
+                        <i class="bi bi-x-circle me-1"></i>{{ error }}
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <div class="col-md-6 mb-3">
+                    <label for="{{ form.tipo.id_for_label }}" class="form-label fw-semibold">
+                        Tipo/Categoría *
+                    </label>
+                    {{ form.tipo }}
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <label for="{{ form.nivel_peligrosidad.id_for_label }}" class="form-label fw-semibold">
+                        Nivel de peligrosidad *
+                    </label>
+                    {{ form.nivel_peligrosidad }}
+                </div>
+                
+                <div class="col-md-4 mb-3">
+                    <label for="{{ form.unidad_medida.id_for_label }}" class="form-label fw-semibold">
+                        Unidad de medida *
+                    </label>
+                    {{ form.unidad_medida }}
+                </div>
+                
+                <div class="col-md-4 mb-3">
+                    <label for="{{ form.esta_activo.id_for_label }}" class="form-label fw-semibold">
+                        Estado
+                    </label>
+                    <div class="form-check form-switch mt-2">
+                        {{ form.esta_activo }}
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label for="{{ form.stock_actual.id_for_label }}" class="form-label fw-semibold">
+                        Stock actual
+                    </label>
+                    {{ form.stock_actual }}
+                </div>
+                
+                <div class="col-md-6 mb-3">
+                    <label for="{{ form.stock_minimo.id_for_label }}" class="form-label fw-semibold">
+                        Stock mínimo alerta
+                    </label>
+                    {{ form.stock_minimo }}
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label for="{{ form.proveedor.id_for_label }}" class="form-label fw-semibold">Proveedor</label>
+                    {{ form.proveedor }}
+                </div>
+                
+                <div class="col-md-6 mb-3">
+                    <label for="{{ form.numero_registro.id_for_label }}" class="form-label fw-semibold">Número de registro</label>
+                    {{ form.numero_registro }}
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label for="{{ form.ingrediente_activo.id_for_label }}" class="form-label fw-semibold">Ingrediente activo</label>
+                    {{ form.ingrediente_activo }}
+                </div>
+                
+                <div class="col-md-6 mb-3">
+                    <label for="{{ form.concentracion.id_for_label }}" class="form-label fw-semibold">Concentración</label>
+                    {{ form.concentracion }}
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label for="{{ form.instrucciones_uso.id_for_label }}" class="form-label fw-semibold">Instrucciones de uso</label>
+                {{ form.instrucciones_uso }}
+            </div>
+
+            <div class="mb-3">
+                <label for="{{ form.precauciones.id_for_label }}" class="form-label fw-semibold">Precauciones</label>
+                {{ form.precauciones }}
+            </div>
+
+            <div class="d-flex justify-content-between mt-4">
+                <a href="{% url 'inventario:lista_productos' %}" class="btn btn-outline-secondary">
+                    <i class="bi bi-x-circle me-2"></i>Cancelar
+                </a>
+                <button type="submit" class="btn btn-agro-primary">
+                    <i class="bi bi-check-circle me-2"></i>
+                    {% if form.instance.id %}Guardar Cambios{% else %}Crear Producto{% endif %}
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,167 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}{{ producto.nombre }} - AgroControl{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="h3 mb-1">
+            <i class="bi bi-box-seam text-agro-primary me-2"></i>{{ producto.nombre }}
+        </h1>
+        <p class="text-muted">{{ producto.get_tipo_display }} - {{ producto.ingrediente_activo }}</p>
+    </div>
+    <div>
+        <a href="{% url 'inventario:editar_producto' producto.id %}" class="btn btn-outline-secondary me-2">
+            <i class="bi bi-pencil me-2"></i>Editar
+        </a>
+        <a href="{% url 'inventario:crear_movimiento_producto' producto.id %}" class="btn btn-outline-primary me-2">
+            <i class="bi bi-arrow-left-right me-2"></i>Registrar Movimiento
+        </a>
+        <a href="{% url 'inventario:lista_productos' %}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-2"></i>Volver
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Información Principal -->
+    <div class="col-lg-8">
+        <div class="card card-agro mb-4">
+            <div class="card-header bg-agro-light">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-info-circle me-2"></i>Información General
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <p><strong>Nombre:</strong> {{ producto.nombre }}</p>
+                        <p><strong>Tipo:</strong> 
+                            <span class="badge bg-light text-dark">{{ producto.get_tipo_display }}</span>
+                        </p>
+                        <p><strong>Peligrosidad:</strong> 
+                            <span class="badge {% if producto.nivel_peligrosidad == 'alto' %}bg-danger{% elif producto.nivel_peligrosidad == 'medio' %}bg-warning{% else %}bg-success{% endif %}">
+                                {{ producto.get_nivel_peligrosidad_display }}
+                            </span>
+                        </p>
+                        <p><strong>Estado:</strong> 
+                            {% if producto.esta_activo %}
+                                <span class="badge bg-success">Activo</span>
+                            {% else %}
+                                <span class="badge bg-secondary">Inactivo</span>
+                            {% endif %}
+                        </p>
+                    </div>
+                    <div class="col-md-6">
+                        <p><strong>Stock actual:</strong> 
+                            <span class="fw-bold {% if producto.estado_stock == 'agotado' %}text-danger{% elif producto.estado_stock == 'bajo' %}text-warning{% else %}text-success{% endif %}">
+                                {{ producto.stock_actual|floatformat:2 }} {{ producto.unidad_medida }}
+                            </span>
+                        </p>
+                        <p><strong>Stock mínimo:</strong> {{ producto.stock_minimo|floatformat:2 }} {{ producto.unidad_medida }}</p>
+                        <p><strong>Estado stock:</strong> 
+                            {% if producto.estado_stock == 'agotado' %}
+                                <span class="badge bg-danger">❌ Agotado</span>
+                            {% elif producto.estado_stock == 'bajo' %}
+                                <span class="badge bg-warning">⚠️ Bajo</span>
+                            {% else %}
+                                <span class="badge bg-success">✅ Normal</span>
+                            {% endif %}
+                        </p>
+                        <p><strong>Unidad:</strong> {{ producto.unidad_medida }}</p>
+                    </div>
+                </div>
+                
+                {% if producto.proveedor %}
+                <div class="mt-3">
+                    <p><strong>Proveedor:</strong> {{ producto.proveedor }}</p>
+                </div>
+                {% endif %}
+                
+                {% if producto.ingrediente_activo %}
+                <div class="mt-3">
+                    <p><strong>Ingrediente activo:</strong> {{ producto.ingrediente_activo }}</p>
+                </div>
+                {% endif %}
+                
+                {% if producto.concentracion %}
+                <div class="mt-3">
+                    <p><strong>Concentración:</strong> {{ producto.concentracion }}</p>
+                </div>
+                {% endif %}
+                
+                {% if producto.instrucciones_uso %}
+                <div class="mt-3">
+                    <p><strong>Instrucciones de uso:</strong></p>
+                    <p class="text-muted">{{ producto.instrucciones_uso|linebreaks }}</p>
+                </div>
+                {% endif %}
+                
+                {% if producto.precauciones %}
+                <div class="mt-3">
+                    <p><strong>Precauciones:</strong></p>
+                    <p class="text-muted">{{ producto.precauciones|linebreaks }}</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Panel Lateral -->
+    <div class="col-lg-4">
+        <!-- Estadísticas -->
+        <div class="card card-agro mb-4">
+            <div class="card-header bg-agro-light">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-graph-up me-2"></i>Estadísticas
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="text-center mb-3">
+                    <div class="display-6 fw-bold {% if producto.estado_stock == 'agotado' %}text-danger{% elif producto.estado_stock == 'bajo' %}text-warning{% else %}text-success{% endif %}">
+                        {{ producto.stock_actual|floatformat:2 }}
+                    </div>
+                    <div class="text-muted">{{ producto.unidad_medida }}</div>
+                    <small class="text-muted">Stock actual</small>
+                </div>
+                
+                <div class="progress progress-agro mb-3" style="height: 20px;">
+                    {% with porcentaje=producto.stock_minimo|default:1 %}
+                    <div class="progress-bar bg-{% if producto.estado_stock == 'agotado' %}danger{% elif producto.estado_stock == 'bajo' %}warning{% else %}success{% endif %}" 
+                         role="progressbar" 
+                         style="width: {% widthratio producto.stock_actual producto.stock_minimo|default:1 100 %}%"
+                         aria-valuenow="{{ producto.stock_actual }}" 
+                         aria-valuemin="0" 
+                         aria-valuemax="{{ producto.stock_minimo|default:1 }}">
+                    </div>
+                    {% endwith %}
+                </div>
+                <div class="text-center">
+                    <small class="text-muted">
+                        Mínimo: {{ producto.stock_minimo|floatformat:2 }} {{ producto.unidad_medida }}
+                    </small>
+                </div>
+            </div>
+        </div>
+
+        <!-- Alertas -->
+        {% if producto.en_alerta_stock %}
+        <div class="card card-agro border-warning">
+            <div class="card-header bg-warning text-dark">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-exclamation-triangle me-2"></i>Alerta de Stock
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-warning mb-0">
+                    <i class="bi bi-exclamation-triangle me-2"></i>
+                    <strong>Stock bajo</strong><br>
+                    El stock actual está por debajo del mínimo establecido.
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

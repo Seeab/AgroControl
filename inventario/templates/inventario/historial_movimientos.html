@@ -1,0 +1,211 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}Historial de Movimientos - AgroControl{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="h3 mb-1">
+            <i class="bi bi-clock-history text-agro-primary me-2"></i>Historial de Movimientos
+        </h1>
+        <p class="text-muted">Registro completo de entradas y salidas de inventario</p>
+    </div>
+    <a href="{% url 'inventario:lista_productos' %}" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left me-2"></i>Volver al inventario
+    </a>
+</div>
+
+<!-- Filtros -->
+<div class="card card-agro mb-4">
+    <div class="card-header bg-agro-light">
+        <h5 class="card-title mb-0">
+            <i class="bi bi-funnel me-2"></i>Filtros
+        </h5>
+    </div>
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <div class="col-md-3">
+                <label class="form-label fw-semibold">Producto</label>
+                <select name="producto" class="form-select">
+                    <option value="">Todos los productos</option>
+                    {% for prod in productos %}
+                    <option value="{{ prod.id }}" {% if filtro_producto == prod.id|stringformat:"i" %}selected{% endif %}>
+                        {{ prod.nombre }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label fw-semibold">Tipo de movimiento</label>
+                <select name="tipo_movimiento" class="form-select">
+                    <option value="">Todos</option>
+                    <option value="entrada" {% if filtro_tipo == 'entrada' %}selected{% endif %}>Entrada</option>
+                    <option value="salida" {% if filtro_tipo == 'salida' %}selected{% endif %}>Salida</option>
+                    <option value="ajuste" {% if filtro_tipo == 'ajuste' %}selected{% endif %}>Ajuste</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label fw-semibold">Fecha desde</label>
+                <input type="date" name="fecha_desde" class="form-control" value="{{ filtro_fecha_desde }}">
+            </div>
+            <div class="col-md-3">
+                <label class="form-label fw-semibold">Fecha hasta</label>
+                <input type="date" name="fecha_hasta" class="form-control" value="{{ filtro_fecha_hasta }}">
+            </div>
+            <div class="col-12">
+                <button type="submit" class="btn btn-agro-primary me-2">
+                    <i class="bi bi-funnel me-1"></i>Filtrar
+                </button>
+                <a href="{% url 'inventario:historial_movimientos' %}" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-clockwise me-1"></i>Limpiar
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Resumen -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card card-agro border-primary">
+            <div class="card-body text-center">
+                <h5 class="card-title text-primary">{{ total_movimientos }}</h5>
+                <p class="card-text text-muted">Total Movimientos</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card card-agro border-success">
+            <div class="card-body text-center">
+                <h5 class="card-title text-success">{{ total_entradas }}</h5>
+                <p class="card-text text-muted">Entradas</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card card-agro border-warning">
+            <div class="card-body text-center">
+                <h5 class="card-title text-warning">{{ total_salidas }}</h5>
+                <p class="card-text text-muted">Salidas</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card card-agro border-info">
+            <div class="card-body text-center">
+                <h5 class="card-title text-info">{{ total_ajustes }}</h5>
+                <p class="card-text text-muted">Ajustes</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Tabla de Movimientos -->
+<div class="card card-agro">
+    <div class="card-header bg-agro-light d-flex justify-content-between align-items-center">
+        <h5 class="card-title mb-0">
+            <i class="bi bi-list-ul me-2"></i>Movimientos Registrados
+        </h5>
+        <span class="badge bg-agro-primary">{{ movimientos|length }} registros</span>
+    </div>
+    
+    <div class="card-body">
+        {% if movimientos %}
+        <div class="table-responsive">
+            <table class="table table-hover table-agro">
+                <thead>
+                    <tr>
+                        <th><i class="bi bi-calendar me-1"></i>Fecha</th>
+                        <th><i class="bi bi-tag me-1"></i>Producto</th>
+                        <th><i class="bi bi-arrow-left-right me-1"></i>Tipo</th>
+                        <th><i class="bi bi-box me-1"></i>Cantidad</th>
+                        <th><i class="bi bi-graph-up me-1"></i>Stock Anterior</th>
+                        <th><i class="bi bi-graph-down me-1"></i>Stock Posterior</th>
+                        <th><i class="bi bi-person me-1"></i>Responsable</th>
+                        <th><i class="bi bi-chat me-1"></i>Motivo</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for movimiento in movimientos %}
+                    <tr>
+                        <td>
+                            <small class="text-muted">{{ movimiento.fecha_movimiento|date:"d/m/Y" }}</small><br>
+                            <small class="text-muted">{{ movimiento.fecha_movimiento|date:"H:i" }}</small>
+                        </td>
+                        <td>
+                            <a href="{% url 'inventario:detalle_producto' movimiento.producto.id %}" class="text-agro-primary">
+                                {{ movimiento.producto.nombre }}
+                            </a>
+                        </td>
+                        <td>
+                            {% if movimiento.tipo_movimiento == 'entrada' %}
+                                <span class="badge bg-success">↑ Entrada</span>
+                            {% elif movimiento.tipo_movimiento == 'salida' %}
+                                <span class="badge bg-warning">↓ Salida</span>
+                            {% else %}
+                                <span class="badge bg-info">↔ Ajuste</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <span class="fw-bold">{{ movimiento.cantidad|floatformat:2 }}</span>
+                            <small class="text-muted">{{ movimiento.producto.unidad_medida }}</small>
+                        </td>
+                        <td>
+                            <span class="text-muted">{{ movimiento.stock_anterior|floatformat:2 }}</span>
+                        </td>
+                        <td>
+                            <span class="fw-bold {% if movimiento.stock_posterior < movimiento.producto.stock_minimo %}text-warning{% endif %}">
+                                {{ movimiento.stock_posterior|floatformat:2 }}
+                            </span>
+                        </td>
+                        <td>
+                            <small class="text-muted">{{ movimiento.realizado_por.username }}</small>
+                        </td>
+                        <td>
+                            <small>{{ movimiento.motivo }}</small>
+                            {% if movimiento.referencia %}
+                            <br><small class="text-muted">Ref: {{ movimiento.referencia }}</small>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Paginación -->
+        {% if movimientos.has_other_pages %}
+        <nav aria-label="Paginación de movimientos">
+            <ul class="pagination justify-content-center mt-4">
+                {% if movimientos.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ movimientos.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">Anterior</a>
+                </li>
+                {% endif %}
+                
+                {% for i in movimientos.paginator.page_range %}
+                <li class="page-item {% if movimientos.number == i %}active{% endif %}">
+                    <a class="page-link" href="?page={{ i }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">{{ i }}</a>
+                </li>
+                {% endfor %}
+                
+                {% if movimientos.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ movimientos.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">Siguiente</a>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+        
+        {% else %}
+        <div class="text-center py-5">
+            <i class="bi bi-inboxes display-1 text-muted"></i>
+            <h4 class="text-muted mt-3">No se encontraron movimientos</h4>
+            <p class="text-muted">No hay movimientos registrados con los filtros aplicados.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
