@@ -1,0 +1,207 @@
+{% extends 'base.html' %}
+
+{% block title %}Cuarteles - AgroControl{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="h3 mb-1">
+            <i class="bi bi-map text-agro-primary me-2"></i>Gestión de Cuarteles
+        </h1>
+        <p class="text-muted">Administra los cuarteles y realiza seguimiento de cultivos</p>
+    </div>
+    <a href="{% url 'cuarteles:crear_cuartel' %}" class="btn btn-agro-primary">
+        <i class="bi bi-plus-circle me-2"></i>Nuevo Cuartel
+    </a>
+</div>
+
+<!-- Tarjetas de Estadísticas -->
+<div class="row mb-4">
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card card-agro border-start border-agro-primary border-4">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col">
+                        <div class="text-xs fw-bold text-agro-primary text-uppercase mb-1">
+                            Total Cuarteles
+                        </div>
+                        <div class="h5 mb-0 fw-bold text-gray-800">{{ total_cuarteles }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-map-fill text-agro-primary fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card card-agro border-start border-success border-4">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col">
+                        <div class="text-xs fw-bold text-success text-uppercase mb-1">
+                            Cuarteles Activos
+                        </div>
+                        <div class="h5 mb-0 fw-bold text-gray-800">{{ cuarteles_activos }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-check-circle-fill text-success fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Filtros -->
+<div class="card card-agro mb-4">
+    <div class="card-header bg-agro-light">
+        <h5 class="card-title mb-0">
+            <i class="bi bi-funnel me-2"></i>Filtros de Búsqueda
+        </h5>
+    </div>
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <div class="col-md-4">
+                <label class="form-label fw-semibold">Tipo de Riego</label>
+                <select name="tipo_riego" class="form-select">
+                    <option value="">Todos los tipos</option>
+                    <option value="goteo" {% if filtro_tipo_riego == 'goteo' %}selected{% endif %}>Riego por Goteo</option>
+                    <option value="aspersion" {% if filtro_tipo_riego == 'aspersion' %}selected{% endif %}>Riego por Aspersión</option>
+                    <option value="inundacion" {% if filtro_tipo_riego == 'inundacion' %}selected{% endif %}>Riego por Inundación</option>
+                    <option value="microaspersion" {% if filtro_tipo_riego == 'microaspersion' %}selected{% endif %}>Microaspersión</option>
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label fw-semibold">Estado del Cultivo</label>
+                <select name="estado" class="form-select">
+                    <option value="">Todos los estados</option>
+                    <option value="activo" {% if filtro_estado == 'activo' %}selected{% endif %}>Activo</option>
+                    <option value="inactivo" {% if filtro_estado == 'inactivo' %}selected{% endif %}>Inactivo</option>
+                    <option value="en_desarrollo" {% if filtro_estado == 'en_desarrollo' %}selected{% endif %}>En Desarrollo</option>
+                    <option value="cosechado" {% if filtro_estado == 'cosechado' %}selected{% endif %}>Cosechado</option>
+                </select>
+            </div>
+            <div class="col-md-4 d-flex align-items-end">
+                <button type="submit" class="btn btn-agro-primary me-2">
+                    <i class="bi bi-funnel me-1"></i>Filtrar
+                </button>
+                <a href="{% url 'cuarteles:lista_cuarteles' %}" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-clockwise me-1"></i>Limpiar
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Tabla de Cuarteles -->
+<div class="card card-agro">
+    <div class="card-header bg-agro-light d-flex justify-content-between align-items-center">
+        <h5 class="card-title mb-0">
+            <i class="bi bi-list-ul me-2"></i>Lista de Cuarteles
+        </h5>
+        <span class="badge bg-agro-primary">{{ cuarteles|length }} registros</span>
+    </div>
+    
+    <div class="card-body">
+        {% if cuarteles %}
+        <div class="table-responsive">
+            <table class="table table-hover table-agro">
+                <thead>
+                    <tr>
+                        <th><i class="bi bi-hash me-1"></i>Número</th>
+                        <th><i class="bi bi-tag me-1"></i>Nombre</th>
+                        <th><i class="bi bi-flower1 me-1"></i>Variedad</th>
+                        <th><i class="bi bi-calendar me-1"></i>Año Plantación</th>
+                        <th><i class="bi bi-droplet me-1"></i>Tipo Riego</th>
+                        <th><i class="bi bi-activity me-1"></i>Estado</th>
+                        <th><i class="bi bi-graph-up me-1"></i>Supervivencia</th>
+                        <th><i class="bi bi-gear me-1"></i>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for cuartel in cuarteles %}
+                    <tr>
+                        <td>
+                            <span class="fw-bold text-agro-primary">{{ cuartel.numero }}</span>
+                        </td>
+                        <td>{{ cuartel.nombre }}</td>
+                        <td>
+                            <span class="badge bg-light text-dark">
+                                <i class="bi bi-flower1 me-1"></i>{{ cuartel.variedad }}
+                            </span>
+                        </td>
+                        <td>{{ cuartel.año_plantacion }}</td>
+                        <td>
+                            <span class="badge bg-info text-dark">
+                                <i class="bi bi-droplet me-1"></i>{{ cuartel.get_tipo_riego_display }}
+                            </span>
+                        </td>
+                        <td>
+                            <span class="badge {% if cuartel.estado_cultivo == 'activo' %}bg-success{% elif cuartel.estado_cultivo == 'en_desarrollo' %}bg-warning{% else %}bg-secondary{% endif %}">
+                                {{ cuartel.get_estado_cultivo_display }}
+                            </span>
+                        </td>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <div class="flex-grow-1 me-3">
+                                    <div class="progress progress-agro" style="height: 8px;">
+                                        <div class="progress-bar {% if cuartel.porcentaje_supervivencia > 80 %}bg-success{% elif cuartel.porcentaje_supervivencia > 60 %}bg-warning{% else %}bg-danger{% endif %}" 
+                                             role="progressbar" 
+                                             style="width: {{ cuartel.porcentaje_supervivencia }}%"
+                                             aria-valuenow="{{ cuartel.porcentaje_supervivencia }}" 
+                                             aria-valuemin="0" 
+                                             aria-valuemax="100">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="text-nowrap">
+                                    <small class="fw-bold">{{ cuartel.porcentaje_supervivencia|floatformat:1 }}%</small>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="btn-group btn-group-sm">
+                                <a href="{% url 'cuarteles:detalle_cuartel' cuartel.id %}" 
+                                   class="btn btn-outline-primary" 
+                                   data-bs-toggle="tooltip" 
+                                   title="Ver detalles">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                                <a href="{% url 'cuarteles:editar_cuartel' cuartel.id %}" 
+                                   class="btn btn-outline-secondary"
+                                   data-bs-toggle="tooltip"
+                                   title="Editar">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-5">
+            <i class="bi bi-inboxes display-1 text-muted"></i>
+            <h4 class="text-muted mt-3">No se encontraron cuarteles</h4>
+            <p class="text-muted">Comienza agregando el primer cuartel al sistema.</p>
+            <a href="{% url 'cuarteles:crear_cuartel' %}" class="btn btn-agro-primary mt-2">
+                <i class="bi bi-plus-circle me-2"></i>Crear Primer Cuartel
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Inicializar tooltips
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl)
+    })
+</script>
+{% endblock %}
