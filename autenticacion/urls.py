@@ -27,8 +27,5 @@ urlpatterns = [
     path('operarios/alertas/', views.alertas_certificaciones, name='alertas_certificaciones'),
     path('dashboard/alertas/', views.dashboard_alertas, name='dashboard_alertas'),
     
-    # Módulos próximamente
-    path('aplicaciones/', views.aplicaciones_proximamente, name='aplicaciones_proximamente'),
-    path('riego/', views.riego_proximamente, name='riego_proximamente'),
-    path('mantencion/', views.mantencion_proximamente, name='mantencion_proximamente'),
+   
 ]

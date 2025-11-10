@@ -1,0 +1,181 @@
+{% extends 'autenticacion/base.html' %}
+
+{% block title %}Registros de Riego - AgroControl{% endblock %}
+{% block page_title %}Registros de Riego{% endblock %}
+
+{% block page_actions %}
+<a href="{% url 'riego:riego_crear' %}" class="btn btn-primary">
+    <i class="bi bi-plus-circle me-2"></i>Registrar Riego
+</a>
+{% endblock %}
+
+{% block content %}
+<!-- Filtros -->
+<div class="card mb-3">
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <div class="col-md-3">
+                <input type="text" name="q" class="form-control" placeholder="Buscar..." value="{{ query }}">
+            </div>
+            <div class="col-md-2">
+                <input type="date" name="fecha_inicio" class="form-control" placeholder="Desde" value="{{ fecha_inicio }}">
+            </div>
+            <div class="col-md-2">
+                <input type="date" name="fecha_fin" class="form-control" placeholder="Hasta" value="{{ fecha_fin }}">
+            </div>
+            <div class="col-md-3">
+                <select name="cuartel" class="form-control">
+                    <option value="">Todos los cuarteles</option>
+                    {% for cuartel in cuarteles %}
+                    <option value="{{ cuartel.id }}" {% if cuartel_id|stringformat:"s" == cuartel.id|stringformat:"s" %}selected{% endif %}>
+                        {{ cuartel.nombre }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="bi bi-search"></i> Buscar
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Tabla de Registros -->
+<div class="card">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Fecha</th>
+                        <th>Cuartel</th>
+                        <th>Horario</th>
+                        <th>Duración</th>
+                        <th>Caudal</th>
+                        <th>Volumen Total</th>
+                        <th>Fertilizante</th>
+                        <th>Encargado</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for riego in page_obj %}
+                    <tr>
+                        <td>
+                            <strong>{{ riego.fecha|date:"d/m/Y" }}</strong>
+                            <br><small class="text-muted">{{ riego.fecha|date:"l" }}</small>
+                        </td>
+                        <td>
+                            <span class="badge bg-info">{{ riego.cuartel.nombre }}</span>
+                            {% if riego.cuartel.variedad_cultivo %}
+                            <br><small class="text-muted">{{ riego.cuartel.variedad_cultivo }}</small>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {{ riego.horario_inicio|time:"H:i" }} - {{ riego.horario_fin|time:"H:i" }}
+                        </td>
+                        <td>
+                            <span class="badge bg-secondary">{{ riego.get_duracion_display }}</span>
+                        </td>
+                        <td>{{ riego.caudal_m3h }} m³/h</td>
+                        <td>
+                            <strong>{{ riego.volumen_total_m3|floatformat:2 }}</strong> m³
+                        </td>
+                        <td>
+                            {% if riego.incluye_fertilizante %}
+                            <span class="badge bg-success">
+                                <i class="bi bi-check-circle"></i> Sí
+                            </span>
+                            <br>
+                            <small class="text-muted">{{ riego.fertilizantes.count }} producto(s)</small>
+                            {% else %}
+                            <span class="badge bg-secondary">No</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ riego.encargado_riego.nombre_completo|default:"-" }}</td>
+                        <td>
+                            <div class="btn-group btn-group-sm" role="group">
+                                <a href="{% url 'riego:riego_detalle' riego.id %}" 
+                                   class="btn btn-outline-info" 
+                                   title="Ver detalle">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                                <a href="{% url 'riego:riego_editar' riego.id %}" 
+                                   class="btn btn-outline-primary" 
+                                   title="Editar">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                                <a href="{% url 'riego:riego_eliminar' riego.id %}" 
+                                   class="btn btn-outline-danger" 
+                                   title="Eliminar">
+                                    <i class="bi bi-trash"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="9" class="text-center text-muted py-4">
+                            {% if query or fecha_inicio or fecha_fin or cuartel_id %}
+                            No se encontraron registros con los filtros aplicados
+                            {% else %}
+                            No hay registros de riego
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Paginación -->
+        {% if page_obj.has_other_pages %}
+        <nav class="mt-3">
+            <ul class="pagination justify-content-center">
+                {% if page_obj.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page=1{% if query %}&q={{ query }}{% endif %}{% if fecha_inicio %}&fecha_inicio={{ fecha_inicio }}{% endif %}{% if fecha_fin %}&fecha_fin={{ fecha_fin }}{% endif %}{% if cuartel_id %}&cuartel={{ cuartel_id }}{% endif %}">
+                        Primera
+                    </a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if query %}&q={{ query }}{% endif %}{% if fecha_inicio %}&fecha_inicio={{ fecha_inicio }}{% endif %}{% if fecha_fin %}&fecha_fin={{ fecha_fin }}{% endif %}{% if cuartel_id %}&cuartel={{ cuartel_id }}{% endif %}">
+                        Anterior
+                    </a>
+                </li>
+                {% endif %}
+                
+                <li class="page-item active">
+                    <span class="page-link">{{ page_obj.number }} de {{ page_obj.paginator.num_pages }}</span>
+                </li>
+                
+                {% if page_obj.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if query %}&q={{ query }}{% endif %}{% if fecha_inicio %}&fecha_inicio={{ fecha_inicio }}{% endif %}{% if fecha_fin %}&fecha_fin={{ fecha_fin }}{% endif %}{% if cuartel_id %}&cuartel={{ cuartel_id }}{% endif %}">
+                        Siguiente
+                    </a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if query %}&q={{ query }}{% endif %}{% if fecha_inicio %}&fecha_inicio={{ fecha_inicio }}{% endif %}{% if fecha_fin %}&fecha_fin={{ fecha_fin }}{% endif %}{% if cuartel_id %}&cuartel={{ cuartel_id }}{% endif %}">
+                        Última
+                    </a>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Resumen -->
+<div class="row mt-3">
+    <div class="col-md-12">
+        <div class="alert alert-info">
+            <i class="bi bi-info-circle me-2"></i>
+            Total de registros: <strong>{{ page_obj.paginator.count }}</strong>
+        </div>
+    </div>
+</div>
+{% endblock %}

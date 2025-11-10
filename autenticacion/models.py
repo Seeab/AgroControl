@@ -126,7 +126,7 @@ class Operario(models.Model):
     
     # Campos para certificaciones
     certificacion_documento = models.FileField(
-        upload_to='certificaciones/operarios/',
+        upload_to='media/certificaciones/operarios',
         blank=True,
         null=True,
         validators=[validate_file_size, validate_file_extension],

@@ -1,0 +1,215 @@
+{% extends 'autenticacion/base.html' %}
+
+{% block title %}Control de Riego - AgroControl{% endblock %}
+{% block page_title %}Control de Riego{% endblock %}
+
+{% block page_actions %}
+<a href="{% url 'riego:riego_crear' %}" class="btn btn-primary">
+    <i class="bi bi-plus-circle me-2"></i>Registrar Riego
+</a>
+{% endblock %}
+
+{% block content %}
+<!-- Estadísticas -->
+<div class="row mb-4">
+    <!-- Riegos Hoy -->
+    <div class="col-md-3">
+        <div class="card bg-primary text-white mb-3">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-white-50 mb-2">Riegos Hoy</h6>
+                        <h2 class="mb-0">{{ riegos_hoy }}</h2>
+                    </div>
+                    <div class="fs-1">
+                        <i class="bi bi-droplet-fill"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Volumen Hoy -->
+    <div class="col-md-3">
+        <div class="card bg-info text-white mb-3">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-white-50 mb-2">Volumen Hoy</h6>
+                        <h2 class="mb-0">{{ volumen_hoy|floatformat:1 }}</h2>
+                        <small>m³</small>
+                    </div>
+                    <div class="fs-1">
+                        <i class="bi bi-bucket"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Riegos Este Mes -->
+    <div class="col-md-3">
+        <div class="card bg-success text-white mb-3">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-white-50 mb-2">Riegos Este Mes</h6>
+                        <h2 class="mb-0">{{ riegos_mes }}</h2>
+                    </div>
+                    <div class="fs-1">
+                        <i class="bi bi-calendar-check"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Volumen Este Mes -->
+    <div class="col-md-3">
+        <div class="card bg-warning text-dark mb-3">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-dark-50 mb-2">Volumen Mes</h6>
+                        <h2 class="mb-0">{{ volumen_mes|floatformat:1 }}</h2>
+                        <small>m³</small>
+                    </div>
+                    <div class="fs-1">
+                        <i class="bi bi-graph-up-arrow"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Información Adicional -->
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body text-center">
+                <i class="bi bi-geo-alt text-primary" style="font-size: 2rem;"></i>
+                <h3 class="mt-2">{{ cuarteles_activos }}</h3>
+                <p class="text-muted mb-0">Cuarteles Activos</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body text-center">
+                <i class="bi bi-exclamation-triangle text-warning" style="font-size: 2rem;"></i>
+                <h3 class="mt-2">{{ productos_bajo_stock }}</h3>
+                <p class="text-muted mb-0">Productos Bajo Stock</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body text-center">
+                <i class="bi bi-calendar-date text-info" style="font-size: 2rem;"></i>
+                <h3 class="mt-2">{{ riegos_hoy }}</h3>
+                <p class="text-muted mb-0">Actividades Hoy</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Últimos Registros -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="bi bi-clock-history me-2"></i>Últimos Registros de Riego</h5>
+                <a href="{% url 'riego:riego_lista' %}" class="btn btn-sm btn-outline-primary">
+                    Ver Todos <i class="bi bi-arrow-right ms-1"></i>
+                </a>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Fecha</th>
+                                <th>Cuartel</th>
+                                <th>Horario</th>
+                                <th>Duración</th>
+                                <th>Volumen</th>
+                                <th>Fertilizante</th>
+                                <th>Encargado</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for riego in ultimos_riegos %}
+                            <tr>
+                                <td>{{ riego.fecha|date:"d/m/Y" }}</td>
+                                <td><strong>{{ riego.cuartel.nombre }}</strong></td>
+                                <td>
+                                    <small>{{ riego.horario_inicio|time:"H:i" }} - {{ riego.horario_fin|time:"H:i" }}</small>
+                                </td>
+                                <td>{{ riego.get_duracion_display }}</td>
+                                <td>{{ riego.volumen_total_m3|floatformat:2 }} m³</td>
+                                <td>
+                                    {% if riego.incluye_fertilizante %}
+                                    <span class="badge bg-success">
+                                        <i class="bi bi-check-circle"></i> Sí
+                                    </span>
+                                    {% else %}
+                                    <span class="badge bg-secondary">No</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ riego.encargado_riego.nombre_completo|default:"-" }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="7" class="text-center text-muted py-4">
+                                    No hay registros de riego
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Accesos Rápidos -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-white">
+                <h5 class="mb-0"><i class="bi bi-lightning me-2"></i>Accesos Rápidos</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3 mb-3">
+                        <a href="{% url 'riego:riego_crear' %}" class="btn btn-outline-primary w-100 py-3">
+                            <i class="bi bi-plus-circle fs-4 d-block mb-2"></i>
+                            Registrar Riego
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <a href="{% url 'riego:riego_lista' %}" class="btn btn-outline-info w-100 py-3">
+                            <i class="bi bi-list-ul fs-4 d-block mb-2"></i>
+                            Ver Registros
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <a href="{% url 'riego:cuartel_lista' %}" class="btn btn-outline-success w-100 py-3">
+                            <i class="bi bi-geo-alt fs-4 d-block mb-2"></i>
+                            Gestionar Cuarteles
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <a href="{% url 'riego:producto_lista' %}" class="btn btn-outline-warning w-100 py-3">
+                            <i class="bi bi-box-seam fs-4 d-block mb-2"></i>
+                            Ver Productos
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

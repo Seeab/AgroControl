@@ -2,6 +2,7 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib import messages
 from django.core.exceptions import ValidationError
+from autenticacion.views import login_required 
 
 # Models and Forms
 from .models import AplicacionFitosanitaria

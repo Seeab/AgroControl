@@ -92,7 +92,10 @@ DATABASES = {
     }
 }
 
-
+# Configuración para login/logout
+LOGIN_URL = '/login/'  # ⬅️ Tu URL de login
+LOGIN_REDIRECT_URL = '/dashboard/'  # ⬅️ Donde redirigir después del login
+LOGOUT_REDIRECT_URL = '/login/'  # ⬅️ Donde redirigir después del logout
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
 
@@ -111,7 +114,9 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-
+# Configuración de archivos media (para certificaciones)
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
 # Internationalization
 # https://docs.djangoproject.com/en/5.2/topics/i18n/
 
@@ -123,6 +128,11 @@ USE_I18N = True
 
 USE_TZ = True
 
+# settings.py
+SESSION_COOKIE_NAME = 'sessionid'
+SESSION_COOKIE_DOMAIN = None  # Para desarrollo local
+SESSION_COOKIE_PATH = '/'
+SESSION_SAVE_EVERY_REQUEST = True
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/

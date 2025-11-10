@@ -31,29 +31,65 @@ def login_view(request):
             
             messages.success(request, f'Bienvenido, {usuario.get_full_name()}')
             
-            # Redirigir según el rol
-            if usuario.es_administrador or (usuario.rol and usuario.rol.nombre == 'administrador'):
-                return redirect('dashboard')
-            elif usuario.rol and usuario.rol.nombre == 'aplicador':
-                return redirect('aplicaciones_proximamente')
-            elif usuario.rol and usuario.rol.nombre == 'regador':
-                return redirect('riego_proximamente')
-            elif usuario.rol and usuario.rol.nombre == 'encargado':
-                return redirect('mantencion_proximamente')
-            else:
-                return redirect('dashboard')
+            # ✅ DEBUG: Ver información del usuario
+            print(f"🔍 DEBUG LOGIN:")
+            print(f"   Usuario: {usuario.nombre_usuario}")
+            print(f"   Rol: {usuario.rol.nombre if usuario.rol else 'Sin rol'}")
+            print(f"   Es admin: {usuario.es_administrador}")
+            
+            # Redirigir según el rol a diferentes apps
+            return redirigir_por_rol(usuario)
     else:
         form = LoginForm()
     
     return render(request, 'autenticacion/login.html', {'form': form})
 
-
+def redirigir_por_rol(usuario):
+    """Redirige según el rol usando nombres exactos de la BD"""
+    if usuario.es_administrador:
+        print("   🔄 Redirigiendo a: dashboard (es administrador)")
+        return redirect('dashboard')
+    
+    if not usuario.rol:
+        print("   🔄 Redirigiendo a: dashboard (sin rol)")
+        return redirect('dashboard')
+    
+    rol_nombre = usuario.rol.nombre.strip()
+    print(f"   🔍 Rol detectado: '{rol_nombre}'")
+    
+    # Mapeo directo a las apps con nombres EXACTOS de tu BD
+    mapa_redirecciones = {
+        'administrador': 'dashboard',
+        'aplicador': 'aplicaciones:lista_aplicaciones',
+        'regador': 'riego:dashboard', 
+        'encargado de mantencion': 'mantencion:dashboard',
+    }
+    
+    destino = mapa_redirecciones.get(rol_nombre, 'dashboard')
+    print(f"   🎯 Destino configurado: {destino}")
+    
+    try:
+        print(f"   🔄 Intentando redirigir a: {destino}")
+        return redirect(destino)
+    except Exception as e:
+        print(f"   ❌ Error en redirección: {e}")
+        # Fallback si la app no está disponible
+        fallbacks = {
+            'aplicador': 'aplicaciones_proximamente',
+            'regador': 'riego_proximamente', 
+            'encargado de mantencion': 'mantencion_proximamente',
+        }
+        fallback = fallbacks.get(rol_nombre, 'dashboard')
+        print(f"   🔄 Fallback a: {fallback}")
+        return redirect(fallback)
+    
 def logout_view(request):
     """Vista de cierre de sesión"""
     request.session.flush()
     messages.info(request, 'Sesión cerrada correctamente.')
     return redirect('login')
 
+# ==================== DECORADORES ====================
 
 def login_required(view_func):
     """Decorador para requerir autenticación"""
@@ -63,7 +99,6 @@ def login_required(view_func):
             return redirect('login')
         return view_func(request, *args, **kwargs)
     return wrapper
-
 
 def admin_required(view_func):
     """Decorador para requerir permisos de administrador"""
@@ -76,7 +111,6 @@ def admin_required(view_func):
             return redirect('dashboard')
         return view_func(request, *args, **kwargs)
     return wrapper
-
 
 # ==================== DASHBOARD ====================
 
@@ -352,31 +386,6 @@ def alertas_certificaciones(request):
     }
     return render(request, 'autenticacion/alertas_certificaciones.html', context)
 
-
-@login_required
-def dashboard_alertas(request):
-    """Endpoint para AJAX - alertas para el dashboard (RF008)"""
-    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-        from datetime import timedelta
-        
-        operarios_por_vencer = Operario.objects.filter(
-            fecha_vencimiento_certificacion__lte=timezone.now().date() + timedelta(days=30),
-            fecha_vencimiento_certificacion__gte=timezone.now().date(),
-            esta_activo=True
-        ).count()
-        
-        operarios_vencidos = Operario.objects.filter(
-            fecha_vencimiento_certificacion__lt=timezone.now().date(),
-            esta_activo=True
-        ).count()
-        
-        data = {
-            'por_vencer': operarios_por_vencer,
-            'vencidos': operarios_vencidos,
-            'total_alertas': operarios_por_vencer + operarios_vencidos
-        }
-        return JsonResponse(data)
-
 # ==================== RECUPERACIÓN DE CONTRASEÑA ====================
 
 def recuperar_password(request):
@@ -468,33 +477,31 @@ def reset_password(request, token):
     return render(request, 'autenticacion/reset_password.html', context)
 
 
-# ==================== RUTAS PRÓXIMAMENTE ====================
+# ==================== PÁGINAS TEMPORALES ====================
 
 @login_required
 def aplicaciones_proximamente(request):
-    """Página de módulo en desarrollo - Aplicaciones"""
+    """Página temporal si la app de aplicaciones no está disponible"""
     context = {
         'modulo': 'Aplicaciones Fitosanitarias',
-        'descripcion': 'Módulo para el registro y control de aplicaciones fitosanitarias.'
+        'descripcion': 'Módulo para el registro y control de aplicaciones fitosanitarias.',
     }
     return render(request, 'autenticacion/proximamente.html', context)
-
 
 @login_required
 def riego_proximamente(request):
-    """Página de módulo en desarrollo - Riego"""
+    """Página temporal si la app de riego no está disponible"""
     context = {
         'modulo': 'Control de Riego',
-        'descripcion': 'Módulo para el registro y control de actividades de riego.'
+        'descripcion': 'Módulo para el registro y control de actividades de riego.',
     }
     return render(request, 'autenticacion/proximamente.html', context)
 
-
 @login_required
 def mantencion_proximamente(request):
-    """Página de módulo en desarrollo - Mantención"""
+    """Página temporal si la app de mantención no está disponible"""
     context = {
         'modulo': 'Mantención y Calibración',
-        'descripcion': 'Módulo para el registro de mantenimientos y calibraciones de equipos.'
+        'descripcion': 'Módulo para el registro de mantenimientos y calibraciones de equipos.',
     }
     return render(request, 'autenticacion/proximamente.html', context)

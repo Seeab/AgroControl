@@ -13,6 +13,11 @@ from django.conf.urls.static import static
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('autenticacion.urls')),
+    path('aplicaciones/', include('aplicaciones.urls', namespace='aplicaciones')),
+    path('riego/', include('riego.urls', namespace='riego')),
+    path('', include('cuarteles.urls')),
+    path('', include('inventario.urls')),
+
 ]
 
 if settings.DEBUG:
