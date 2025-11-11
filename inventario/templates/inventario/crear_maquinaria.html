@@ -1,0 +1,136 @@
+{% extends 'base.html' %}
+
+{% block title %}{% if form.instance.id %}Editar{% else %}Registrar{% endif %} Equipo - AgroControl{% endblock %}
+{% block page_title %}{% if form.instance.id %}Editar{% else %}Registrar{% endif %} Maquinaria o Herramienta{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="h3 mb-1">
+            <i class="bi bi-{% if form.instance.id %}pencil-square{% else %}plus-circle{% endif %} text-agro-primary me-2"></i>
+            {% if form.instance.id %}Editar Equipo: {{ equipo.nombre }}{% else %}Registrar Nuevo Equipo{% endif %}
+        </h1>
+        <p class="text-muted">Complete la información de la maquinaria o herramienta</p>
+    </div>
+    <a href="{% url 'inventario:lista_maquinaria' %}" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left me-2"></i>Volver al listado
+    </a>
+</div>
+
+<div class="card card-agro">
+    <div class="card-header bg-agro-light">
+        <h5 class="card-title mb-0">
+            <i class="bi bi-info-circle me-2"></i>Información del Equipo
+        </h5>
+    </div>
+    <div class="card-body">
+        <form method="post" novalidate>
+            {% csrf_token %}
+            
+            {% if form.errors %}
+            <div class="alert alert-danger">
+                <i class="bi bi-exclamation-triangle me-2"></i>
+                Por favor, corrija los errores.
+                <ul class="mb-0 mt-2">
+                    {% for field, errors in form.errors.items %}
+                        {% for error in errors %}
+                            <li>{{ field }}: {{ error }}</li>
+                        {% endfor %}
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+            
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label for="{{ form.nombre.id_for_label }}" class="form-label fw-semibold">
+                        {{ form.nombre.label }}
+                    </label>
+                    {{ form.nombre }}
+                    {% if form.nombre.errors %}<div class="text-danger small mt-1">{{ form.nombre.errors }}</div>{% endif %}
+                </div>
+                
+                <div class="col-md-6 mb-3">
+                    <label for="{{ form.tipo.id_for_label }}" class="form-label fw-semibold">
+                        {{ form.tipo.label }}
+                    </label>
+                    {{ form.tipo }}
+                    {% if form.tipo.errors %}<div class="text-danger small mt-1">{{ form.tipo.errors }}</div>{% endif %}
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label for="{{ form.estado.id_for_label }}" class="form-label fw-semibold">
+                        {{ form.estado.label }}
+                    </label>
+                    {{ form.estado }}
+                    {% if form.estado.errors %}<div class="text-danger small mt-1">{{ form.estado.errors }}</div>{% endif %}
+                </div>
+                
+                <div class="col-md-6 mb-3">
+                    <label for="{{ form.modelo.id_for_label }}" class="form-label fw-semibold">
+                        {{ form.modelo.label }}
+                    </label>
+                    {{ form.modelo }}
+                    {% if form.modelo.errors %}<div class="text-danger small mt-1">{{ form.modelo.errors }}</div>{% endif %}
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label for="{{ form.numero_serie.id_for_label }}" class="form-label fw-semibold">
+                       {{ form.numero_serie.label }}
+                    </label>
+                    {{ form.numero_serie }}
+                    {% if form.numero_serie.errors %}<div class="text-danger small mt-1">{{ form.numero_serie.errors }}</div>{% endif %}
+                </div>
+                
+                <div class="col-md-6 mb-3">
+                    <label for="{{ form.fecha_compra.id_for_label }}" class="form-label fw-semibold">
+                        {{ form.fecha_compra.label }}
+                    </label>
+                    {{ form.fecha_compra }}
+                    {% if form.fecha_compra.errors %}<div class="text-danger small mt-1">{{ form.fecha_compra.errors }}</div>{% endif %}
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label for="{{ form.stock_actual.id_for_label }}" class="form-label fw-semibold">
+                       {{ form.stock_actual.label }}
+                    </label>
+                    {{ form.stock_actual }}
+                    {% if form.stock_actual.errors %}<div class="text-danger small mt-1">{{ form.stock_actual.errors }}</div>{% endif %}
+                </div>
+                
+                <div class="col-md-6 mb-3">
+                    <label for="{{ form.stock_minimo.id_for_label }}" class="form-label fw-semibold">
+                        {{ form.stock_minimo.label }}
+                    </label>
+                    {{ form.stock_minimo }}
+                    {% if form.stock_minimo.errors %}<div class="text-danger small mt-1">{{ form.stock_minimo.errors }}</div>{% endif %}
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label for="{{ form.observaciones.id_for_label }}" class="form-label fw-semibold">
+                    {{ form.observaciones.label }}
+                </label>
+                {{ form.observaciones }}
+                {% if form.observaciones.errors %}<div class="text-danger small mt-1">{{ form.observaciones.errors }}</div>{% endif %}
+            </div>
+
+            <div class="d-flex justify-content-between mt-4">
+                <a href="{% url 'inventario:lista_maquinaria' %}" class="btn btn-outline-secondary">
+                    <i class="bi bi-x-circle me-2"></i>Cancelar
+                </a>
+                <button type="submit" class="btn btn-agro-primary">
+                    <i class="bi bi-check-circle me-2"></i>
+                    {% if form.instance.id %}Guardar Cambios{% else %}Crear Equipo{% endif %}
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

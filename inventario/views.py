@@ -1,12 +1,12 @@
 from django.shortcuts import render, get_object_or_404, redirect
-# IMPORTACIÓN CORREGIDA: Apunta a las vistas de tu amigo
 from autenticacion.views import login_required, admin_required
 from django.contrib import messages
 from django.db import models
 from django.core.paginator import Paginator
 from django.core.exceptions import ValidationError
-from .models import Producto , MovimientoInventario
-from .forms import ProductoForm, MovimientoInventarioForm
+from .models import Producto, MovimientoInventario, EquipoAgricola
+from .forms import ProductoForm, MovimientoInventarioForm, EquipoAgricolaForm
+
 
 @login_required # <-- USA EL DECORADOR DE 'autenticacion.views'
 def lista_productos(request):
@@ -178,3 +178,91 @@ def historial_movimientos(request):
         'page_title': 'Historial de Movimientos' # Añadido page_title
     }
     return render(request, 'inventario/historial_movimientos.html', context)
+
+@login_required
+def lista_maquinaria(request):
+    """
+    Vista para listar Maquinaria y Herramientas (RF026).
+    """
+    equipos = EquipoAgricola.objects.all().order_by('nombre')
+    
+    # Filtros
+    tipo = request.GET.get('tipo')
+    estado = request.GET.get('estado')
+    
+    if tipo:
+        equipos = equipos.filter(tipo=tipo)
+    if estado:
+        equipos = equipos.filter(estado=estado)
+    
+    # Estadísticas
+    total_equipos = EquipoAgricola.objects.count()
+    equipos_operativos = EquipoAgricola.objects.filter(estado='operativo').count()
+    equipos_mantenimiento = EquipoAgricola.objects.filter(estado='mantenimiento').count()
+    
+    context = {
+        'equipos': equipos,
+        'total_equipos': total_equipos,
+        'equipos_operativos': equipos_operativos,
+        'equipos_mantenimiento': equipos_mantenimiento,
+        'filtro_tipo': tipo,
+        'filtro_estado': estado,
+        'page_title': 'Maquinaria y Herramientas'
+    }
+    return render(request, 'inventario/lista_maquinaria.html', context)
+
+@admin_required
+def crear_maquinaria(request):
+    """
+    Vista para registrar una nueva Maquinaria o Herramienta (RF026).
+    """
+    if request.method == 'POST':
+        form = EquipoAgricolaForm(request.POST)
+        if form.is_valid():
+            equipo = form.save(commit=False)
+            
+            # --- CAMBIO: Línea eliminada ---
+            # Ya no asignamos 'creado_por_id' porque no está en el modelo
+            # equipo.creado_por_id = request.session.get('usuario_id') 
+            
+            equipo.save()
+            messages.success(request, f'Equipo "{equipo.nombre}" creado exitosamente.')
+            return redirect('inventario:lista_maquinaria')
+    else:
+        form = EquipoAgricolaForm()
+    
+    context = {
+        'form': form, 
+        'page_title': 'Registrar Maquinaria o Herramienta'
+    }
+    return render(request, 'inventario/crear_maquinaria.html', context)
+
+@login_required
+def detalle_maquinaria(request, equipo_id):
+    equipo = get_object_or_404(EquipoAgricola, id=equipo_id)
+    context = {
+        'equipo': equipo, 
+        'page_title': f'Detalle Equipo: {equipo.nombre}'
+    }
+    return render(request, 'inventario/detalle_maquinaria.html', context)
+
+@admin_required
+def editar_maquinaria(request, equipo_id):
+    equipo = get_object_or_404(EquipoAgricola, id=equipo_id)
+    
+    if request.method == 'POST':
+        form = EquipoAgricolaForm(request.POST, instance=equipo)
+        if form.is_valid():
+            form.save()
+            messages.success(request, f'Equipo "{equipo.nombre}" actualizado exitosamente.')
+            return redirect('inventario:detalle_maquinaria', equipo_id=equipo.id)
+    else:
+        form = EquipoAgricolaForm(instance=equipo)
+    
+    context = {
+        'form': form, 
+        'equipo': equipo, # Lo pasamos para el título
+        'page_title': f'Editar Equipo: {equipo.nombre}'
+    }
+    # Reutilizamos el template de 'crear'
+    return render(request, 'inventario/crear_maquinaria.html', context)

@@ -224,3 +224,84 @@ class MovimientoInventario(models.Model):
             if is_new:
                 self.producto.stock_actual = self.stock_posterior
                 self.producto.save(update_fields=['stock_actual', 'fecha_actualizacion'])
+
+# --- CORRECCIÓN DE INDENTACIÓN ---
+# Esta clase ahora está al nivel correcto (sin indentación)
+class EquipoAgricola(models.Model):
+    """
+    Modelo para registrar Maquinaria y Herramientas (RF026).
+    Ajustado para coincidir con la base de datos existente.
+    """
+    TIPO_EQUIPO_CHOICES = [
+        ('maquinaria', 'Maquinaria Pesada (Tractor, etc.)'),
+        ('herramienta_mayor', 'Herramienta Mayor (Escalera, etc.)'),
+        ('herramienta_manual', 'Herramienta Manual (Tijeras, etc.)'),
+        ('vehiculo', 'Vehículo (Camioneta, etc.)'),
+        ('otro', 'Otro'),
+    ]
+    ESTADO_CHOICES = [
+        ('operativo', 'Operativo'),
+        ('mantenimiento', 'En Mantenimiento'),
+        ('de_baja', 'De Baja'),
+    ]
+
+    nombre = models.CharField(max_length=200, verbose_name='Nombre del Equipo')
+    tipo = models.CharField(max_length=100, choices=TIPO_EQUIPO_CHOICES, verbose_name='Tipo de Equipo')
+    modelo = models.CharField(max_length=100, blank=True, null=True, verbose_name='Modelo')
+    numero_serie = models.CharField(
+        max_length=100, 
+        blank=True, 
+        null=True, 
+        verbose_name='Número de Serie o Identificador Único',
+        unique=True
+    )
+    fecha_compra = models.DateField(blank=True, null=True, verbose_name='Fecha de Compra')
+    estado = models.CharField(
+        max_length=50, 
+        choices=ESTADO_CHOICES, 
+        default='operativo', 
+        verbose_name='Estado'
+    )
+    observaciones = models.TextField(blank=True, null=True, verbose_name='Observaciones')
+    
+    stock_actual = models.PositiveIntegerField(
+        default=1, 
+        verbose_name='Stock Actual'
+    )
+    stock_minimo = models.PositiveIntegerField(
+        default=1, 
+        verbose_name='Stock Mínimo de Alerta'
+    )
+    
+    # --- CAMBIO: Ajusta este campo ---
+    # Lo hacemos editable para que puedas cambiarlo si quieres
+    creado_en = models.DateTimeField(
+        verbose_name='Creado en', 
+        auto_now_add=True, # Deja que Django lo maneje al crear
+        editable=False # Sigue sin ser editable, es mejor
+    )
+
+    creado_en = models.DateTimeField(verbose_name='Creado en', auto_now_add=False, editable=False, null=True, blank=True)
+
+    class Meta:
+        db_table = 'equipos_agricolas'
+        verbose_name = 'Equipo Agrícola'
+        verbose_name_plural = 'Equipos Agrícolas'
+        ordering = ['nombre']
+
+    def __str__(self):
+        return f"{self.nombre} ({self.get_tipo_display()})"
+    
+    @property
+    def estado_stock(self):
+        """Determina el estado del stock (normal, bajo, agotado)"""
+        if self.stock_actual == 0:
+            return 'agotado'
+        elif self.stock_actual < self.stock_minimo:
+            return 'bajo'
+        return 'normal'
+
+    @property
+    def en_alerta_stock(self):
+        """Verifica si el equipo está en alerta de stock"""
+        return self.estado_stock in ['bajo', 'agotado']

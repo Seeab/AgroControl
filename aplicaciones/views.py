@@ -1,8 +1,11 @@
 from django.shortcuts import render, get_object_or_404, redirect
-from django.contrib.auth.decorators import login_required, permission_required
+# --- CORRECCIÓN 1: Quitar el import de Django ---
+# from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib import messages
 from django.core.exceptions import ValidationError
-from autenticacion.views import login_required 
+
+# --- CORRECCIÓN 2: Asegurarse de importar 'admin_required' de tu app ---
+from autenticacion.views import login_required, admin_required 
 
 # Models and Forms
 from .models import AplicacionFitosanitaria
@@ -53,8 +56,10 @@ def lista_aplicaciones(request):
     }
     return render(request, 'aplicaciones/lista_aplicaciones.html', context)
 
+
 @login_required
-@permission_required('aplicaciones.add_aplicacionfitosanitaria', raise_exception=True)
+# --- CORRECCIÓN 3: Usar @admin_required ---
+@admin_required
 def crear_aplicacion(request):
     
     if request.method == 'POST':
@@ -62,7 +67,10 @@ def crear_aplicacion(request):
         
         if form.is_valid():
             aplicacion = form.save(commit=False)
-            aplicacion.creado_por = request.user
+            
+            # --- CAMBIO IMPORTANTE: Asignar el usuario desde la SESIÓN ---
+            # (El 'request.user' de Django estaría mal aquí)
+            aplicacion.creado_por_id = request.session.get('usuario_id')
             
             # Asignamos los valores calculados en el form.clean()
             aplicacion.area_tratada = form.cleaned_data.get('area_tratada', 0)
@@ -109,7 +117,8 @@ def detalle_aplicacion(request, aplicacion_id):
 # -----------------------------------------------------------------------------
 
 @login_required
-@permission_required('aplicaciones.change_aplicacionfitosanitaria', raise_exception=True)
+# --- CORRECCIÓN 3: Usar @admin_required ---
+@admin_required
 def editar_aplicacion(request, app_id):
     aplicacion = get_object_or_404(AplicacionFitosanitaria, id=app_id)
 
@@ -144,7 +153,8 @@ def editar_aplicacion(request, app_id):
 
 
 @login_required
-@permission_required('aplicaciones.change_aplicacionfitosanitaria', raise_exception=True)
+# --- CORRECCIÓN 3: Usar @admin_required ---
+@admin_required
 def finalizar_aplicacion(request, app_id):
     """
     Marca una aplicación 'programada' como 'realizada' y descuenta stock.
@@ -181,7 +191,8 @@ def finalizar_aplicacion(request, app_id):
             fecha_movimiento=aplicacion.fecha_aplicacion,
             motivo=f"Salida por Aplicación Fitosanitaria ID: {aplicacion.id}",
             referencia=f"APL-{aplicacion.id}",
-            realizado_por=request.user, 
+            # --- CAMBIO IMPORTANTE: Asignar el usuario desde la SESIÓN ---
+            realizado_por_id=request.session.get('usuario_id'), 
             aplicacion=aplicacion
         )
         
@@ -197,7 +208,8 @@ def finalizar_aplicacion(request, app_id):
 
 
 @login_required
-@permission_required('aplicaciones.change_aplicacionfitosanitaria', raise_exception=True)
+# --- CORRECCIÓN 3: Usar @admin_required ---
+@admin_required
 def cancelar_aplicacion(request, app_id):
     """
     Marca una aplicación 'programada' como 'cancelada'.

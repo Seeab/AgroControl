@@ -88,6 +88,14 @@
                             <div class="text-danger small mt-1">{{ form.metodo_aplicacion.errors }}</div>
                         </div>
 
+                        <!-- ✨ INICIO DEL CAMBIO ✨ -->
+                        <div class="mb-3">
+                            <label for="{{ form.equipo_utilizado.id_for_label }}" class="form-label fw-semibold">{{ form.equipo_utilizado.label }}</label>
+                            {{ form.equipo_utilizado }}
+                            <div class="text-danger small mt-1">{{ form.equipo_utilizado.errors }}</div>
+                        </div>
+                        <!-- ✨ FIN DEL CAMBIO ✨ -->
+
                         <div class="mt-4 border-top pt-3 text-end">
                             <a href="{% url 'aplicaciones:lista_aplicaciones' %}" class="btn btn-outline-secondary">
                                 Cancelar

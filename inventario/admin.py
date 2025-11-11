@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.utils.html import format_html
 from django.db import models
-from .models import Producto , MovimientoInventario
+from .models import Producto , MovimientoInventario, EquipoAgricola
 
 @admin.register(Producto)
 class ProductoAdmin(admin.ModelAdmin):
@@ -107,3 +107,29 @@ class MovimientoInventarioAdmin(admin.ModelAdmin):
         if not obj.realizado_por:
             obj.realizado_por = request.user
         super().save_model(request, obj, form, change)
+
+@admin.register(EquipoAgricola)
+class EquipoAgricolaAdmin(admin.ModelAdmin):
+    # --- AÑADIDO: 'stock_actual', 'stock_minimo' ---
+    list_display = [
+        'nombre', 'tipo', 'estado', 'stock_actual', 
+        'stock_minimo', 'modelo', 'numero_serie', 'fecha_compra', 'creado_en'
+    ]
+    list_filter = ['tipo', 'estado', 'fecha_compra']
+    search_fields = ['nombre', 'modelo', 'numero_serie']
+    readonly_fields = ['creado_en']
+    fieldsets = (
+        ('Información Básica', {
+            'fields': ('nombre', 'tipo', 'estado', 'modelo', 'numero_serie')
+        }),
+        # --- AÑADIDO: Fieldset de Stock ---
+        ('Control de Stock', {
+            'fields': ('stock_actual', 'stock_minimo')
+        }),
+        ('Historial', {
+            'fields': ('fecha_compra', 'observaciones')
+        }),
+        ('Auditoría', {
+            'fields': ('creado_en',) 
+        }),
+    )

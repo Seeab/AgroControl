@@ -1,7 +1,7 @@
 from django import forms
 from .models import AplicacionFitosanitaria
 from cuarteles.models import Cuartel
-from inventario.models import Producto
+from inventario.models import Producto, EquipoAgricola # <-- 1. IMPORTACIÓN AÑADIDA
 from django.contrib.auth.models import User
 
 class AplicacionForm(forms.ModelForm):
@@ -27,12 +27,22 @@ class AplicacionForm(forms.ModelForm):
         input_formats=['%Y-%m-%dT%H:%M', '%Y-%m-%d %H:%M:%S']
     )
 
+    # --- ✨ NUEVO CAMPO AÑADIDO (CON FILTRO) ---
+    equipo_utilizado = forms.ModelChoiceField(
+        queryset=EquipoAgricola.objects.filter(estado='operativo').order_by('nombre'),
+        required=False, # <-- Muy importante: hacerlo opcional
+        widget=forms.Select(attrs={'class': 'form-control'}),
+        label='Equipo Utilizado (Opcional)'
+    )
+    # --- FIN DEL NUEVO CAMPO ---
+
     class Meta:
         model = AplicacionFitosanitaria
         # AHORA PEDIMOS 'cantidad_utilizada' Y SACAMOS 'dosis_por_hectarea'
         fields = [
             'aplicador', 'fecha_aplicacion', 'producto', 'cantidad_utilizada',
-            'cuarteles', 'objetivo', 'metodo_aplicacion', 'estado'
+            'cuarteles', 'objetivo', 'metodo_aplicacion', 'estado',
+            'equipo_utilizado' # <-- 3. AÑADIDO A LA LISTA
         ]
         widgets = {
             # Este es el NUEVO campo de entrada
@@ -42,6 +52,7 @@ class AplicacionForm(forms.ModelForm):
             'objetivo': forms.TextInput(attrs={'class': 'form-control'}),
             'metodo_aplicacion': forms.TextInput(attrs={'class': 'form-control'}),
             'estado': forms.Select(attrs={'class': 'form-control'}),
+            # No es necesario añadir 'equipo_utilizado' aquí, ya lo definimos arriba.
         }
 
     def clean(self):
@@ -69,9 +80,9 @@ class AplicacionForm(forms.ModelForm):
             try:
                 area_total = sum(c.area_hectareas for c in cuarteles if c.area_hectareas)
                 if area_total <= 0:
-                     raise forms.ValidationError(
-                         "El área total de los cuarteles seleccionados debe ser mayor a 0."
-                     )
+                        raise forms.ValidationError(
+                            "El área total de los cuarteles seleccionados debe ser mayor a 0."
+                        )
                 cleaned_data['area_tratada'] = area_total
             except Exception as e:
                 raise forms.ValidationError(f"Error al calcular el área: {e}")

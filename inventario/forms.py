@@ -1,5 +1,5 @@
 from django import forms
-from .models import Producto, MovimientoInventario
+from .models import Producto, MovimientoInventario, EquipoAgricola
 
 class ProductoForm(forms.ModelForm):
     class Meta:
@@ -58,3 +58,36 @@ class MovimientoInventarioForm(forms.ModelForm):
                 )
         
         return cleaned_data
+
+
+class EquipoAgricolaForm(forms.ModelForm):
+    class Meta:
+        model = EquipoAgricola
+        # --- AÑADIDO: 'stock_actual', 'stock_minimo' ---
+        fields = [
+            'nombre', 'tipo', 'estado', 'modelo', 'numero_serie', 
+            'fecha_compra', 'stock_actual', 'stock_minimo', 'observaciones'
+        ]
+        widgets = {
+            'nombre': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ej: Tractor John Deere 5075E'}),
+            'tipo': forms.Select(attrs={'class': 'form-select'}),
+            'estado': forms.Select(attrs={'class': 'form-select'}),
+            'modelo': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ej: 5075E'}),
+            'numero_serie': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Identificador único'}),
+            'fecha_compra': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
+            'observaciones': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+            
+            # --- AÑADIDO: Widgets de Stock ---
+            'stock_actual': forms.NumberInput(attrs={'class': 'form-control', 'min': '0'}),
+            'stock_minimo': forms.NumberInput(attrs={'class': 'form-control', 'min': '0'}),
+        }
+        labels = {
+            'nombre': 'Nombre del Equipo o Herramienta *',
+            'tipo': 'Tipo *',
+            'estado': 'Estado Actual *',
+            'numero_serie': 'N° Serie o Identificador',
+            'fecha_compra': 'Fecha de Adquisición',
+            # --- AÑADIDO: Labels de Stock ---
+            'stock_actual': 'Cantidad Actual (Stock) *',
+            'stock_minimo': 'Stock Mínimo de Alerta *',
+        }
