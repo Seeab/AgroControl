@@ -4,8 +4,8 @@ from django.core.paginator import Paginator
 from django.db.models import Q, Sum
 from django.utils import timezone
 from datetime import timedelta
-from .models import ControlRiego, FertilizanteRiego
-from .forms import ControlRiegoForm, FertilizanteRiegoForm
+from .models import ControlRiego
+from .forms import ControlRiegoForm
 from autenticacion.views import login_required 
 
 # Decorador de login
@@ -72,7 +72,7 @@ def lista_riegos(request):
         'query': query,
         'titulo': 'Lista de Controles de Riego'
     }
-    return render(request, 'riego/lista_riegos.html', context)
+    return render(request, 'riego/riego_lista.html', context)
 
 
 @login_required
@@ -100,7 +100,7 @@ def crear_riego(request):
         'form': form,
         'titulo': 'Crear Control de Riego'
     }
-    return render(request, 'riego/crear_riego.html', context)
+    return render(request, 'riego/riego_form.html', context)
 
 
 @login_required

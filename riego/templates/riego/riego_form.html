@@ -35,12 +35,12 @@
                         </div>
                         
                         <div class="col-md-6 mb-3">
-                            <label for="{{ form.cuartel.id_for_label }}" class="form-label">
+                            <label for="{{ form.cuartel_id.id_for_label }}" class="form-label">  <!-- CAMBIADO -->
                                 Cuartel/Sector <span class="text-danger">*</span>
                             </label>
-                            {{ form.cuartel }}
-                            {% if form.cuartel.errors %}
-                            <div class="text-danger small mt-1">{{ form.cuartel.errors }}</div>
+                            {{ form.cuartel_id }}  <!-- CAMBIADO -->
+                            {% if form.cuartel_id.errors %}  <!-- CAMBIADO -->
+                            <div class="text-danger small mt-1">{{ form.cuartel_id.errors }}</div>
                             {% endif %}
                         </div>
                         
