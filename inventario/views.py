@@ -1,13 +1,14 @@
 from django.shortcuts import render, get_object_or_404, redirect
-from django.contrib.auth.decorators import login_required, permission_required
+from autenticacion.views import login_required, admin_required
 from django.contrib import messages
 from django.db import models
 from django.core.paginator import Paginator
 from django.core.exceptions import ValidationError
-from .models import Producto, MovimientoInventario
-from .forms import ProductoForm, MovimientoInventarioForm
+from .models import Producto, MovimientoInventario, EquipoAgricola
+from .forms import ProductoForm, MovimientoInventarioForm, EquipoAgricolaForm
 
-@login_required
+
+@login_required # <-- USA EL DECORADOR DE 'autenticacion.views'
 def lista_productos(request):
     productos = Producto.objects.all().order_by('nombre')
     
@@ -54,31 +55,32 @@ def lista_productos(request):
     }
     return render(request, 'inventario/lista_productos.html', context)
 
-@login_required
-@permission_required('inventario.add_producto', raise_exception=True)
+# CAMBIADO: Usamos admin_required en lugar de permission_required
+@admin_required 
 def crear_producto(request):
     if request.method == 'POST':
         form = ProductoForm(request.POST)
         if form.is_valid():
             producto = form.save(commit=False)
-            producto.creado_por = request.user
+            # Asignamos el usuario desde la SESIÓN
+            producto.creado_por_id = request.session.get('usuario_id') 
             producto.save()
             messages.success(request, f'Producto {producto.nombre} creado exitosamente.')
             return redirect('inventario:lista_productos')
     else:
         form = ProductoForm()
     
-    context = {'form': form}
+    context = {'form': form, 'page_title': 'Crear Producto'} # Añadido page_title
     return render(request, 'inventario/crear_producto.html', context)
 
-@login_required
+@login_required # <-- USA EL DECORADOR DE 'autenticacion.views'
 def detalle_producto(request, producto_id):
     producto = get_object_or_404(Producto, id=producto_id)
-    context = {'producto': producto}
+    context = {'producto': producto, 'page_title': f'Detalle: {producto.nombre}'} # Añadido page_title
     return render(request, 'inventario/detalle_producto.html', context)
 
-@login_required
-@permission_required('inventario.change_producto', raise_exception=True)
+# CAMBIADO: Usamos admin_required en lugar de permission_required
+@admin_required
 def editar_producto(request, producto_id):
     producto = get_object_or_404(Producto, id=producto_id)
     
@@ -91,11 +93,15 @@ def editar_producto(request, producto_id):
     else:
         form = ProductoForm(instance=producto)
     
-    context = {'form': form, 'producto': producto}
-    return render(request, 'inventario/crear_producto.html', context)
+    context = {
+        'form': form, 
+        'producto': producto,
+        'page_title': f'Editar: {producto.nombre}' # Añadido page_title
+    }
+    return render(request, 'inventario/crear_producto.html', context) # Reusa el template de crear
 
-@login_required
-@permission_required('inventario.add_movimientoinventario', raise_exception=True)
+# CAMBIADO: Usamos admin_required en lugar de permission_required
+@admin_required
 def crear_movimiento(request, producto_id=None):
     producto = None
     if producto_id:
@@ -106,25 +112,17 @@ def crear_movimiento(request, producto_id=None):
         
         if form.is_valid():
             movimiento = form.save(commit=False)
-            movimiento.realizado_por = request.user
-            
-            # ¡ELIMINADO! Ya no calculamos stocks aquí.
-            # El método save() del modelo se encargará de todo.
-            # movimiento.stock_anterior = ...
-            # movimiento.stock_posterior = ...
+            # Asignamos el usuario desde la SESIÓN
+            movimiento.realizado_por_id = request.session.get('usuario_id')
             
             try:
-                movimiento.save() # <-- Esto ahora llama al save() que arreglamos
+                movimiento.save()
                 messages.success(request, 'Movimiento registrado exitosamente.')
                 return redirect('inventario:lista_productos')
             
             except ValidationError as e:
-                # Si el save() falla (ej: stock insuficiente), lo capturamos
                 messages.error(request, f'Error al guardar: {e.args[0]}')
-                # (Podrías ser más elegante y pasarlo al form.add_error)
-        
-        # (else: el form no es válido, se re-renderiza con errores)
-
+    
     else:
         initial = {}
         if producto:
@@ -133,15 +131,16 @@ def crear_movimiento(request, producto_id=None):
     
     context = {
         'form': form,
-        'producto': producto
+        'producto': producto,
+        'page_title': 'Registrar Movimiento' # Añadido page_title
     }
     return render(request, 'inventario/crear_movimiento.html', context)
 
-@login_required
+@login_required # <-- USA EL DECORADOR DE 'autenticacion.views'
 def historial_movimientos(request):
     movimientos = MovimientoInventario.objects.all().select_related('producto', 'realizado_por').order_by('-fecha_movimiento')
     
-    # Filtros
+    # (El resto de tu lógica de filtros y paginación está bien...)
     producto_id = request.GET.get('producto')
     tipo_movimiento = request.GET.get('tipo_movimiento')
     fecha_desde = request.GET.get('fecha_desde')
@@ -156,12 +155,10 @@ def historial_movimientos(request):
     if fecha_hasta:
         movimientos = movimientos.filter(fecha_movimiento__lte=fecha_hasta)
     
-    # Paginación
     paginator = Paginator(movimientos, 25)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
     
-    # Estadísticas
     total_movimientos = movimientos.count()
     total_entradas = movimientos.filter(tipo_movimiento='entrada').count()
     total_salidas = movimientos.filter(tipo_movimiento='salida').count()
@@ -178,5 +175,94 @@ def historial_movimientos(request):
         'filtro_tipo': tipo_movimiento,
         'filtro_fecha_desde': fecha_desde,
         'filtro_fecha_hasta': fecha_hasta,
+        'page_title': 'Historial de Movimientos' # Añadido page_title
     }
     return render(request, 'inventario/historial_movimientos.html', context)
+
+@login_required
+def lista_maquinaria(request):
+    """
+    Vista para listar Maquinaria y Herramientas (RF026).
+    """
+    equipos = EquipoAgricola.objects.all().order_by('nombre')
+    
+    # Filtros
+    tipo = request.GET.get('tipo')
+    estado = request.GET.get('estado')
+    
+    if tipo:
+        equipos = equipos.filter(tipo=tipo)
+    if estado:
+        equipos = equipos.filter(estado=estado)
+    
+    # Estadísticas
+    total_equipos = EquipoAgricola.objects.count()
+    equipos_operativos = EquipoAgricola.objects.filter(estado='operativo').count()
+    equipos_mantenimiento = EquipoAgricola.objects.filter(estado='mantenimiento').count()
+    
+    context = {
+        'equipos': equipos,
+        'total_equipos': total_equipos,
+        'equipos_operativos': equipos_operativos,
+        'equipos_mantenimiento': equipos_mantenimiento,
+        'filtro_tipo': tipo,
+        'filtro_estado': estado,
+        'page_title': 'Maquinaria y Herramientas'
+    }
+    return render(request, 'inventario/lista_maquinaria.html', context)
+
+@admin_required
+def crear_maquinaria(request):
+    """
+    Vista para registrar una nueva Maquinaria o Herramienta (RF026).
+    """
+    if request.method == 'POST':
+        form = EquipoAgricolaForm(request.POST)
+        if form.is_valid():
+            equipo = form.save(commit=False)
+            
+            # --- CAMBIO: Línea eliminada ---
+            # Ya no asignamos 'creado_por_id' porque no está en el modelo
+            # equipo.creado_por_id = request.session.get('usuario_id') 
+            
+            equipo.save()
+            messages.success(request, f'Equipo "{equipo.nombre}" creado exitosamente.')
+            return redirect('inventario:lista_maquinaria')
+    else:
+        form = EquipoAgricolaForm()
+    
+    context = {
+        'form': form, 
+        'page_title': 'Registrar Maquinaria o Herramienta'
+    }
+    return render(request, 'inventario/crear_maquinaria.html', context)
+
+@login_required
+def detalle_maquinaria(request, equipo_id):
+    equipo = get_object_or_404(EquipoAgricola, id=equipo_id)
+    context = {
+        'equipo': equipo, 
+        'page_title': f'Detalle Equipo: {equipo.nombre}'
+    }
+    return render(request, 'inventario/detalle_maquinaria.html', context)
+
+@admin_required
+def editar_maquinaria(request, equipo_id):
+    equipo = get_object_or_404(EquipoAgricola, id=equipo_id)
+    
+    if request.method == 'POST':
+        form = EquipoAgricolaForm(request.POST, instance=equipo)
+        if form.is_valid():
+            form.save()
+            messages.success(request, f'Equipo "{equipo.nombre}" actualizado exitosamente.')
+            return redirect('inventario:detalle_maquinaria', equipo_id=equipo.id)
+    else:
+        form = EquipoAgricolaForm(instance=equipo)
+    
+    context = {
+        'form': form, 
+        'equipo': equipo, # Lo pasamos para el título
+        'page_title': f'Editar Equipo: {equipo.nombre}'
+    }
+    # Reutilizamos el template de 'crear'
+    return render(request, 'inventario/crear_maquinaria.html', context)

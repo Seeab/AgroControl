@@ -1,6 +1,7 @@
 {% extends 'base.html' %}
 
 {% block title %}Cuarteles - AgroControl{% endblock %}
+{% block page_title %}Gestión de Cuarteles{% endblock %}
 
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-4">
@@ -15,16 +16,13 @@
     </a>
 </div>
 
-<!-- Tarjetas de Estadísticas -->
 <div class="row mb-4">
     <div class="col-xl-3 col-md-6 mb-4">
         <div class="card card-agro border-start border-agro-primary border-4">
             <div class="card-body">
                 <div class="row align-items-center">
                     <div class="col">
-                        <div class="text-xs fw-bold text-agro-primary text-uppercase mb-1">
-                            Total Cuarteles
-                        </div>
+                        <div class="text-xs fw-bold text-agro-primary text-uppercase mb-1">Total Cuarteles</div>
                         <div class="h5 mb-0 fw-bold text-gray-800">{{ total_cuarteles }}</div>
                     </div>
                     <div class="col-auto">
@@ -34,15 +32,12 @@
             </div>
         </div>
     </div>
-    
     <div class="col-xl-3 col-md-6 mb-4">
         <div class="card card-agro border-start border-success border-4">
             <div class="card-body">
                 <div class="row align-items-center">
                     <div class="col">
-                        <div class="text-xs fw-bold text-success text-uppercase mb-1">
-                            Cuarteles Activos
-                        </div>
+                        <div class="text-xs fw-bold text-success text-uppercase mb-1">Cuarteles Activos</div>
                         <div class="h5 mb-0 fw-bold text-gray-800">{{ cuarteles_activos }}</div>
                     </div>
                     <div class="col-auto">
@@ -53,8 +48,6 @@
         </div>
     </div>
 </div>
-
-<!-- Filtros -->
 <div class="card card-agro mb-4">
     <div class="card-header bg-agro-light">
         <h5 class="card-title mb-0">
@@ -95,7 +88,6 @@
     </div>
 </div>
 
-<!-- Tabla de Cuarteles -->
 <div class="card card-agro">
     <div class="card-header bg-agro-light d-flex justify-content-between align-items-center">
         <h5 class="card-title mb-0">
@@ -103,7 +95,6 @@
         </h5>
         <span class="badge bg-agro-primary">{{ cuarteles|length }} registros</span>
     </div>
-    
     <div class="card-body">
         {% if cuarteles %}
         <div class="table-responsive">
@@ -113,10 +104,10 @@
                         <th><i class="bi bi-hash me-1"></i>Número</th>
                         <th><i class="bi bi-tag me-1"></i>Nombre</th>
                         <th><i class="bi bi-flower1 me-1"></i>Variedad</th>
-                        <th><i class="bi bi-calendar me-1"></i>Año Plantación</th>
-                        <th><i class="bi bi-droplet me-1"></i>Tipo Riego</th>
-                        <th><i class="bi bi-activity me-1"></i>Estado</th>
-                        <th><i class="bi bi-graph-up me-1"></i>Supervivencia</th>
+                        <th><i class="bi bi-leaf me-1"></i>Tipo de Planta</th>
+                        <th><i class="bi bi-calendar me-1"></i>Año</th>
+                        <th><i class="bi bi-grid-3x3-gap me-1"></i>Hileras</th>
+                        <th><i class="bi bi-check-circle me-1"></i>Estado</th> <th><i class="bi bi-graph-up me-1"></i>Supervivencia</th>
                         <th><i class="bi bi-gear me-1"></i>Acciones</th>
                     </tr>
                 </thead>
@@ -132,48 +123,55 @@
                                 <i class="bi bi-flower1 me-1"></i>{{ cuartel.variedad }}
                             </span>
                         </td>
+                        <td>{{ cuartel.tipo_planta }}</td>
                         <td>{{ cuartel.año_plantacion }}</td>
-                        <td>
-                            <span class="badge bg-info text-dark">
-                                <i class="bi bi-droplet me-1"></i>{{ cuartel.get_tipo_riego_display }}
-                            </span>
-                        </td>
+                        <td>{{ cuartel.cantidad_hileras }}</td>
                         <td>
                             <span class="badge {% if cuartel.estado_cultivo == 'activo' %}bg-success{% elif cuartel.estado_cultivo == 'en_desarrollo' %}bg-warning{% else %}bg-secondary{% endif %}">
                                 {{ cuartel.get_estado_cultivo_display }}
                             </span>
                         </td>
                         <td>
+                            {% with supervivencia=cuartel.get_porcentaje_supervivencia %}
                             <div class="d-flex align-items-center">
                                 <div class="flex-grow-1 me-3">
                                     <div class="progress progress-agro" style="height: 8px;">
-                                        <div class="progress-bar {% if cuartel.porcentaje_supervivencia > 80 %}bg-success{% elif cuartel.porcentaje_supervivencia > 60 %}bg-warning{% else %}bg-danger{% endif %}" 
-                                             role="progressbar" 
-                                             style="width: {{ cuartel.porcentaje_supervivencia }}%"
-                                             aria-valuenow="{{ cuartel.porcentaje_supervivencia }}" 
-                                             aria-valuemin="0" 
-                                             aria-valuemax="100">
+                                        <div class="progress-bar {% if supervivencia > 80 %}bg-success{% elif supervivencia > 60 %}bg-warning{% else %}bg-danger{% endif %}" 
+                                            role="progressbar" 
+                                            style="width: {{ supervivencia }}%"
+                                            aria-valuenow="{{ supervivencia }}" 
+                                            aria-valuemin="0" 
+                                            aria-valuemax="100">
                                         </div>
                                     </div>
                                 </div>
                                 <div class="text-nowrap">
-                                    <small class="fw-bold">{{ cuartel.porcentaje_supervivencia|floatformat:1 }}%</small>
+                                    <small class="fw-bold">{{ supervivencia|floatformat:1 }}%</small>
                                 </div>
                             </div>
+                            {% endwith %}
                         </td>
                         <td>
                             <div class="btn-group btn-group-sm">
                                 <a href="{% url 'cuarteles:detalle_cuartel' cuartel.id %}" 
-                                   class="btn btn-outline-primary" 
-                                   data-bs-toggle="tooltip" 
-                                   title="Ver detalles">
+                                class="btn btn-outline-primary" 
+                                data-bs-toggle="tooltip" 
+                                title="Ver detalles">
                                     <i class="bi bi-eye"></i>
                                 </a>
+                                
                                 <a href="{% url 'cuarteles:editar_cuartel' cuartel.id %}" 
-                                   class="btn btn-outline-secondary"
-                                   data-bs-toggle="tooltip"
-                                   title="Editar">
+                                class="btn btn-outline-secondary"
+                                data-bs-toggle="tooltip"
+                                title="Editar">
                                     <i class="bi bi-pencil"></i>
+                                </a>
+                                
+                                <a href="{% url 'cuarteles:registrar_seguimiento' cuartel.id %}" 
+                                class="btn btn-outline-success"
+                                data-bs-toggle="tooltip"
+                                title="Registrar Seguimiento">
+                                    <i class="bi bi-clipboard-data"></i>
                                 </a>
                             </div>
                         </td>

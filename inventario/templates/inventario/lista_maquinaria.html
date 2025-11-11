@@ -1,0 +1,161 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}Maquinaria y Herramientas - AgroControl{% endblock %}
+{% block page_title %}Maquinaria y Herramientas{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="h3 mb-1">
+            <i class="bi bi-tractor text-agro-primary me-2"></i>Gestión de Maquinaria
+        </h1>
+        <p class="text-muted">Control de maquinaria, vehículos y herramientas</p>
+    </div>
+    <div>
+        <a href="{% url 'inventario:crear_maquinaria' %}" class="btn btn-agro-primary">
+            <i class="bi bi-plus-circle me-2"></i>Nueva Maquinaria/Herramienta
+        </a>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card card-agro border-start border-agro-primary border-4">
+            <div class="card-body"><div class="row align-items-center"><div class="col">
+                <div class="text-xs fw-bold text-agro-primary text-uppercase mb-1">Total Equipos</div>
+                <div class="h5 mb-0 fw-bold text-gray-800">{{ total_equipos }}</div>
+            </div><div class="col-auto"><i class="bi bi-tractor text-agro-primary fa-2x"></i></div></div></div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card card-agro border-start border-success border-4">
+            <div class="card-body"><div class="row align-items-center"><div class="col">
+                <div class="text-xs fw-bold text-success text-uppercase mb-1">Equipos Operativos</div>
+                <div class="h5 mb-0 fw-bold text-gray-800">{{ equipos_operativos }}</div>
+            </div><div class="col-auto"><i class="bi bi-check-circle text-success fa-2x"></i></div></div></div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card card-agro border-start border-warning border-4">
+            <div class="card-body"><div class="row align-items-center"><div class="col">
+                <div class="text-xs fw-bold text-warning text-uppercase mb-1">En Mantenimiento</div>
+                <div class="h5 mb-0 fw-bold text-gray-800">{{ equipos_mantenimiento }}</div>
+            </div><div class="col-auto"><i class="bi bi-tools text-warning fa-2x"></i></div></div></div>
+        </div>
+    </div>
+</div>
+
+<div class="card card-agro mb-4">
+    <div class="card-header bg-agro-light"><h5 class="card-title mb-0"><i class="bi bi-funnel me-2"></i>Filtros de Búsqueda</h5></div>
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <div class="col-md-4">
+                <label class="form-label fw-semibold">Tipo de Equipo</label>
+                <select name="tipo" class="form-select">
+                    <option value="">Todos los tipos</option>
+                    {% for value, display in equipos.model.TIPO_EQUIPO_CHOICES %}
+                    <option value="{{ value }}" {% if filtro_tipo == value %}selected{% endif %}>{{ display }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label fw-semibold">Estado</label>
+                <select name="estado" class="form-select">
+                    <option value="">Todos</option>
+                    {% for value, display in equipos.model.ESTADO_CHOICES %}
+                    <option value="{{ value }}" {% if filtro_estado == value %}selected{% endif %}>{{ display }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-4 d-flex align-items-end">
+                <button type="submit" class="btn btn-agro-primary me-2"><i class="bi bi-funnel me-1"></i>Filtrar</button>
+                <a href="{% url 'inventario:lista_maquinaria' %}" class="btn btn-outline-secondary"><i class="bi bi-arrow-clockwise me-1"></i>Limpiar</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card card-agro">
+    <div class="card-header bg-agro-light d-flex justify-content-between align-items-center">
+        <h5 class="card-title mb-0">
+            <i class="bi bi-list-ul me-2"></i>Lista de Maquinaria y Herramientas
+        </h5>
+        <span class="badge bg-agro-primary">{{ equipos|length }} registros</span>
+    </div>
+    
+    <div class="card-body">
+        {% if equipos %}
+        <div class="table-responsive">
+            <table class="table table-hover table-agro">
+                <thead>
+                    <tr>
+                        <th><i class="bi bi-tag me-1"></i>Nombre</th>
+                        <th><i class="bi bi-grid me-1"></i>Tipo</th>
+                        <th><i class="bi bi-box me-1"></i>Stock</th> <th><i class="bi bi-activity me-1"></i>Estado</th>
+                        <th><i class="bi bi-gear me-1"></i>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for equipo in equipos %}
+                    <tr>
+                        <td>
+                            <div class="fw-bold text-agro-primary">{{ equipo.nombre }}</div>
+                            <small class="text-muted">{{ equipo.modelo|default:"" }}</small>
+                        </td>
+                        <td>
+                            <span class="badge bg-light text-dark">
+                                {{ equipo.get_tipo_display }}
+                            </span>
+                        </td>
+                        <td>
+                            <span class="fw-bold">{{ equipo.stock_actual }}</span>
+                            {% if equipo.estado_stock == 'agotado' %}
+                                <span class="badge bg-danger ms-1">Agotado</span>
+                            {% elif equipo.estado_stock == 'bajo' %}
+                                <span class="badge bg-warning ms-1">Bajo</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if equipo.estado == 'operativo' %}
+                                <span class="badge bg-success">✅ Operativo</span>
+                            {% elif equipo.estado == 'mantenimiento' %}
+                                <span class="badge bg-warning">⚠️ Mantenimiento</span>
+                            {% else %}
+                                <span class="badge bg-secondary">❌ De Baja</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="btn-group btn-group-sm">
+                                <a href="{% url 'inventario:detalle_maquinaria' equipo.id %}" 
+                                   class="btn btn-outline-primary" 
+                                   data-bs-toggle="tooltip" 
+                                   title="Ver detalles">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                                <a href="{% url 'inventario:editar_maquinaria' equipo.id %}" 
+                                   class="btn btn-outline-secondary"
+                                   data-bs-toggle="tooltip"
+                                   title="Editar">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-5">
+            <i class="bi bi-inboxes display-1 text-muted"></i>
+            <h4 class="text-muted mt-3">No se encontró maquinaria</h4>
+            <p class="text-muted">Comienza agregando el primer equipo al inventario.</p>
+            <a href="{% url 'inventario:crear_maquinaria' %}" class="btn btn-agro-primary mt-2">
+                <i class="bi bi-plus-circle me-2"></i>Registrar Primer Equipo
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

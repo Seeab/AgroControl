@@ -127,7 +127,7 @@
                 <thead>
                     <tr>
                         <th><i class="bi bi-calendar-event me-1"></i>Aplicación</th>
-                        <th><i class="bi bi-box-seam me-1"></i>Producto (Aplicador)</th>
+                        <th><i class="bi bi-box-seam me-1"></i>Producto (Aplicador/Equipo)</th> <!-- Título actualizado -->
                         <th><i class="bi bi-speedometer2 me-1"></i>Dosis/Ha</th>
                         <th><i class="bi bi-droplet-fill me-1"></i>Total Utilizado</th>
                         <th><i class="bi bi-activity me-1"></i>Estado</th>
@@ -142,8 +142,18 @@
                             <small class="text-muted">{{ app.fecha_aplicacion|date:"d/m/Y H:i" }}</small>
                         </td>
                         <td>
+                            <!-- ✨ INICIO DEL CAMBIO ✨ -->
                             <div class="fw-bold">{{ app.producto.nombre }}</div>
                             <small class="text-muted">{{ app.aplicador.username }}</small>
+                            {% if app.equipo_utilizado %}
+                                <br>
+                                <small class="text-primary-emphasis"
+                                    data-bs-toggle="tooltip" 
+                                    title="Equipo Utilizado">
+                                    <i class="bi bi-truck me-1"></i>{{ app.equipo_utilizado.nombre }}
+                                </small>
+                            {% endif %}
+                            <!-- ✨ FIN DEL CAMBIO ✨ -->
                         </td>
                         <td>
                             <span class="text-muted">{{ app.dosis_por_hectarea|floatformat:2 }} {{ app.producto.unidad_medida }}/Ha</span>

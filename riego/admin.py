@@ -1,6 +1,6 @@
 # riego/admin.py - COMPLETO Y CORREGIDO
 from django.contrib import admin
-from .models import ControlRiego, FertilizanteRiego
+from .models import ControlRiego , FertilizanteRiego
 
 @admin.register(ControlRiego)
 class ControlRiegoAdmin(admin.ModelAdmin):

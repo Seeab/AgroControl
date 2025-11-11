@@ -64,17 +64,22 @@
                         
                         <dt class="col-sm-4">Método</dt>
                         <dd class="col-sm-8">{{ aplicacion.metodo_aplicacion|default:"N/A" }}</dd>
+                        
+                        <!-- ✨ INICIO DEL CAMBIO ✨ -->
+                        <dt class="col-sm-4">Equipo Utilizado</dt>
+                        <dd class="col-sm-8">{{ aplicacion.equipo_utilizado.nombre|default:"N/A" }}</dd>
+                        <!-- ✨ FIN DEL CAMBIO ✨ -->
                     </dl>
 
                     {% if movimiento %}
                     <div class="alert alert-success mt-3">
-                        <i class="fas fa-check-circle"></i> 
+                        <i class="bi bi-check-circle-fill me-2"></i> <!-- Icono actualizado de 'fas' a 'bi' -->
                         <strong>Inventario Actualizado:</strong> Se registró la salida APL-{{ aplicacion.id }} por {{ movimiento.cantidad }} {{ movimiento.producto.unidad_medida }}
                         (Stock anterior: {{ movimiento.stock_anterior }}, Stock posterior: {{ movimiento.stock_posterior }}).
                     </div>
                     {% else %}
                     <div class="alert alert-warning mt-3">
-                        <i class="fas fa-exclamation-triangle"></i>
+                        <i class="bi bi-exclamation-triangle-fill me-2"></i> <!-- Icono actualizado de 'fas' a 'bi' -->
                         No se encontró un movimiento de inventario asociado (ej: aplicación programada o cancelada).
                     </div>
                     {% endif %}

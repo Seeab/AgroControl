@@ -1,6 +1,7 @@
 {% extends 'base.html' %}
 
 {% block title %}Editar Cuartel - AgroControl{% endblock %}
+{% block page_title %}Editar Cuartel: {{ cuartel.nombre }}{% endblock %}
 
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-4">
@@ -15,20 +16,21 @@
     </a>
 </div>
 
-<div class="card card-agro">
-    <div class="card-header bg-agro-light">
-        <h5 class="card-title mb-0">
-            <i class="bi bi-info-circle me-2"></i>Información del Cuartel
-        </h5>
-    </div>
-    <div class="card-body">
-        <form method="post" novalidate>
-            {% csrf_token %}
-            
+<form method="post" novalidate>
+    {% csrf_token %}
+    
+    <!-- Formulario Principal del Cuartel -->
+    <div class="card card-agro mb-4">
+        <div class="card-header bg-agro-light">
+            <h5 class="card-title mb-0">
+                <i class="bi bi-info-circle me-2"></i>Información del Cuartel
+            </h5>
+        </div>
+        <div class="card-body">
             {% if form.errors %}
             <div class="alert alert-danger">
                 <i class="bi bi-exclamation-triangle me-2"></i>
-                Por favor, corrija los errores below.
+                Por favor, corrija los errores en el formulario principal.
             </div>
             {% endif %}
             
@@ -40,9 +42,7 @@
                     {{ form.numero }}
                     {% if form.numero.errors %}
                     <div class="text-danger small mt-1">
-                        {% for error in form.numero.errors %}
-                        <i class="bi bi-x-circle me-1"></i>{{ error }}
-                        {% endfor %}
+                        {% for error in form.numero.errors %}<i class="bi bi-x-circle me-1"></i>{{ error }}{% endfor %}
                     </div>
                     {% endif %}
                 </div>
@@ -54,15 +54,12 @@
                     {{ form.nombre }}
                     {% if form.nombre.errors %}
                     <div class="text-danger small mt-1">
-                        {% for error in form.nombre.errors %}
-                        <i class="bi bi-x-circle me-1"></i>{{ error }}
-                        {% endfor %}
+                        {% for error in form.nombre.errors %}<i class="bi bi-x-circle me-1"></i>{{ error }}{% endfor %}
                     </div>
                     {% endif %}
                 </div>
             </div>
 
-            <!-- El resto del formulario es igual al de crear_cuartel.html -->
             <div class="row">
                 <div class="col-md-6 mb-3">
                     <label for="{{ form.variedad.id_for_label }}" class="form-label fw-semibold">Variedad</label>
@@ -95,21 +92,20 @@
             </div>
 
             <div class="row">
-                <div class="col-md-4 mb-3">
+                <div class="col-md-6 mb-3">
                     <label for="{{ form.area_hectareas.id_for_label }}" class="form-label fw-semibold">Área (hectáreas)</label>
                     {{ form.area_hectareas }}
                 </div>
                 
-                <div class="col-md-4 mb-3">
-                    <label for="{{ form.plantas_vivas.id_for_label }}" class="form-label fw-semibold">Plantas vivas</label>
-                    {{ form.plantas_vivas }}
-                </div>
-                
-                <div class="col-md-4 mb-3">
-                    <label for="{{ form.plantas_muertas.id_for_label }}" class="form-label fw-semibold">Plantas muertas</label>
-                    {{ form.plantas_muertas }}
+                <div class="col-md-6 mb-3">
+                    <label for="{{ form.cantidad_hileras.id_for_label }}" class="form-label fw-semibold">{{ form.cantidad_hileras.label }}</label>
+                    {{ form.cantidad_hileras }}
+                    <small class="form-text text-muted">Ajustar el número de hileras puede añadir o eliminar hileras.</small>
                 </div>
             </div>
+            
+            <!-- Este campo desaparece, se maneja en el formset de hileras -->
+            <!-- {{ form.plantas_iniciales_predeterminadas }} -->
 
             <div class="mb-3">
                 <label for="{{ form.ubicacion.id_for_label }}" class="form-label fw-semibold">Ubicación</label>
@@ -121,15 +117,66 @@
                 {{ form.observaciones }}
             </div>
 
-            <div class="d-flex justify-content-between mt-4">
-                <a href="{% url 'cuarteles:detalle_cuartel' cuartel.id %}" class="btn btn-outline-secondary">
-                    <i class="bi bi-x-circle me-2"></i>Cancelar
-                </a>
-                <button type="submit" class="btn btn-agro-primary">
-                    <i class="bi bi-check-circle me-2"></i>Guardar Cambios
-                </button>
-            </div>
-        </form>
+        </div>
     </div>
-</div>
+
+    <!-- FORMSET PARA HILERAS (Asimetría) -->
+    <div class="card card-agro mb-4">
+        <div class="card-header bg-agro-light">
+            <h5 class="card-title mb-0">
+                <i class="bi bi-list-ol me-2"></i>Plantas Iniciales por Hilera
+            </h5>
+        </div>
+        <div class="card-body">
+            <p class="text-muted">Defina el número total de plantas iniciales para cada hilera. Este valor se usa para calcular la supervivencia.</p>
+            
+            {{ formset_hileras.management_form }}
+            
+            {% if formset_hileras.errors %}
+            <div class="alert alert-danger">
+                <i class="bi bi-exclamation-triangle me-2"></i>
+                Por favor, corrija los errores en la lista de hileras.
+            </div>
+            {% endif %}
+
+            <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+                <table class="table table-sm">
+                    <thead>
+                        <tr>
+                            <th style="width: 20%;">Hilera N°</th>
+                            <th style="width: 80%;">Plantas Totales (Iniciales)*</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for form_hilera in formset_hileras %}
+                        <tr>
+                            <td>
+                                <!-- Campo oculto para el ID de la hilera -->
+                                {{ form_hilera.id }}
+                                <label class="form-label fw-bold">Hilera {{ form_hilera.instance.numero_hilera }}</label>
+                            </td>
+                            <td>
+                                {{ form_hilera.plantas_totales_iniciales }}
+                                {% for error in form_hilera.plantas_totales_iniciales.errors %}
+                                    <div class="text-danger small">{{ error }}</div>
+                                {% endfor %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Botones de Guardar -->
+    <div class="d-flex justify-content-between mt-4 mb-4">
+        <a href="{% url 'cuarteles:detalle_cuartel' cuartel.id %}" class="btn btn-outline-secondary">
+            <i class="bi bi-x-circle me-2"></i>Cancelar
+        </a>
+        <button type="submit" class="btn btn-agro-primary btn-lg">
+            <i class="bi bi-check-circle me-2"></i>Guardar Cambios
+        </button>
+    </div>
+</form>
 {% endblock %}

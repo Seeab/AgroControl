@@ -1,6 +1,7 @@
 {% extends 'base.html' %}
 
 {% block title %}Crear Cuartel - AgroControl{% endblock %}
+{% block page_title %}Crear Nuevo Cuartel{% endblock %}
 
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-4">
@@ -28,14 +29,14 @@
             {% if form.errors %}
             <div class="alert alert-danger">
                 <i class="bi bi-exclamation-triangle me-2"></i>
-                Por favor, corrija los errores below.
+                Por favor, corrija los errores.
             </div>
             {% endif %}
             
             <div class="row">
                 <div class="col-md-6 mb-3">
                     <label for="{{ form.numero.id_for_label }}" class="form-label fw-semibold">
-                        Número único del cuartel *
+                        {{ form.numero.label }}
                     </label>
                     {{ form.numero }}
                     {% if form.numero.errors %}
@@ -49,7 +50,7 @@
                 
                 <div class="col-md-6 mb-3">
                     <label for="{{ form.nombre.id_for_label }}" class="form-label fw-semibold">
-                        Nombre del cuartel *
+                        {{ form.nombre.label }}
                     </label>
                     {{ form.nombre }}
                     {% if form.nombre.errors %}
@@ -77,7 +78,7 @@
             <div class="row">
                 <div class="col-md-4 mb-3">
                     <label for="{{ form.año_plantacion.id_for_label }}" class="form-label fw-semibold">
-                        Año de plantación *
+                        {{ form.año_plantacion.label }}
                     </label>
                     {{ form.año_plantacion }}
                 </div>
@@ -100,16 +101,17 @@
                 </div>
                 
                 <div class="col-md-4 mb-3">
-                    <label for="{{ form.plantas_vivas.id_for_label }}" class="form-label fw-semibold">Plantas vivas</label>
-                    {{ form.plantas_vivas }}
+                    <label for="{{ form.cantidad_hileras.id_for_label }}" class="form-label fw-semibold">{{ form.cantidad_hileras.label }}</label>
+                    {{ form.cantidad_hileras }}
                 </div>
                 
                 <div class="col-md-4 mb-3">
-                    <label for="{{ form.plantas_muertas.id_for_label }}" class="form-label fw-semibold">Plantas muertas</label>
-                    {{ form.plantas_muertas }}
+                    <label for="{{ form.plantas_por_hilera_iniciales.id_for_label }}" class="form-label fw-semibold">{{ form.plantas_por_hilera_iniciales.label }}</label>
+                    {{ form.plantas_por_hilera_iniciales }}
+                    <small class="form-text text-muted">{{ form.plantas_por_hilera_iniciales.help_text }}</small>
                 </div>
             </div>
-
+            
             <div class="mb-3">
                 <label for="{{ form.ubicacion.id_for_label }}" class="form-label fw-semibold">Ubicación</label>
                 {{ form.ubicacion }}

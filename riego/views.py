@@ -4,8 +4,13 @@ from django.core.paginator import Paginator
 from django.db.models import Q, Sum
 from django.utils import timezone
 from datetime import timedelta
+<<<<<<< HEAD
 from .models import ControlRiego
 from .forms import ControlRiegoForm
+=======
+from .models import ControlRiego , FertilizanteRiego
+from .forms import ControlRiegoForm, FertilizanteRiegoForm
+>>>>>>> f1fb4d405896851bfb7a50b67ee04c0dbaa27ace
 from autenticacion.views import login_required 
 
 # Decorador de login

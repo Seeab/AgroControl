@@ -1,0 +1,104 @@
+{% extends 'base.html' %}
+
+{% block title %}Registrar Seguimiento - AgroControl{% endblock %}
+{% block page_title %}Registrar Seguimiento: {{ cuartel.nombre }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="h3 mb-1">
+            <i class="bi bi-clipboard-data text-agro-primary me-2"></i>Registrar Seguimiento
+        </h1>
+        <p class="text-muted">Cuartel: {{ cuartel.numero }} - {{ cuartel.nombre }}</p>
+    </div>
+    <a href="{% url 'cuarteles:detalle_cuartel' cuartel.id %}" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left me-2"></i>Volver al Detalle
+    </a>
+</div>
+
+<form method="post">
+    {% csrf_token %}
+    <div class="card card-agro mb-4">
+        <div class="card-header bg-agro-light">
+            <h5 class="card-title mb-0">
+                <i class="bi bi-calendar-event me-2"></i>Datos del Seguimiento
+            </h5>
+        </div>
+        <div class="card-body">
+            {% if form_seguimiento.errors or formset_registro_hileras.errors %}
+            <div class="alert alert-danger">
+                <i class="bi bi-exclamation-triangle me-2"></i>
+                Por favor, corrija los errores en el formulario.
+                {{ form_seguimiento.non_field_errors }}
+                {{ formset_registro_hileras.non_form_errors }}
+            </div>
+            {% endif %}
+        
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label fw-semibold">{{ form_seguimiento.fecha_seguimiento.label }}</label>
+                    {{ form_seguimiento.fecha_seguimiento }}
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label fw-semibold">Observaciones Generales</label>
+                    {{ form_seguimiento.observaciones }}
+                </div>
+            </div>
+
+            <hr>
+
+            <h5 class="mb-3">Registro de Conteo por Hilera</h5>
+            <p class="text-muted">
+                Los campos ya están llenos con el último conteo. 
+                Sobrescriba el número de <strong>Plantas Vivas</strong> y <strong>Plantas Muertas</strong> solo en las hileras que haya contado.
+            </p>
+            
+            {{ formset_registro_hileras.management_form }}
+            
+            <div class="table-responsive" style="max-height: 60vh; overflow-y: auto;">
+                <table class="table table-sm table-bordered">
+                    <thead class="table-light sticky-top">
+                        <tr>
+                            <th style="width: 15%;">Hilera N°</th>
+                            <th style="width: 25%;" class="bg-success-subtle">Plantas Vivas (Nuevo Total)*</th>
+                            <th style="width: 25%;" class="bg-danger-subtle">Plantas Muertas (Nuevo Total)*</th>
+                            <th style="width: 35%;">Observaciones (Hilera)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for form_hilera in formset_registro_hileras %}
+                            <tr>
+                                <td class="align-middle">
+                                    {{ form_hilera.hilera }} 
+                                    
+                                    <label class="form-label fw-bold mb-0">Hilera {{ form_hilera.initial.hilera.numero_hilera }}</label>
+                                </td>
+                                <td>
+                                    {{ form_hilera.plantas_vivas_registradas }}
+                                    {% for error in form_hilera.plantas_vivas_registradas.errors %}
+                                        <div class="text-danger small">{{ error }}</div>
+                                    {% endfor %}
+                                </td>
+                                <td>
+                                    {{ form_hilera.plantas_muertas_registradas }}
+                                    {% for error in form_hilera.plantas_muertas_registradas.errors %}
+                                        <div class="text-danger small">{{ error }}</div>
+                                    {% endfor %}
+                                </td>
+                                <td>
+                                    {{ form_hilera.observaciones_hilera }}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="card-footer text-end">
+            <button type="submit" class="btn btn-agro-primary btn-lg">
+                <i class="bi bi-check-circle me-2"></i>Guardar Seguimiento Completo
+            </button>
+        </div>
+    </div>
+</form>
+{% endblock %}

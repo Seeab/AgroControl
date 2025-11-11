@@ -1,6 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
-from inventario.models import Producto
+from inventario.models import Producto, EquipoAgricola # <-- 1. IMPORTACIÓN AÑADIDA
 from cuarteles.models import Cuartel # ¡Importante! Asume que este modelo existe
 from django.utils import timezone
 
@@ -90,6 +90,17 @@ class AplicacionFitosanitaria(models.Model):
         default='realizada',
         verbose_name='Estado'
     )
+
+    # --- ✨ NUEVO CAMPO AÑADIDO ---
+    equipo_utilizado = models.ForeignKey(
+        EquipoAgricola,
+        on_delete=models.SET_NULL, # Si borras el equipo, la aplicación no se borra
+        null=True,                 # Permite que la base de datos lo deje vacío
+        blank=True,                # Permite que los formularios de Django lo dejen vacío
+        verbose_name='Equipo Utilizado (Opcional)',
+        related_name='aplicaciones_fitosanitarias'
+    )
+    # --- FIN DEL NUEVO CAMPO ---
 
     # --- Auditoría ---
     creado_por = models.ForeignKey(
