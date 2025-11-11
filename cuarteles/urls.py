@@ -10,5 +10,9 @@ urlpatterns = [
     path('<int:cuartel_id>/', views.detalle_cuartel, name='detalle_cuartel'),
     path('<int:cuartel_id>/editar/', views.editar_cuartel, name='editar_cuartel'),
     path('<int:cuartel_id>/eliminar/', views.eliminar_cuartel, name='eliminar_cuartel'),
+    
+    # --- NUEVA URL (RF013 / Feedback) ---
+    path('<int:cuartel_id>/seguimiento/', views.registrar_seguimiento, name='registrar_seguimiento'),
+    
     path('api/estadisticas/', views.api_estadisticas_cuarteles, name='api_estadisticas'),
 ]
