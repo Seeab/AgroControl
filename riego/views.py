@@ -4,7 +4,7 @@ from django.core.paginator import Paginator
 from django.db.models import Q, Sum
 from django.utils import timezone
 from datetime import timedelta
-from .models import ControlRiego, FertilizanteRiego
+from .models import ControlRiego , FertilizanteRiego
 from .forms import ControlRiegoForm, FertilizanteRiegoForm
 from autenticacion.views import login_required 
 

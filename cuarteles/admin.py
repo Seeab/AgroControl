@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Cuartel, SeguimientoCuartel
+from .models import Cuartel , SeguimientoCuartel
 
 @admin.register(Cuartel)
 class CuartelAdmin(admin.ModelAdmin):

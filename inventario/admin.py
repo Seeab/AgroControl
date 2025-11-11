@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.utils.html import format_html
 from django.db import models
-from .models import Producto, MovimientoInventario
+from .models import Producto , MovimientoInventario
 
 @admin.register(Producto)
 class ProductoAdmin(admin.ModelAdmin):

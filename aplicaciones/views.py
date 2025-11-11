@@ -8,7 +8,7 @@ from autenticacion.views import login_required
 from .models import AplicacionFitosanitaria
 from .forms import AplicacionForm
 from cuarteles.models import Cuartel
-from inventario.models import Producto, MovimientoInventario
+from inventario.models import Producto , MovimientoInventario
 
 # -----------------------------------------------------------------------------
 # VISTAS PRINCIPALES

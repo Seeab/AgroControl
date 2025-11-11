@@ -86,8 +86,8 @@ DATABASES = {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'agrocontrol',
         'USER': 'postgres',
-        'PASSWORD': '123',
-        'HOST': '127.0.0.1',
+        'PASSWORD': 'agrocontrol',
+        'HOST': 'agrocontrol-db.c12msmcq8dsc.us-east-2.rds.amazonaws.com',
         'PORT': '5432',
     }
 }
