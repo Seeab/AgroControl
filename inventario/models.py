@@ -1,5 +1,7 @@
+# inventario/models.py
+
 from django.db import models
-from django.contrib.auth.models import User
+from autenticacion.models import Usuario as User
 from django.core.exceptions import ValidationError
 
 class Producto(models.Model):
@@ -225,8 +227,7 @@ class MovimientoInventario(models.Model):
                 self.producto.stock_actual = self.stock_posterior
                 self.producto.save(update_fields=['stock_actual', 'fecha_actualizacion'])
 
-# --- CORRECCIÓN DE INDENTACIÓN ---
-# Esta clase ahora está al nivel correcto (sin indentación)
+
 class EquipoAgricola(models.Model):
     """
     Modelo para registrar Maquinaria y Herramientas (RF026).
@@ -273,15 +274,12 @@ class EquipoAgricola(models.Model):
         verbose_name='Stock Mínimo de Alerta'
     )
     
-    # --- CAMBIO: Ajusta este campo ---
-    # Lo hacemos editable para que puedas cambiarlo si quieres
+    # --- CORRECCIÓN: Se eliminó el campo duplicado que estaba aquí ---
     creado_en = models.DateTimeField(
         verbose_name='Creado en', 
         auto_now_add=True, # Deja que Django lo maneje al crear
         editable=False # Sigue sin ser editable, es mejor
     )
-
-    creado_en = models.DateTimeField(verbose_name='Creado en', auto_now_add=False, editable=False, null=True, blank=True)
 
     class Meta:
         db_table = 'equipos_agricolas'

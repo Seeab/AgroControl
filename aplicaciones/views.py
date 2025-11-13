@@ -58,8 +58,6 @@ def lista_aplicaciones(request):
 
 
 @login_required
-# --- CORRECCIÓN 3: Usar @admin_required ---
-@admin_required
 def crear_aplicacion(request):
     
     if request.method == 'POST':
@@ -117,8 +115,6 @@ def detalle_aplicacion(request, aplicacion_id):
 # -----------------------------------------------------------------------------
 
 @login_required
-# --- CORRECCIÓN 3: Usar @admin_required ---
-@admin_required
 def editar_aplicacion(request, app_id):
     aplicacion = get_object_or_404(AplicacionFitosanitaria, id=app_id)
 
@@ -153,8 +149,6 @@ def editar_aplicacion(request, app_id):
 
 
 @login_required
-# --- CORRECCIÓN 3: Usar @admin_required ---
-@admin_required
 def finalizar_aplicacion(request, app_id):
     """
     Marca una aplicación 'programada' como 'realizada' y descuenta stock.
@@ -208,8 +202,6 @@ def finalizar_aplicacion(request, app_id):
 
 
 @login_required
-# --- CORRECCIÓN 3: Usar @admin_required ---
-@admin_required
 def cancelar_aplicacion(request, app_id):
     """
     Marca una aplicación 'programada' como 'cancelada'.

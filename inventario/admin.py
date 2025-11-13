@@ -1,7 +1,12 @@
+# inventario/admin.py
+
 from django.contrib import admin
 from django.utils.html import format_html
 from django.db import models
 from .models import Producto , MovimientoInventario, EquipoAgricola
+
+# --- CORRECCIÓN 1: Importar tu Usuario personalizado ---
+from autenticacion.models import Usuario
 
 @admin.register(Producto)
 class ProductoAdmin(admin.ModelAdmin):
@@ -68,9 +73,17 @@ class ProductoAdmin(admin.ModelAdmin):
 
     actions = [productos_stock_bajo]
 
+    # --- CORRECCIÓN 2: 'save_model' para 'Producto' ---
     def save_model(self, request, obj, form, change):
-        if not obj.creado_por:
-            obj.creado_por = request.user
+        if not obj.creado_por_id: # Es mejor verificar el _id
+            try:
+                # 'request.user' es el usuario del admin de Django
+                # 'usuario_custom' es tu usuario de la app 'autenticacion'
+                usuario_custom = Usuario.objects.get(nombre_usuario=request.user.username)
+                obj.creado_por = usuario_custom
+            except Usuario.DoesNotExist:
+                # Si no lo encuentra, lo deja en blanco
+                pass 
         super().save_model(request, obj, form, change)
 
 @admin.register(MovimientoInventario)
@@ -103,9 +116,14 @@ class MovimientoInventarioAdmin(admin.ModelAdmin):
         return f"{obj.stock_posterior} {obj.producto.unidad_medida}"
     stock_posterior_display.short_description = 'Stock Posterior'
 
+    # --- CORRECCIÓN 3: 'save_model' para 'MovimientoInventario' ---
     def save_model(self, request, obj, form, change):
-        if not obj.realizado_por:
-            obj.realizado_por = request.user
+        if not obj.realizado_por_id:
+            try:
+                usuario_custom = Usuario.objects.get(nombre_usuario=request.user.username)
+                obj.realizado_por = usuario_custom
+            except Usuario.DoesNotExist:
+                pass
         super().save_model(request, obj, form, change)
 
 @admin.register(EquipoAgricola)
@@ -133,3 +151,4 @@ class EquipoAgricolaAdmin(admin.ModelAdmin):
             'fields': ('creado_en',) 
         }),
     )
+    # NOTA: Este modelo no tiene 'creado_por', así que no necesita save_model

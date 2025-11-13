@@ -1,5 +1,5 @@
 from django.db import models
-from django.contrib.auth.models import User
+from autenticacion.models import Usuario as User  # <-- 1. IMPORTACIÓN AÑADIDA
 from inventario.models import Producto, EquipoAgricola # <-- 1. IMPORTACIÓN AÑADIDA
 from cuarteles.models import Cuartel # ¡Importante! Asume que este modelo existe
 from django.utils import timezone

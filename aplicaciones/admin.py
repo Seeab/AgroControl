@@ -1,34 +1,32 @@
+# aplicaciones/admin.py
+
 from django.contrib import admin
 from .models import AplicacionFitosanitaria
-from .forms import AplicacionForm # <-- 1. IMPORTA EL FORMULARIO
+from .forms import AplicacionForm
+# --- CORRECCIÓN 1: Importar tu modelo Usuario ---
+from autenticacion.models import Usuario 
 
 @admin.register(AplicacionFitosanitaria)
 class AplicacionFitosanitariaAdmin(admin.ModelAdmin):
-    # Asignamos el formulario personalizado al admin
-    form = AplicacionForm # <-- 2. AÑADE ESTA LÍNEA
+    form = AplicacionForm
     
     list_display = (
-        '__str__',
-        'aplicador',
-        'fecha_aplicacion',
-        'producto',
-        'dosis_por_hectarea',
-        'area_tratada',
-        'cantidad_utilizada',
-        'estado',
-        'creado_por'
+        '__str__', 'aplicador', 'fecha_aplicacion', 'producto',
+        'dosis_por_hectarea', 'area_tratada', 'cantidad_utilizada',
+        'estado', 'creado_por'
     )
     list_filter = ('estado', 'producto', 'aplicador', 'fecha_aplicacion')
     search_fields = (
         'producto__nombre', 
-        'aplicador__username', 
-        'cuarteles__nombre' # Asumo que Cuartel tiene 'nombre'
+        # --- CORRECCIÓN 2: Asumir que tu 'Usuario' tiene 'nombre_usuario' y 'nombres' ---
+        'aplicador__nombre_usuario', 
+        'aplicador__nombres',
+        'aplicador__apellidos',
+        'cuarteles__nombre'
     )
     readonly_fields = (
-        'area_tratada', 
-        'cantidad_utilizada', 
-        'fecha_creacion', 
-        'fecha_actualizacion'
+        'area_tratada', 'cantidad_utilizada', 
+        'fecha_creacion', 'fecha_actualizacion'
     )
     
     filter_horizontal = ('cuarteles',)
@@ -54,14 +52,19 @@ class AplicacionFitosanitariaAdmin(admin.ModelAdmin):
     )
 
     def save_model(self, request, obj, form, change):
+        # --- CORRECCIÓN 3: 'request.user' es un usuario de Django, no tu 'Usuario' custom ---
         if not obj.creado_por_id:
-            obj.creado_por = request.user
+            try:
+                # Intentamos buscar tu Usuario custom usando el username del admin de Django
+                usuario_custom = Usuario.objects.get(nombre_usuario=request.user.username)
+                obj.creado_por = usuario_custom
+            except Usuario.DoesNotExist:
+                # Si no existe, no lo asignamos.
+                # El formulario fallará si 'creado_por' es obligatorio y no se seleccionó manualmente.
+                pass 
         
-        # 3. ACTUALIZA ESTA SECCIÓN
-        # Los cálculos ya vienen hechos desde el form.clean()
         if form.is_valid() and 'area_tratada' in form.cleaned_data:
             obj.area_tratada = form.cleaned_data['area_tratada']
             obj.cantidad_utilizada = form.cleaned_data['cantidad_utilizada']
         
         super().save_model(request, obj, form, change)
-        # (La señal post_save se disparará después de esto)

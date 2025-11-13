@@ -1,4 +1,5 @@
 # aplicaciones/signals.py
+
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from .models import AplicacionFitosanitaria
@@ -26,6 +27,13 @@ def crear_movimiento_salida(sender, instance, created, **kwargs):
             fecha_movimiento=instance.fecha_aplicacion,
             motivo=f"Salida por Aplicación Fitosanitaria ID: {instance.id}",
             referencia=f"APL-{instance.id}",
-            realizado_por=instance.creado_por, # La persona que registró la app
+            
+            # --- AQUÍ ESTÁ LA CORRECCIÓN ---
+            # En lugar de pasar el objeto (instance.creado_por),
+            # pasamos el ID directamente (instance.creado_por_id).
+            # Esto es más robusto dentro de una señal.
+            realizado_por_id=instance.creado_por_id, 
+            # --- FIN DE LA CORRECCIÓN ---
+            
             aplicacion=instance # ¡La conexión clave!
         )

@@ -159,9 +159,17 @@
                                 {{ movimiento.stock_posterior|floatformat:2 }}
                             </span>
                         </td>
+                        
+                        <!-- 
+                            ✨ ¡AQUÍ ESTÁ LA CORRECCIÓN! ✨
+                            Cambiamos 'movimiento.realizado_por.username'
+                            por 'movimiento.realizado_por', que usa el __str__
+                        -->
                         <td>
-                            <small class="text-muted">{{ movimiento.realizado_por.username }}</small>
+                            <small class="text-muted">{{ movimiento.realizado_por }}</small>
                         </td>
+                        <!-- FIN DE LA CORRECCIÓN -->
+                        
                         <td>
                             <small>{{ movimiento.motivo }}</small>
                             {% if movimiento.referencia %}

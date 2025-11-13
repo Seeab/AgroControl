@@ -1,14 +1,22 @@
+# aplicaciones/forms.py
+
 from django import forms
 from .models import AplicacionFitosanitaria
 from cuarteles.models import Cuartel
-from inventario.models import Producto, EquipoAgricola # <-- 1. IMPORTACIÓN AÑADIDA
-from django.contrib.auth.models import User
+from inventario.models import Producto, EquipoAgricola
+# --- CORRECCIÓN 1: Importar tu modelo Usuario, NO el de Django ---
+from autenticacion.models import Usuario 
 
 class AplicacionForm(forms.ModelForm):
     
     # --- Campos personalizados ---
     aplicador = forms.ModelChoiceField(
-        queryset=User.objects.filter(is_staff=True).order_by('username'),
+        # --- CORRECCIÓN 2: Usar tu 'Usuario' y filtrar por el rol correcto ---
+        # Asumo que tienes un Rol con nombre 'aplicador'
+        queryset=Usuario.objects.filter(
+            esta_activo=True, 
+            rol__nombre='aplicador' # O el filtro que definas para "aplicadores"
+        ).order_by('nombres', 'apellidos'),
         widget=forms.Select(attrs={'class': 'form-control'})
     )
     producto = forms.ModelChoiceField(
@@ -27,32 +35,27 @@ class AplicacionForm(forms.ModelForm):
         input_formats=['%Y-%m-%dT%H:%M', '%Y-%m-%d %H:%M:%S']
     )
 
-    # --- ✨ NUEVO CAMPO AÑADIDO (CON FILTRO) ---
     equipo_utilizado = forms.ModelChoiceField(
         queryset=EquipoAgricola.objects.filter(estado='operativo').order_by('nombre'),
-        required=False, # <-- Muy importante: hacerlo opcional
+        required=False,
         widget=forms.Select(attrs={'class': 'form-control'}),
         label='Equipo Utilizado (Opcional)'
     )
-    # --- FIN DEL NUEVO CAMPO ---
 
     class Meta:
         model = AplicacionFitosanitaria
-        # AHORA PEDIMOS 'cantidad_utilizada' Y SACAMOS 'dosis_por_hectarea'
         fields = [
             'aplicador', 'fecha_aplicacion', 'producto', 'cantidad_utilizada',
             'cuarteles', 'objetivo', 'metodo_aplicacion', 'estado',
-            'equipo_utilizado' # <-- 3. AÑADIDO A LA LISTA
+            'equipo_utilizado'
         ]
         widgets = {
-            # Este es el NUEVO campo de entrada
             'cantidad_utilizada': forms.NumberInput(
                 attrs={'class': 'form-control', 'step': '0.01', 'min': '0.01'}
             ),
             'objetivo': forms.TextInput(attrs={'class': 'form-control'}),
             'metodo_aplicacion': forms.TextInput(attrs={'class': 'form-control'}),
             'estado': forms.Select(attrs={'class': 'form-control'}),
-            # No es necesario añadir 'equipo_utilizado' aquí, ya lo definimos arriba.
         }
 
     def clean(self):
@@ -62,15 +65,15 @@ class AplicacionForm(forms.ModelForm):
         cleaned_data = super().clean()
         
         producto = cleaned_data.get('producto')
-        cantidad_utilizada = cleaned_data.get('cantidad_utilizada') # <-- Dato de entrada
+        cantidad_utilizada = cleaned_data.get('cantidad_utilizada')
         cuarteles = cleaned_data.get('cuarteles')
 
         if producto and cantidad_utilizada and cuarteles:
             
-            # 1. Validar stock (RF020) - AHORA ES MÁS FÁCIL
+            # 1. Validar stock (RF020)
             if cantidad_utilizada > producto.stock_actual:
                 raise forms.ValidationError({
-                    'cantidad_utilizada': ( # Error en el campo nuevo
+                    'cantidad_utilizada': (
                         f"No hay suficiente stock. Requerido: {cantidad_utilizada} {producto.unidad_medida}, "
                         f"Disponible: {producto.stock_actual} {producto.unidad_medida}."
                     )
@@ -87,7 +90,7 @@ class AplicacionForm(forms.ModelForm):
             except Exception as e:
                 raise forms.ValidationError(f"Error al calcular el área: {e}")
 
-            # 3. Calcular Dosis/Ha (el campo calculado)
+            # 3. Calcular Dosis/Ha
             if area_total > 0:
                 dosis_calculada = cantidad_utilizada / area_total
                 cleaned_data['dosis_por_hectarea'] = dosis_calculada

@@ -1,3 +1,5 @@
+# autenticacion/models.py
+
 from django.db import models
 from django.contrib.auth.hashers import make_password, check_password
 from django.utils import timezone
@@ -23,8 +25,8 @@ class Usuario(models.Model):
     nombre_usuario = models.CharField(max_length=150, unique=True)
     correo_electronico = models.EmailField(max_length=254, blank=True, null=True)
     contraseña = models.CharField(max_length=128)
-    nombres = models.CharField(max_length=150)
-    apellidos = models.CharField(max_length=150)
+    nombres = models.CharField(max_length=150, blank=True, null=True) # <-- MEJOR PRÁCTICA (permitir nulos)
+    apellidos = models.CharField(max_length=150, blank=True, null=True) # <-- MEJOR PRÁCTICA (permitir nulos)
     rol = models.ForeignKey(Rol, on_delete=models.SET_NULL, null=True, related_name='usuarios')
     esta_activo = models.BooleanField(default=True)
     es_administrador = models.BooleanField(default=False)
@@ -36,8 +38,27 @@ class Usuario(models.Model):
         verbose_name = 'Usuario'
         verbose_name_plural = 'Usuarios'
 
+    # --- ✨ CORRECCIÓN A PRUEBA DE BALAS ✨ ---
     def __str__(self):
-        return f"{self.nombres} {self.apellidos}"
+        """
+        Muestra el nombre completo del usuario.
+        Maneja 'None' y strings vacíos.
+        Si no hay nombre, usa 'nombre_usuario'.
+        """
+        # 1. Convierte 'None' en un string vacío
+        nombres = self.nombres or ''
+        apellidos = self.apellidos or ''
+        
+        # 2. Concatena y quita espacios
+        full_name = f"{nombres} {apellidos}".strip()
+        
+        # 3. Si full_name NO está vacío, devuélvelo
+        if full_name:
+            return full_name
+        
+        # 4. Si full_name ESTÁ vacío, usa el nombre_usuario (que NUNCA es nulo)
+        return self.nombre_usuario
+    # --- FIN DE LA CORRECCIÓN ---
 
     def set_password(self, raw_password):
         """Encripta y guarda la contraseña"""
@@ -49,7 +70,11 @@ class Usuario(models.Model):
 
     def get_full_name(self):
         """Retorna el nombre completo del usuario"""
-        return f"{self.nombres} {self.apellidos}"
+        # Usamos la misma lógica del __str__
+        nombres = self.nombres or ''
+        apellidos = self.apellidos or ''
+        full_name = f"{nombres} {apellidos}".strip()
+        return full_name if full_name else self.nombre_usuario
 
     def actualizar_ultimo_acceso(self):
         """Actualiza la fecha del último acceso"""
@@ -111,20 +136,18 @@ class Operario(models.Model):
     nombre_completo = models.CharField(max_length=200)
     cargo = models.CharField(max_length=100)
     
-    # ✅ CAMBIADO: carnet -> rut
     rut = models.CharField(
         max_length=50, 
         unique=True,
         validators=[validar_rut_chileno],
         help_text="Formato: 12345678-9",
         error_messages={
-            'unique': 'Ya existe un operario con este RUT registrado.'  # ✅ MENSAJE PERSONALIZADO
+            'unique': 'Ya existe un operario con este RUT registrado.'
         }
     )
     
     telefono = models.CharField(max_length=20, blank=True, null=True)
     
-    # Campos para certificaciones
     certificacion_documento = models.FileField(
         upload_to='media/certificaciones/operarios',
         blank=True,
@@ -148,7 +171,6 @@ class Operario(models.Model):
         return self.nombre_completo
 
     def carnet_por_vencer(self, dias=30):
-        """Verifica si el carnet está próximo a vencer (RF008)"""
         if self.fecha_vencimiento_certificacion:
             from datetime import timedelta
             dias_restantes = (self.fecha_vencimiento_certificacion - timezone.now().date()).days
@@ -156,12 +178,9 @@ class Operario(models.Model):
         return False
 
     def certificacion_vencida(self):
-        """Verifica si la certificación está vencida"""
         if self.fecha_vencimiento_certificacion:
             return self.fecha_vencimiento_certificacion < timezone.now().date()
         return False
 
-    # ✅ ACTUALIZADO: Método para RUT formateado
     def get_rut_formateado(self):
-        """Retorna el RUT formateado para mostrar"""
         return self.rut.upper()
