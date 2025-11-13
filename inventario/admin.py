@@ -3,7 +3,9 @@
 from django.contrib import admin
 from django.utils.html import format_html
 from django.db import models
-from .models import Producto , MovimientoInventario, EquipoAgricola
+from django.db import transaction  # <--- ✨ ¡AQUÍ ESTÁ LA CORRECCIÓN! ✨
+from .models import Producto , MovimientoInventario, EquipoAgricola, DetalleMovimiento
+from .forms import DetalleMovimientoForm
 
 # --- CORRECCIÓN 1: Importar tu Usuario personalizado ---
 from autenticacion.models import Usuario
@@ -86,35 +88,60 @@ class ProductoAdmin(admin.ModelAdmin):
                 pass 
         super().save_model(request, obj, form, change)
 
+
+# --- NUEVO INLINE ---
+class DetalleMovimientoInline(admin.TabularInline):
+    model = DetalleMovimiento
+    form = DetalleMovimientoForm # Usamos el form que valida cantidad > 0
+    extra = 1
+    # Campos que se muestran en el admin inline
+    fields = ('producto', 'cantidad', 'stock_anterior', 'stock_posterior')
+    # Hacemos que los stocks sean de solo lectura en el admin
+    readonly_fields = ('stock_anterior', 'stock_posterior')
+    autocomplete_fields = ['producto']
+
+
 @admin.register(MovimientoInventario)
 class MovimientoInventarioAdmin(admin.ModelAdmin):
+    # --- CAMPOS MODIFICADOS ---
+    # (Esto corrige los errores E108 y E116 de SystemCheck)
     list_display = [
-        'producto',
+        'id',
         'tipo_movimiento',
-        'cantidad_display',
-        'stock_anterior_display',
-        'stock_posterior_display',
+        'get_productos_display', # Helper del modelo
         'realizado_por',
-        'fecha_movimiento'
+        'fecha_movimiento',
+        'referencia',
+        'aplicacion'
     ]
     
-    list_filter = ['tipo_movimiento', 'fecha_movimiento', 'producto']
+    list_filter = ['tipo_movimiento', 'fecha_movimiento']
     
-    search_fields = ['producto__nombre', 'motivo', 'referencia']
+    search_fields = ['motivo', 'referencia', 'detalles__producto__nombre']
     
-    readonly_fields = ['stock_anterior', 'stock_posterior', 'fecha_registro']
+    # (Esto corrige los errores E035 de SystemCheck)
+    readonly_fields = ['fecha_registro']
     
-    def cantidad_display(self, obj):
-        return f"{obj.cantidad} {obj.producto.unidad_medida}"
-    cantidad_display.short_description = 'Cantidad'
+    # --- AÑADIR EL INLINE ---
+    inlines = [DetalleMovimientoInline]
+    
+    # No permitir añadir/editar detalles si es una 'salida' (se maneja por la app)
+    def get_inlines(self, request, obj=None):
+        if obj and obj.tipo_movimiento == 'salida':
+            # Clonamos el inline para modificarlo
+            class DetalleMovimientoSalidaInline(DetalleMovimientoInline):
+                can_delete = False
+                extra = 0
+                def has_add_permission(self, request, obj=None):
+                    return False
+                def has_change_permission(self, request, obj=None):
+                    return False
+            return [DetalleMovimientoSalidaInline]
+        return super().get_inlines(request, obj)
 
-    def stock_anterior_display(self, obj):
-        return f"{obj.stock_anterior} {obj.producto.unidad_medida}"
-    stock_anterior_display.short_description = 'Stock Anterior'
-
-    def stock_posterior_display(self, obj):
-        return f"{obj.stock_posterior} {obj.producto.unidad_medida}"
-    stock_posterior_display.short_description = 'Stock Posterior'
+    def get_queryset(self, request):
+        # Optimizar la carga
+        return super().get_queryset(request).prefetch_related('detalles__producto')
 
     # --- CORRECCIÓN 3: 'save_model' para 'MovimientoInventario' ---
     def save_model(self, request, obj, form, change):
@@ -125,6 +152,44 @@ class MovimientoInventarioAdmin(admin.ModelAdmin):
             except Usuario.DoesNotExist:
                 pass
         super().save_model(request, obj, form, change)
+    
+    @transaction.atomic # <--- Esta línea necesitaba el import
+    def save_related(self, request, form, formsets, change):
+        """
+        Lógica de stock para el Admin (Entrada/Ajuste)
+        """
+        # Guardar el padre (Movimiento) primero
+        super().save_related(request, form, formsets, change)
+        
+        movimiento = form.instance
+        
+        # Solo actuar en Entrada o Ajuste (Salida es automática)
+        if movimiento.tipo_movimiento in ['entrada', 'ajuste']:
+            
+            # formsets[0] es nuestro DetalleMovimientoInline
+            # Iteramos sobre los formularios guardados
+            for detalle in movimiento.detalles.all():
+                
+                # Si el stock_anterior no está seteado, es nuevo o necesita recálculo
+                if detalle.stock_anterior == 0 and detalle.stock_posterior == 0:
+                    producto = detalle.producto
+                    cantidad = detalle.cantidad
+                    
+                    producto.refresh_from_db()
+                    stock_anterior = producto.stock_actual
+                    
+                    if movimiento.tipo_movimiento == 'entrada':
+                        stock_posterior = stock_anterior + cantidad
+                    else: # Ajuste
+                        stock_posterior = cantidad
+                    
+                    detalle.stock_anterior = stock_anterior
+                    detalle.stock_posterior = stock_posterior
+                    detalle.save()
+                    
+                    producto.stock_actual = stock_posterior
+                    producto.save(update_fields=['stock_actual'])
+
 
 @admin.register(EquipoAgricola)
 class EquipoAgricolaAdmin(admin.ModelAdmin):

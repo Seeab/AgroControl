@@ -3,37 +3,32 @@
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from .models import AplicacionFitosanitaria
-from inventario.models import MovimientoInventario
+# from inventario.models import MovimientoInventario # Ya no se usa aquí
+
+# --- IMPORTANTE: ESTA SEÑAL SE DESACTIVA ---
+# La lógica ahora vive en las vistas 'crear_aplicacion' y 'finalizar_aplicacion'
+# (dentro de la función 'crear_movimiento_salida_para_app')
+# para manejar correctamente la validación de stock de MÚLTIPLES productos
+# y la creación del MovimientoInventario y sus DetalleMovimiento.
 
 @receiver(post_save, sender=AplicacionFitosanitaria)
 def crear_movimiento_salida(sender, instance, created, **kwargs):
     """
-    RF021: Descontar automáticamente del inventario.
-    Se activa después de crear una nueva aplicación 'realizada'.
+    (DESACTIVADO)
+    La lógica de creación de movimientos se maneja en las vistas
+    para poder procesar el FormSet de productos.
     """
+    pass
     
-    # Solo actuar si es una NUEVA creación (created=True)
-    # y si la aplicación está marcada como 'realizada'
-    # y si la cantidad es mayor a 0.
-    if created and instance.estado == 'realizada' and instance.cantidad_utilizada > 0:
-        
-        # Creamos el movimiento de inventario.
-        # La lógica en MovimientoInventario.save() (que tú ya tienes)
-        # se encargará de actualizar el stock_actual del Producto.
-        MovimientoInventario.objects.create(
-            producto=instance.producto,
-            tipo_movimiento='salida',
-            cantidad=instance.cantidad_utilizada,
-            fecha_movimiento=instance.fecha_aplicacion,
-            motivo=f"Salida por Aplicación Fitosanitaria ID: {instance.id}",
-            referencia=f"APL-{instance.id}",
-            
-            # --- AQUÍ ESTÁ LA CORRECCIÓN ---
-            # En lugar de pasar el objeto (instance.creado_por),
-            # pasamos el ID directamente (instance.creado_por_id).
-            # Esto es más robusto dentro de una señal.
-            realizado_por_id=instance.creado_por_id, 
-            # --- FIN DE LA CORRECCIÓN ---
-            
-            aplicacion=instance # ¡La conexión clave!
-        )
+    # if created and instance.estado == 'realizada' and instance.cantidad_utilizada > 0:
+    #     
+    #     MovimientoInventario.objects.create(
+    #         producto=instance.producto,
+    #         tipo_movimiento='salida',
+    #         cantidad=instance.cantidad_utilizada,
+    #         fecha_movimiento=instance.fecha_aplicacion,
+    #         motivo=f"Salida por Aplicación Fitosanitaria ID: {instance.id}",
+    #         referencia=f"APL-{instance.id}",
+    #         realizado_por_id=instance.creado_por_id, 
+    #         aplicacion=instance # ¡La conexión clave!
+    #     )

@@ -4,7 +4,7 @@
 {% block content %}
 <div class="container mt-4">
     <div class="row">
-        <div class="col-md-8 offset-md-2">
+        <div class="col-md-10 offset-md-1"> 
             
             <div class="card card-agro shadow-sm">
                 <div class="card-header bg-agro-light">
@@ -18,59 +18,56 @@
                 </div>
                 <div class="card-body">
                     
-                    <form method="POST" novalidate>
+                    <form method="POST" id="aplicacionForm" novalidate>
                         {% csrf_token %}
 
-                        {% if form.non_field_errors %}
-                            <div class="alert alert-danger">
-                                {% for error in form.non_field_errors %}
-                                    <p class="mb-0">{{ error }}</p>
+                        {% if form.non_field_errors or formset.non_field_errors or formset.errors %}
+                        <div class="alert alert-danger">
+                            <i class="bi bi-exclamation-triangle me-2"></i>
+                            Por favor, corrija los errores:
+                            <ul class="mb-0 mt-2">
+                                {% for error in form.non_field_errors %} <li>{{ error }}</li> {% endfor %}
+                                {% for error in formset.non_field_errors %} <li>{{ error }}</li> {% endfor %}
+                                
+                                {% for field in form %}
+                                    {% for error in field.errors %} <li>{{ field.label }}: {{ error }}</li> {% endfor %}
                                 {% endfor %}
-                            </div>
+                                
+                                {% for f in formset %}
+                                    {% for error in f.non_field_errors %} <li>Detalle: {{ error }}</li> {% endfor %}
+                                    {% for field in f %}
+                                        {% for error in field.errors %} <li>Detalle ({{ field.label }}): {{ error }}</li> {% endfor %}
+                                    {% endfor %}
+                                {% endfor %}
+                            </ul>
+                        </div>
                         {% endif %}
 
                         <h5 class="mt-3 text-agro-primary">Detalles de la Aplicación</h5>
                         
                         <div class="row">
                             <div class="col-md-6 mb-3">
-                                <label for="{{ form.producto.id_for_label }}" class="form-label fw-semibold">{{ form.producto.label }}</label>
-                                {{ form.producto }}
-                                <div class="text-danger small mt-1">{{ form.producto.errors }}</div>
-                            </div>
-                            <div class="col-md-6 mb-3">
                                 <label for="{{ form.aplicador.id_for_label }}" class="form-label fw-semibold">{{ form.aplicador.label }}</label>
                                 {{ form.aplicador }}
                                 <div class="text-danger small mt-1">{{ form.aplicador.errors }}</div>
                             </div>
-                        </div>
-
-                        <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label for="{{ form.fecha_aplicacion.id_for_label }}" class="form-label fw-semibold">{{ form.fecha_aplicacion.label }}</label>
                                 {{ form.fecha_aplicacion }}
                                 <div class="text-danger small mt-1">{{ form.fecha_aplicacion.errors }}</div>
                             </div>
-                             <div class="col-md-6 mb-3">
-                                <label for="{{ form.estado.id_for_label }}" class="form-label fw-semibold">{{ form.estado.label }}</label>
-                                {{ form.estado }}
-                                <div class="text-danger small mt-1">{{ form.estado.errors }}</div>
-                            </div>
                         </div>
 
-                        <hr class="my-4">
-                        <h5 class="text-agro-primary">Dosis y Cuarteles</h5>
-
                         <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label for="{{ form.cantidad_utilizada.id_for_label }}" class="form-label fw-semibold">{{ form.cantidad_utilizada.label }}</label>
-                                {{ form.cantidad_utilizada }}
-                                <div class="text-danger small mt-1">{{ form.cantidad_utilizada.errors }}</div>
-                            </div>
-                            
                             <div class="col-md-6 mb-3">
                                 <label for="{{ form.cuarteles.id_for_label }}" class="form-label fw-semibold">{{ form.cuarteles.label }}</label>
                                 {{ form.cuarteles }}
                                 <div class="text-danger small mt-1">{{ form.cuarteles.errors }}</div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.estado.id_for_label }}" class="form-label fw-semibold">{{ form.estado.label }}</label>
+                                {{ form.estado }}
+                                <div class="text-danger small mt-1">{{ form.estado.errors }}</div>
                             </div>
                         </div>
 
@@ -87,15 +84,75 @@
                             {{ form.metodo_aplicacion }}
                             <div class="text-danger small mt-1">{{ form.metodo_aplicacion.errors }}</div>
                         </div>
-
-                        <!-- ✨ INICIO DEL CAMBIO ✨ -->
                         <div class="mb-3">
                             <label for="{{ form.equipo_utilizado.id_for_label }}" class="form-label fw-semibold">{{ form.equipo_utilizado.label }}</label>
                             {{ form.equipo_utilizado }}
                             <div class="text-danger small mt-1">{{ form.equipo_utilizado.errors }}</div>
                         </div>
-                        <!-- ✨ FIN DEL CAMBIO ✨ -->
 
+
+                        <hr class="my-4">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h5 class="text-agro-primary">Productos y Dosis</h5>
+                            <button type="button" id="add-form" class="btn btn-success btn-sm">
+                                <i class="bi bi-plus-circle me-1"></i> Añadir Producto
+                            </button>
+                        </div>
+                        
+                        {{ formset.management_form }}
+                        
+                        <div id="formset-container" class="mt-3">
+                            {% for form in formset %}
+                                <div class="dynamic-form row align-items-center mb-3 p-2 border rounded">
+                                    <div class="col-md-5 mb-2">
+                                        {{ form.id }} {% if forloop.first %}
+                                            <label class="form-label fw-semibold">Producto</label>
+                                        {% endif %}
+                                        {{ form.producto }}
+                                        <div class="text-danger small mt-1">{{ form.producto.errors }}</div>
+                                    </div>
+                                    <div class="col-md-4 mb-2">
+                                        {% if forloop.first %}
+                                            <label class="form-label fw-semibold">Cantidad Utilizada</label>
+                                        {% endif %}
+                                        {{ form.cantidad_utilizada }}
+                                        <div class="text-danger small mt-1">{{ form.cantidad_utilizada.errors }}</div>
+                                    </div>
+                                    <div class="col-md-2 mb-2">
+                                        {% if forloop.first %}
+                                            <label class="form-label d-block">&nbsp;</label>
+                                        {% endif %}
+                                        {% if form.instance.pk %}
+                                        <div class="form-check">
+                                            {{ form.DELETE }}
+                                            <label class="form-check-label" for="{{ form.DELETE.id_for_label }}">Eliminar</l>
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                    {% if form.non_field_errors %}
+                                    <div class="col-12">
+                                        <div class="alert alert-danger py-1 px-2 mb-0">
+                                            {{ form.non_field_errors }}
+                                        </div>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            {% endfor %}
+                        </div>
+
+                        <div id="empty-form" class="dynamic-form row align-items-center mb-3 p-2 border rounded" style="display: none;">
+                            <div class="col-md-5 mb-2">
+                                <label class="form-label fw-semibold">Producto</label>
+                                {{ formset.empty_form.producto }}
+                            </div>
+                            <div class="col-md-4 mb-2">
+                                <label class="form-label fw-semibold">Cantidad Utilizada</label>
+                                {{ formset.empty_form.cantidad_utilizada }}
+                            </div>
+                            <div class="col-md-2 mb-2">
+                                <label class="form-label d-block">&nbsp;</label>
+                                </div>
+                        </div>
                         <div class="mt-4 border-top pt-3 text-end">
                             <a href="{% url 'aplicaciones:lista_aplicaciones' %}" class="btn btn-outline-secondary">
                                 Cancelar
@@ -112,4 +169,36 @@
     </div>
 </div>
 
+{% endblock %} {% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const formsetContainer = document.getElementById('formset-container');
+    const addButton = document.getElementById('add-form');
+    // ✨ INICIO DE LA CORRECCIÓN JS ✨
+    // 1. Apuntar al NODO del template, no a su innerHTML
+    const emptyFormTemplate = document.getElementById('empty-form'); 
+    const totalFormsInput = document.getElementById('id_aplicacionproducto_set-TOTAL_FORMS');
+    
+    addButton.addEventListener('click', function() {
+        let formNum = parseInt(totalFormsInput.value);
+        
+        // 2. Clonar el NODO completo (true = clonar hijos)
+        let newFormElement = emptyFormTemplate.cloneNode(true);
+
+        // 3. Quitar el ID para evitar duplicados y hacerlo visible
+        newFormElement.id = '';
+        newFormElement.style.display = 'flex'; // O 'block', 'row', etc., según tu CSS. 'flex' es lo que usaba.
+
+        // 4. Reemplazar el prefijo en el HTML clonado
+        newFormElement.innerHTML = newFormElement.innerHTML.replace(/__prefix__/g, formNum);
+        
+        // 5. Añadir el NODO clonado y actualizado
+        formsetContainer.appendChild(newFormElement);
+        // ✨ FIN DE LA CORRECCIÓN JS ✨
+        
+        // Incrementar el contador de formularios
+        totalFormsInput.value = formNum + 1;
+    });
+});
+</script>
 {% endblock %}

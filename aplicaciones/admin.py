@@ -1,48 +1,60 @@
 # aplicaciones/admin.py
 
 from django.contrib import admin
-from .models import AplicacionFitosanitaria
-from .forms import AplicacionForm
+from .models import AplicacionFitosanitaria, AplicacionProducto
+from .forms import AplicacionProductoForm # Usamos el form customizado
 # --- CORRECCIÓN 1: Importar tu modelo Usuario ---
 from autenticacion.models import Usuario 
 
+# --- NUEVO INLINE ---
+class AplicacionProductoInline(admin.TabularInline):
+    model = AplicacionProducto
+    form = AplicacionProductoForm # Usamos el form que valida stock
+    extra = 1
+    readonly_fields = ('dosis_por_hectarea',)
+    autocomplete_fields = ['producto'] # Mejor para muchos productos
+
+
 @admin.register(AplicacionFitosanitaria)
 class AplicacionFitosanitariaAdmin(admin.ModelAdmin):
-    form = AplicacionForm
+    # form = AplicacionForm # El form de admin es complejo con M2M
     
     list_display = (
-        '__str__', 'aplicador', 'fecha_aplicacion', 'producto',
-        'dosis_por_hectarea', 'area_tratada', 'cantidad_utilizada',
+        '__str__', 'aplicador', 'fecha_aplicacion', 
+        'get_productos_display', # Helper del modelo
+        'area_tratada',
         'estado', 'creado_por'
     )
-    list_filter = ('estado', 'producto', 'aplicador', 'fecha_aplicacion')
+    list_filter = ('estado', 'aplicador', 'fecha_aplicacion')
     search_fields = (
-        'producto__nombre', 
-        # --- CORRECCIÓN 2: Asumir que tu 'Usuario' tiene 'nombre_usuario' y 'nombres' ---
+        'productos__nombre', # Búsqueda en M2M
         'aplicador__nombre_usuario', 
         'aplicador__nombres',
         'aplicador__apellidos',
         'cuarteles__nombre'
     )
     readonly_fields = (
-        'area_tratada', 'cantidad_utilizada', 
+        'area_tratada', 
         'fecha_creacion', 'fecha_actualizacion'
     )
     
     filter_horizontal = ('cuarteles',)
+    
+    # --- AÑADIR EL INLINE ---
+    inlines = [AplicacionProductoInline]
 
     fieldsets = (
         ('Detalles de la Aplicación', {
             'fields': (
-                'producto', 'fecha_aplicacion', 'aplicador', 'estado', 
+                'fecha_aplicacion', 'aplicador', 'estado', 
                 'objetivo', 'metodo_aplicacion'
             )
         }),
         ('Dosis y Cuarteles', {
-            'fields': ('dosis_por_hectarea', 'cuarteles')
+            'fields': ('cuarteles',) # 'productos' se maneja en el inline
         }),
         ('Totales Calculados (Automático)', {
-            'fields': ('area_tratada', 'cantidad_utilizada'),
+            'fields': ('area_tratada',),
             'classes': ('collapse',) 
         }),
         ('Auditoría', {
@@ -60,11 +72,23 @@ class AplicacionFitosanitariaAdmin(admin.ModelAdmin):
                 obj.creado_por = usuario_custom
             except Usuario.DoesNotExist:
                 # Si no existe, no lo asignamos.
-                # El formulario fallará si 'creado_por' es obligatorio y no se seleccionó manualmente.
                 pass 
         
-        if form.is_valid() and 'area_tratada' in form.cleaned_data:
-            obj.area_tratada = form.cleaned_data['area_tratada']
-            obj.cantidad_utilizada = form.cleaned_data['cantidad_utilizada']
-        
         super().save_model(request, obj, form, change)
+        
+        # Recalcular área después de guardar (los inlines se guardan después)
+        # obj.save() # Llama al save() del modelo
+
+    def save_related(self, request, form, formsets, change):
+        """
+        Recalcula el área después de guardar los M2M (cuarteles)
+        y los inlines (productos).
+        """
+        super().save_related(request, form, formsets, change)
+        # Asegurar que el área se recalcule después de guardar M2M
+        form.instance.save() # Esto llama al save() del modelo
+
+
+    def get_queryset(self, request):
+        # Optimizar la carga
+        return super().get_queryset(request).prefetch_related('aplicacionproducto_set__producto')

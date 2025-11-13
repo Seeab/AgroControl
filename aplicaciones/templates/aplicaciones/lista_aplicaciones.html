@@ -36,7 +36,6 @@
             </div>
         </div>
     </div>
-    
     <div class="col-xl-4 col-md-6 mb-4">
         <div class="card card-agro border-start border-warning border-4">
             <div class="card-body">
@@ -54,7 +53,6 @@
             </div>
         </div>
     </div>
-
     <div class="col-xl-4 col-md-6 mb-4">
         <div class="card card-agro border-start border-success border-4">
             <div class="card-body">
@@ -111,7 +109,6 @@
         </form>
     </div>
 </div>
-
 <div class="card card-agro">
     <div class="card-header bg-agro-light d-flex justify-content-between align-items-center">
         <h5 class="card-title mb-0">
@@ -127,9 +124,9 @@
                 <thead>
                     <tr>
                         <th><i class="bi bi-calendar-event me-1"></i>Aplicación</th>
-                        <th><i class="bi bi-box-seam me-1"></i>Producto (Aplicador/Equipo)</th> <!-- Título actualizado -->
-                        <th><i class="bi bi-speedometer2 me-1"></i>Dosis/Ha</th>
-                        <th><i class="bi bi-droplet-fill me-1"></i>Total Utilizado</th>
+                        <th><i class="bi bi-box-seam me-1"></i>Productos (Aplicador/Equipo)</th>
+                        <th><i class="bi bi-speedometer2 me-1"></i>Área Tratada</th>
+                        <th><i class="bi bi-droplet-fill me-1"></i>Total Utilizado (1er Prod.)</th>
                         <th><i class="bi bi-activity me-1"></i>Estado</th>
                         <th class="text-end"><i class="bi bi-gear me-1"></i>Acciones</th>
                     </tr>
@@ -142,25 +139,42 @@
                             <small class="text-muted">{{ app.fecha_aplicacion|date:"d/m/Y H:i" }}</small>
                         </td>
                         <td>
-                            <!-- ✨ INICIO DEL CAMBIO ✨ -->
-                            <div class="fw-bold">{{ app.producto.nombre }}</div>
-                            <small class="text-muted">{{ app.aplicador.username }}</small>
+                            {% with primer_producto=app.get_primer_producto %}
+                                {% if primer_producto %}
+                                    <div class="fw-bold">{{ primer_producto.producto.nombre }}</div>
+                                {% else %}
+                                    <div class="fw-bold text-danger">Sin Productos</div>
+                                {% endif %}
+                            {% endwith %}
+
+                            {% if app.get_total_productos > 1 %}
+                                <span class="badge bg-secondary">+{{ app.get_total_productos|add:"-1" }} más</span>
+                            {% endif %}
+                            
+                            <br>
+                            <small class="text-muted">{{ app.aplicador.get_full_name|default:app.aplicador.nombre_usuario|default:app.aplicador }}</small>
+                            
                             {% if app.equipo_utilizado %}
                                 <br>
                                 <small class="text-primary-emphasis"
-                                    data-bs-toggle="tooltip" 
-                                    title="Equipo Utilizado">
+                                        data-bs-toggle="tooltip" 
+                                        title="Equipo Utilizado">
                                     <i class="bi bi-truck me-1"></i>{{ app.equipo_utilizado.nombre }}
                                 </small>
                             {% endif %}
-                            <!-- ✨ FIN DEL CAMBIO ✨ -->
                         </td>
                         <td>
-                            <span class="text-muted">{{ app.dosis_por_hectarea|floatformat:2 }} {{ app.producto.unidad_medida }}/Ha</span>
+                            <span class="text-muted">{{ app.area_tratada|floatformat:2 }} Ha</span>
                         </td>
                         <td>
-                            <span class="fw-bold">{{ app.cantidad_utilizada|floatformat:2 }}</span>
-                            <small class="text-muted">{{ app.producto.unidad_medida }}</small>
+                            {% with primer_producto=app.get_primer_producto %}
+                                {% if primer_producto %}
+                                    <span class="fw-bold">{{ primer_producto.cantidad_utilizada|floatformat:2 }}</span>
+                                    <small class="text-muted">{{ primer_producto.producto.unidad_medida }}</small>
+                                {% else %}
+                                    N/A
+                                {% endif %}
+                            {% endwith %}
                         </td>
                         <td>
                             {% if app.estado == 'realizada' %}

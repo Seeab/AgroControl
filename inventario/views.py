@@ -1,15 +1,21 @@
+# inventario/views.py
+
 from django.shortcuts import render, get_object_or_404, redirect
 from autenticacion.views import login_required, admin_required
 from django.contrib import messages
-from django.db import models
+from django.db import models, transaction # Importar transaction
 from django.core.paginator import Paginator
 from django.core.exceptions import ValidationError
-from .models import Producto, MovimientoInventario, EquipoAgricola
-from .forms import ProductoForm, MovimientoInventarioForm, EquipoAgricolaForm
+from .models import Producto, MovimientoInventario, EquipoAgricola, DetalleMovimiento
+from .forms import (
+    ProductoForm, MovimientoInventarioForm, EquipoAgricolaForm,
+    DetalleMovimientoFormSet # Importar el FormSet
+)
 
 
 @login_required # <-- USA EL DECORADOR DE 'autenticacion.views'
 def lista_productos(request):
+    """(SIN CAMBIOS)"""
     productos = Producto.objects.all().order_by('nombre')
     
     # Filtros
@@ -58,6 +64,7 @@ def lista_productos(request):
 # CAMBIADO: Usamos admin_required en lugar de permission_required
 @admin_required 
 def crear_producto(request):
+    """(SIN CAMBIOS)"""
     if request.method == 'POST':
         form = ProductoForm(request.POST)
         if form.is_valid():
@@ -75,6 +82,7 @@ def crear_producto(request):
 
 @login_required # <-- USA EL DECORADOR DE 'autenticacion.views'
 def detalle_producto(request, producto_id):
+    """(SIN CAMBIOS)"""
     producto = get_object_or_404(Producto, id=producto_id)
     context = {'producto': producto, 'page_title': f'Detalle: {producto.nombre}'} # Añadido page_title
     return render(request, 'inventario/detalle_producto.html', context)
@@ -82,6 +90,7 @@ def detalle_producto(request, producto_id):
 # CAMBIADO: Usamos admin_required en lugar de permission_required
 @admin_required
 def editar_producto(request, producto_id):
+    """(SIN CAMBIOS)"""
     producto = get_object_or_404(Producto, id=producto_id)
     
     if request.method == 'POST':
@@ -98,61 +107,118 @@ def editar_producto(request, producto_id):
         'producto': producto,
         'page_title': f'Editar: {producto.nombre}' # Añadido page_title
     }
-    return render(request, 'inventario/crear_producto.html', context) # Reusa el template de crear
+    return render(request, 'inventario/crear_producto.html', context) # Reusa el template
 
 # CAMBIADO: Usamos admin_required en lugar de permission_required
 @admin_required
+@transaction.atomic # Importante para la lógica de stock
 def crear_movimiento(request, producto_id=None):
-    producto = None
+    """(MODIFICADO) Vista para crear movimientos manuales (Entrada/Ajuste) con FORMSET"""
+    
+    producto_inicial = None
     if producto_id:
-        producto = get_object_or_404(Producto, id=producto_id)
+        producto_inicial = get_object_or_404(Producto, id=producto_id)
     
     if request.method == 'POST':
         form = MovimientoInventarioForm(request.POST)
+        formset = DetalleMovimientoFormSet(request.POST)
         
-        if form.is_valid():
+        if form.is_valid() and formset.is_valid():
             movimiento = form.save(commit=False)
-            # Asignamos el usuario desde la SESIÓN
             movimiento.realizado_por_id = request.session.get('usuario_id')
+            movimiento.save() # Guardar el encabezado
             
-            try:
-                movimiento.save()
-                messages.success(request, 'Movimiento registrado exitosamente.')
-                return redirect('inventario:lista_productos')
+            formset.instance = movimiento
+            detalles_a_guardar = formset.save(commit=False) # No guardar aún
             
-            except ValidationError as e:
-                messages.error(request, f'Error al guardar: {e.args[0]}')
-    
+            # --- Lógica de Stock ---
+            for detalle in detalles_a_guardar:
+                # Omitir si está marcado para borrarse
+                if detalle in formset.deleted_objects:
+                    continue
+
+                producto = detalle.producto
+                cantidad = detalle.cantidad
+                
+                # Refrescar producto para evitar concurrencia
+                producto.refresh_from_db() 
+                
+                stock_anterior = producto.stock_actual
+                
+                if movimiento.tipo_movimiento == 'entrada':
+                    stock_posterior = stock_anterior + cantidad
+                elif movimiento.tipo_movimiento == 'ajuste':
+                    stock_posterior = cantidad # Ajuste define el stock
+                else:
+                    # Esto no debería pasar gracias al form
+                    stock_posterior = stock_anterior 
+                
+                # Asignar stocks al detalle
+                detalle.stock_anterior = stock_anterior
+                detalle.stock_posterior = stock_posterior
+                detalle.save() # Guardar el detalle
+                
+                # Actualizar el producto
+                producto.stock_actual = stock_posterior
+                producto.save(update_fields=['stock_actual', 'fecha_actualizacion'])
+            
+            # Manejar objetos borrados (si se edita un movimiento)
+            for detalle in formset.deleted_objects:
+                # (Aquí iría la lógica para revertir el stock si editáramos,
+                # pero para 'crear' no es necesario)
+                detalle.delete()
+            
+            messages.success(request, 'Movimiento registrado exitosamente.')
+            return redirect('inventario:historial_movimientos')
+        else:
+             messages.error(request, 'Error al registrar el movimiento. Revisa los campos.')
+
     else:
-        initial = {}
-        if producto:
-            initial['producto'] = producto
-        form = MovimientoInventarioForm(initial=initial)
+        initial_data = [] # Debe ser una lista para el formset
+        if producto_inicial:
+            # Pre-llenar el primer form del formset
+            initial_data = [{
+                'producto': producto_inicial
+            }]
+            
+        form = MovimientoInventarioForm()
+        formset = DetalleMovimientoFormSet(initial=initial_data)
     
     context = {
         'form': form,
-        'producto': producto,
-        'page_title': 'Registrar Movimiento' # Añadido page_title
+        'formset': formset, # Pasar el formset al template
+        'producto': producto_inicial, # Para el título si aplica
+        'page_title': 'Registrar Movimiento'
     }
     return render(request, 'inventario/crear_movimiento.html', context)
 
 @login_required # <-- USA EL DECORADOR DE 'autenticacion.views'
 def historial_movimientos(request):
-    movimientos = MovimientoInventario.objects.all().select_related('producto', 'realizado_por').order_by('-fecha_movimiento')
+    """(MODIFICADO) Vista de historial con prefetch"""
     
-    # (El resto de tu lógica de filtros y paginación está bien...)
+    # --- MODIFICADO: Usar prefetch_related para detalles ---
+    movimientos = MovimientoInventario.objects.all().select_related(
+        'realizado_por', 'aplicacion'
+    ).prefetch_related(
+        'detalles__producto' # Optimiza la carga para el tooltip
+    ).order_by('-fecha_movimiento')
+    
+    # --- Filtros (MODIFICADOS) ---
     producto_id = request.GET.get('producto')
     tipo_movimiento = request.GET.get('tipo_movimiento')
     fecha_desde = request.GET.get('fecha_desde')
     fecha_hasta = request.GET.get('fecha_hasta')
     
     if producto_id:
-        movimientos = movimientos.filter(producto_id=producto_id)
+        # Filtrar si CUALQUIER detalle coincide
+        movimientos = movimientos.filter(detalles__producto_id=producto_id).distinct()
     if tipo_movimiento:
         movimientos = movimientos.filter(tipo_movimiento=tipo_movimiento)
     if fecha_desde:
         movimientos = movimientos.filter(fecha_movimiento__gte=fecha_desde)
     if fecha_hasta:
+        # Añadir +1 día para incluir el día completo
+        # O asumir que el datepicker lo maneja. Por simpleza, lo dejamos así.
         movimientos = movimientos.filter(fecha_movimiento__lte=fecha_hasta)
     
     paginator = Paginator(movimientos, 25)
@@ -179,10 +245,28 @@ def historial_movimientos(request):
     }
     return render(request, 'inventario/historial_movimientos.html', context)
 
+
+@login_required
+def detalle_movimiento(request, movimiento_id):
+    """(NUEVA VISTA) Muestra el detalle de un movimiento y todos sus productos"""
+    movimiento = get_object_or_404(
+        MovimientoInventario.objects.prefetch_related('detalles__producto', 'realizado_por'),
+        id=movimiento_id
+    )
+    
+    context = {
+        'movimiento': movimiento,
+        'detalles': movimiento.detalles.all(), # Pasamos los detalles
+        'page_title': f'Detalle Movimiento #{movimiento.id}'
+    }
+    return render(request, 'inventario/detalle_movimiento.html', context)
+
+
 @login_required
 def lista_maquinaria(request):
     """
     Vista para listar Maquinaria y Herramientas (RF026).
+    (SIN CAMBIOS)
     """
     equipos = EquipoAgricola.objects.all().order_by('nombre')
     
@@ -215,6 +299,7 @@ def lista_maquinaria(request):
 def crear_maquinaria(request):
     """
     Vista para registrar una nueva Maquinaria o Herramienta (RF026).
+    (SIN CAMBIOS)
     """
     if request.method == 'POST':
         form = EquipoAgricolaForm(request.POST)
@@ -239,6 +324,7 @@ def crear_maquinaria(request):
 
 @login_required
 def detalle_maquinaria(request, equipo_id):
+    """(SIN CAMBIOS)"""
     equipo = get_object_or_404(EquipoAgricola, id=equipo_id)
     context = {
         'equipo': equipo, 
@@ -248,6 +334,7 @@ def detalle_maquinaria(request, equipo_id):
 
 @admin_required
 def editar_maquinaria(request, equipo_id):
+    """(SIN CAMBIOS)"""
     equipo = get_object_or_404(EquipoAgricola, id=equipo_id)
     
     if request.method == 'POST':

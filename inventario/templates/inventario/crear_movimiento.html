@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load humanize %}
 
 {% block title %}Registrar Movimiento - AgroControl{% endblock %}
 
@@ -8,7 +9,7 @@
         <h1 class="h3 mb-1">
             <i class="bi bi-arrow-left-right text-agro-primary me-2"></i>Registrar Movimiento de Inventario
         </h1>
-        <p class="text-muted">Registre entradas, salidas o ajustes de stock</p>
+        <p class="text-muted">Registre entradas o ajustes de stock (Las salidas se generan desde Aplicaciones)</p>
     </div>
     <a href="{% url 'inventario:lista_productos' %}" class="btn btn-outline-secondary">
         <i class="bi bi-arrow-left me-2"></i>Volver al inventario
@@ -25,50 +26,36 @@
         <form method="post" novalidate>
             {% csrf_token %}
             
-            {% if form.errors %}
+            {% if form.errors or formset.non_field_errors or formset.errors %}
             <div class="alert alert-danger">
                 <i class="bi bi-exclamation-triangle me-2"></i>
-                Por favor, corrija los errores below.
+                Por favor, corrija los errores:
                 <ul class="mb-0 mt-2">
-                    {% for field, errors in form.errors.items %}
-                        {% for error in errors %}
-                            <li>{{ error }}</li>
+                    {% for error in form.non_field_errors %} <li>{{ error }}</li> {% endfor %}
+                    {% for error in formset.non_field_errors %} <li>{{ error }}</li> {% endfor %}
+                    
+                    {% for field in form %}
+                        {% for error in field.errors %} <li>{{ field.label }}: {{ error }}</li> {% endfor %}
+                    {% endfor %}
+                    
+                    {% for f in formset %}
+                        {% for error in f.non_field_errors %} <li>Detalle: {{ error }}</li> {% endfor %}
+                        {% for field in f %}
+                            {% for error in field.errors %} <li>Detalle ({{ field.label }}): {{ error }}</li> {% endfor %}
                         {% endfor %}
                     {% endfor %}
                 </ul>
             </div>
             {% endif %}
             
+            <h5 class="mt-3 text-agro-primary">Detalles del Movimiento</h5>
             <div class="row">
-                <div class="col-md-6 mb-3">
-                    <label for="{{ form.producto.id_for_label }}" class="form-label fw-semibold">
-                        Producto *
-                    </label>
-                    {{ form.producto }}
-                    {% if producto %}
-                    <div class="form-text">
-                        Stock actual: <strong>{{ producto.stock_actual }} {{ producto.unidad_medida }}</strong>
-                    </div>
-                    {% endif %}
-                </div>
-                
                 <div class="col-md-6 mb-3">
                     <label for="{{ form.tipo_movimiento.id_for_label }}" class="form-label fw-semibold">
                         Tipo de movimiento *
                     </label>
                     {{ form.tipo_movimiento }}
                 </div>
-            </div>
-
-            <div class="row">
-                <div class="col-md-6 mb-3">
-                    <label for="{{ form.cantidad.id_for_label }}" class="form-label fw-semibold">
-                        Cantidad *
-                    </label>
-                    {{ form.cantidad }}
-                    <div class="form-text">En {{ producto.unidad_medida|default:"unidades" }}</div>
-                </div>
-                
                 <div class="col-md-6 mb-3">
                     <label for="{{ form.fecha_movimiento.id_for_label }}" class="form-label fw-semibold">
                         Fecha del movimiento *
@@ -82,7 +69,7 @@
                     Motivo del movimiento *
                 </label>
                 {{ form.motivo }}
-                <div class="form-text">Ej: Compra, venta, aplicación, ajuste, etc.</div>
+                <div class="form-text">Ej: Compra, ajuste inventario, etc.</div>
             </div>
 
             <div class="mb-3">
@@ -91,17 +78,68 @@
                 <div class="form-text">Número de factura, orden de compra, etc.</div>
             </div>
 
-            <!-- Información de cálculo -->
-            {% if producto %}
-            <div class="alert alert-info">
-                <h6 class="alert-heading">Resumen del movimiento:</h6>
-                <ul class="mb-0">
-                    <li>Stock actual: <strong>{{ producto.stock_actual }} {{ producto.unidad_medida }}</strong></li>
-                    <li>Stock después del movimiento: <strong id="stock-posterior">-</strong></li>
-                </ul>
+            <hr class="my-4">
+            <div class="d-flex justify-content-between align-items-center">
+                <h5 class="text-agro-primary">Productos y Cantidades</h5>
+                <button type="button" id="add-form-mov" class="btn btn-success btn-sm">
+                    <i class="bi bi-plus-circle me-1"></i> Añadir Producto
+                </button>
             </div>
-            {% endif %}
+            
+            {{ formset.management_form }}
+            
+            <div id="formset-container-mov" class="mt-3">
+                {% for form in formset %}
+                    <div class="dynamic-form-mov row align-items-center mb-3 p-2 border rounded">
+                        <div class="col-md-5 mb-2">
+                            {{ form.id }} {% if forloop.first %}
+                                <label class="form-label fw-semibold">Producto</label>
+                            {% endif %}
+                            {{ form.producto }}
+                            <div class="text-danger small mt-1">{{ form.producto.errors }}</div>
+                        </div>
+                        <div class="col-md-4 mb-2">
+                            {% if forloop.first %}
+                                <label class="form-label fw-semibold">Cantidad</label>
+                            {% endif %}
+                            {{ form.cantidad }}
+                            <div class="text-danger small mt-1">{{ form.cantidad.errors }}</div>
+                        </div>
+                        <div class="col-md-2 mb-2">
+                            {% if forloop.first %}
+                                <label class="form-label d-block">&nbsp;</label>
+                            {% endif %}
+                            {% if form.instance.pk %}
+                            <div class="form-check">
+                                {{ form.DELETE }}
+                                <label class="form-check-label" for="{{ form.DELETE.id_for_label }}">Eliminar</l>
+                            </div>
+                            {% endif %}
+                        </div>
+                        {% if form.non_field_errors %}
+                        <div class="col-12">
+                            <div class="alert alert-danger py-1 px-2 mb-0">
+                                {{ form.non_field_errors }}
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+            </div>
 
+            <div id="empty-form-mov" class="dynamic-form-mov row align-items-center mb-3 p-2 border rounded" style="display: none;">
+                <div class="col-md-5 mb-2">
+                    <label class="form-label fw-semibold">Producto</label>
+                    {{ formset.empty_form.producto }}
+                </div>
+                <div class="col-md-4 mb-2">
+                    <label class="form-label fw-semibold">Cantidad</label>
+                    {{ formset.empty_form.cantidad }}
+                </div>
+                <div class="col-md-2 mb-2">
+                    <label class="form-label d-block">&nbsp;</label>
+                    </div>
+            </div>
             <div class="d-flex justify-content-between mt-4">
                 <a href="{% url 'inventario:lista_productos' %}" class="btn btn-outline-secondary">
                     <i class="bi bi-x-circle me-2"></i>Cancelar
@@ -117,47 +155,34 @@
 
 {% block extra_js %}
 <script>
-    // Calcular stock posterior en tiempo real
-    document.addEventListener('DOMContentLoaded', function() {
-        const tipoMovimiento = document.getElementById('{{ form.tipo_movimiento.id_for_label }}');
-        const cantidadInput = document.getElementById('{{ form.cantidad.id_for_label }}');
-        const stockPosterior = document.getElementById('stock-posterior');
+document.addEventListener('DOMContentLoaded', function() {
+    // Usamos IDs únicos para este formset
+    const formsetContainer = document.getElementById('formset-container-mov');
+    const addButton = document.getElementById('add-form-mov');
+    // ✨ INICIO DE LA CORRECCIÓN JS ✨
+    // 1. Apuntar al NODO del template
+    const emptyFormTemplate = document.getElementById('empty-form-mov');
+    const totalFormsInput = document.getElementById('id_detalles-TOTAL_FORMS');
+    
+    addButton.addEventListener('click', function() {
+        let formNum = parseInt(totalFormsInput.value);
         
-        const stockActual = {{ producto.stock_actual|default:0 }};
-        const unidadMedida = '{{ producto.unidad_medida|default:"unidades" }}';
+        // 2. Clonar el NODO completo
+        let newFormElement = emptyFormTemplate.cloneNode(true);
+
+        // 3. Quitar el ID y hacerlo visible
+        newFormElement.id = '';
+        newFormElement.style.display = 'flex';
+
+        // 4. Reemplazar el prefijo
+        newFormElement.innerHTML = newFormElement.innerHTML.replace(/__prefix__/g, formNum);
         
-        function calcularStockPosterior() {
-            const tipo = tipoMovimiento.value;
-            const cantidad = parseFloat(cantidadInput.value) || 0;
-            
-            let nuevoStock = stockActual;
-            if (tipo === 'entrada') {
-                nuevoStock = stockActual + cantidad;
-            } else if (tipo === 'salida') {
-                nuevoStock = stockActual - cantidad;
-            } else if (tipo === 'ajuste') {
-                nuevoStock = cantidad;
-            }
-            
-            if (!isNaN(nuevoStock)) {
-                stockPosterior.textContent = nuevoStock.toFixed(2) + ' ' + unidadMedida;
-                
-                // Colorear según el resultado
-                if (nuevoStock < 0) {
-                    stockPosterior.className = 'text-danger fw-bold';
-                } else if (nuevoStock < {{ producto.stock_minimo|default:0 }}) {
-                    stockPosterior.className = 'text-warning fw-bold';
-                } else {
-                    stockPosterior.className = 'text-success fw-bold';
-                }
-            }
-        }
+        // 5. Añadir el NODO
+        formsetContainer.appendChild(newFormElement);
+        // ✨ FIN DE LA CORRECCIÓN JS ✨
         
-        tipoMovimiento.addEventListener('change', calcularStockPosterior);
-        cantidadInput.addEventListener('input', calcularStockPosterior);
-        
-        // Calcular inicialmente
-        calcularStockPosterior();
+        totalFormsInput.value = formNum + 1;
     });
+});
 </script>
 {% endblock %}
