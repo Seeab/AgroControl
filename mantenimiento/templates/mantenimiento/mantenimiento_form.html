@@ -1,0 +1,87 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}{{ titulo }} - AgroControl{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            
+            <form method="POST">
+                {% csrf_token %}
+                <div class="card shadow-sm">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h3>{{ titulo }}</h3>
+                        <a href="{% url 'mantenimiento:dashboard' %}" class="btn btn-secondary btn-sm">
+                            &larr; Volver al Dashboard
+                        </a>
+                    </div>
+                    <div class="card-body">
+                        
+                        {% if form.non_field_errors %}
+                            <div class="alert alert-danger">
+                                {{ form.non_field_errors }}
+                            </div>
+                        {% endif %}
+                        
+                        <div class="row g-3">
+                            
+                            <div class="col-md-6">
+                                <label for="{{ form.maquinaria.id_for_label }}" class="form-label fw-semibold">{{ form.maquinaria.label }}</label>
+                                {{ form.maquinaria }}
+                                {% if form.maquinaria.errors %}
+                                    <div class="text-danger small mt-1">{{ form.maquinaria.errors.as_text }}</div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label for="{{ form.tipo_mantenimiento.id_for_label }}" class="form-label fw-semibold">{{ form.tipo_mantenimiento.label }}</label>
+                                {{ form.tipo_mantenimiento }}
+                                {% if form.tipo_mantenimiento.errors %}
+                                    <div class="text-danger small mt-1">{{ form.tipo_mantenimiento.errors.as_text }}</div>
+                                {% endif %}
+                            </div>
+
+                            <div class="col-md-6">
+                                <label for="{{ form.fecha_mantenimiento.id_for_label }}" class="form-label fw-semibold">{{ form.fecha_mantenimiento.label }}</label>
+                                {{ form.fecha_mantenimiento }}
+                                {% if form.fecha_mantenimiento.errors %}
+                                    <div class="text-danger small mt-1">{{ form.fecha_mantenimiento.errors.as_text }}</div>
+                                {% endif %}
+                            </div>
+
+                            <div class="col-md-6">
+                                <label for="{{ form.operario_responsable.id_for_label }}" class="form-label fw-semibold">{{ form.operario_responsable.label }}</label>
+                                {{ form.operario_responsable }}
+                                {% if form.operario_responsable.errors %}
+                                    <div class="text-danger small mt-1">{{ form.operario_responsable.errors.as_text }}</div>
+                                {% endif %}
+                            </div>
+
+                            <div class="col-12">
+                                <label for="{{ form.descripcion_trabajo.id_for_label }}" class="form-label fw-semibold">{{ form.descripcion_trabajo.label }}</label>
+                                {{ form.descripcion_trabajo }}
+                                {% if form.descripcion_trabajo.errors %}
+                                    <div class="text-danger small mt-1">{{ form.descripcion_trabajo.errors.as_text }}</div>
+                                {% endif %}
+                                <small class="text-muted">{{ form.descripcion_trabajo.help_text }}</small>
+                            </div>
+                        </div>
+
+                    </div>
+                    <div class="card-footer text-end">
+                        <a href="{% url 'mantenimiento:dashboard' %}" class="btn btn-secondary">
+                            Cancelar
+                        </a>
+                        <button type="submit" class="btn btn-agro-primary">
+                            <i class="bi bi-check-circle me-2"></i>{{ boton_texto }}
+                        </button>
+                    </div>
+                </div>
+            </form>
+
+        </div>
+    </div>
+</div>
+{% endblock %}

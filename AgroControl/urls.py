@@ -14,6 +14,7 @@ urlpatterns = [
     
     path('aplicaciones/', include('aplicaciones.urls', namespace='aplicaciones')),
     path('riego/', include('riego.urls', namespace='riego')),
+    path('mantenimiento/', include('mantenimiento.urls', namespace='mantenimiento')),
     
     # ¡ESTAS LÍNEAS SON LAS QUE PROBABLEMENTE TIENES MAL!
     path('cuarteles/', include('cuarteles.urls', namespace='cuarteles')),

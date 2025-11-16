@@ -1,0 +1,95 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}Detalle Riego #{{ riego.id }} - AgroControl{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            
+            <div class="card shadow-sm">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h3>Detalle Riego #{{ riego.id }}</h3>
+                    <a href="{% url 'riego:dashboard' %}" class="btn btn-secondary btn-sm">
+                        &larr; Volver al Dashboard
+                    </a>
+                </div>
+                <div class="card-body">
+                    
+                    <h5 class="card-title">
+                        Riego del {{ riego.fecha|date:"d/m/Y" }}
+                    </h5>
+
+                    <p class="card-subtitle mb-2 text-muted">
+                        Encargado: {{ riego.encargado_riego|default:"Sin Asignar" }}
+                    </p>
+                    <hr>
+                    
+                    <h4 class="mt-4">Fertilizantes Utilizados</h4>
+                    <div class="table-responsive">
+                        <table class="table table-sm table-bordered">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Producto</th>
+                                    <th>Cantidad Utilizada</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for fert in fertilizantes %}
+                                <tr>
+                                    <td>{{ fert.producto.nombre }}</td>
+                                    <td><strong>{{ fert.cantidad_kg|floatformat:2 }} kg</strong></td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="2" class="text-center">No se registraron fertilizantes.</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <h4 class="mt-4">Detalles del Riego</h4>
+                    <dl class="row">
+                        <dt class="col-sm-4">Cuartel</dt>
+                        <dd class="col-sm-8">
+                            <span class="badge bg-info-subtle text-info-emphasis border border-info-subtle">{{ riego.cuartel.nombre }}</span>
+                        </dd>
+                        
+                        <dt class="col-sm-4">Estado</dt>
+                        <dd class="col-sm-8">
+                            {% if riego.estado == 'REALIZADO' %}
+                                <span class="badge bg-success-subtle text-success-emphasis border border-success-subtle"><i class="bi bi-check-circle me-1"></i>Realizado</span>
+                            {% elif riego.estado == 'PROGRAMADO' %}
+                                <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle"><i class="bi bi-clock me-1"></i>Programado</span>
+                            {% elif riego.estado == 'CANCELADO' %}
+                                <span class="badge bg-danger-subtle text-danger-emphasis border border-danger-subtle"><i class="bi bi-x-circle me-1"></i>Cancelado</span>
+                            {% else %}
+                                <span class="badge bg-secondary-subtle text-secondary-emphasis border border-secondary-subtle">{{ riego.estado }}</span>
+                            {% endif %}
+                        </dd>
+
+                        <dt class="col-sm-4">Horario</dt>
+                        <dd class="col-sm-8">{{ riego.horario_inicio|time:"H:i" }} - {{ riego.horario_fin|time:"H:i" }}</dd>
+
+                        <dt class="col-sm-4">Duración</dt>
+                        <dd class="col-sm-8">{{ riego.get_duracion_display }}</dd>
+
+                        <dt class="col-sm-4">Caudal Aplicado</dt>
+                        <dd class="col-sm-8">{{ riego.caudal_m3h|floatformat:2 }} m³/h</dd>
+
+                        <dt class="col-sm-4">Volumen Total</dt>
+                        <dd class="col-sm-8"><strong>{{ riego.volumen_total_m3|floatformat:2 }} m³</strong></dd>
+
+                        <dt class="col-sm-4">Observaciones</dt>
+                        <dd class="col-sm-8">{{ riego.observaciones|default:"N/A" }}</dd>
+                    </dl>
+                    
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -6,12 +6,14 @@ app_name = 'riego'
 urlpatterns = [
     # Vistas principales
     path('', views.dashboard_riego, name='dashboard'),
-    path('lista/', views.lista_riegos, name='riego_lista'),
     path('crear/', views.crear_riego, name='riego_crear'),
-    path('<int:riego_id>/', views.detalle_riego, name='detalle'),
-    path('editar/<int:pk>/', views.editar_riego, name='editar'),
-    path('eliminar/<int:pk>/', views.eliminar_riego, name='eliminar'),
+    path('<int:pk>/', views.detalle_riego, name='riego_detalle'),
+    path('editar/<int:pk>/', views.editar_riego, name='riego_editar'),
+
+    path('<int:pk>/cancelar/', views.cancelar_riego, name='riego_cancelar'), 
     
-    # Fertilizantes
-    path('<int:riego_id>/agregar-fertilizante/', views.agregar_fertilizante, name='agregar_fertilizante'),
+    # 2. URL NUEVA (para el botón del "tick")
+    path('<int:pk>/finalizar/', views.finalizar_riego, name='riego_finalizar'),
+    
+    
 ]

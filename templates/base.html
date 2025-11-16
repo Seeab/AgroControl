@@ -228,8 +228,9 @@
                            href="{% url 'cuarteles:lista_cuarteles' %}">
                             <i class="bi bi-map me-2"></i>Cuarteles
                         </a>
-                        <a class="nav-link disabled-temp" href="#" title="Módulo temporalmente deshabilitado">
-                            <i class="bi bi-droplet me-2"></i>Riego
+                        <a class="nav-link {% if request.resolver_match.app_name == 'riego' %}active{% endif %}" 
+                            href="{% url 'riego:dashboard' %}">
+                             <i class="bi bi-droplet me-2"></i>Riego
                         </a>
                         <a class="nav-link {% if request.resolver_match.app_name == 'aplicaciones' %}active{% endif %}" href="{% url 'aplicaciones:lista_aplicaciones' %}">
                             <i class="bi bi-droplet-half me-2"></i>Aplicaciones
@@ -251,7 +252,8 @@
                            href="{% url 'inventario:lista_maquinaria' %}">
                             <i class="bi bi-wrench me-2"></i>Maquinaria y Herramientas
                         </a>
-                        <a class="nav-link disabled-temp" href="#" title="Módulo temporalmente deshabilitado">
+                        <a class="nav-link {% if request.resolver_match.app_name == 'mantenimiento' %}active{% endif %}"
+                           href="{% url 'mantenimiento:dashboard' %}"> 
                             <i class="bi bi-tools me-2"></i>Mantenimiento
                         </a>
                         
