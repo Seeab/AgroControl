@@ -1,32 +1,26 @@
+# mantenimiento/urls.py (CORREGIDO)
 from django.urls import path
 from . import views
 
-# Este app_name es crucial para que {% url 'mantencion:...' %} funcione
 app_name = 'mantenimiento'
 
 urlpatterns = [
     # 1. Dashboard (Lista Principal)
-    # URL: /mantencion/
     path('', views.dashboard_mantencion, name='dashboard'),
 
+    # <-- CORRECCIÓN: Nombres simplificados
     # 2. Crear
-    # URL: /mantencion/crear/
-    path('crear/', views.crear_mantenimiento, name='mantenimiento_crear'),
-
-    # 3. Detalle
-    # URL: /mantencion/5/
-    path('<int:pk>/', views.detalle_mantenimiento, name='mantenimiento_detalle'),
+    path('crear/', views.crear_mantenimiento, name='crear_mantenimiento'),
 
     # 4. Editar
-    # URL: /mantencion/5/editar/
-    path('<int:pk>/editar/', views.editar_mantenimiento, name='mantenimiento_editar'),
+    path('<int:pk>/editar/', views.editar_mantenimiento, name='editar_mantenimiento'),
+
+    # <-- CORRECCIÓN: 'mantenimiento_detalle' -> 'detalle_mantenimiento'
+    # Esta línea habría causado el siguiente error
+    # 3. Detalle
+    path('<int:pk>/', views.detalle_mantenimiento, name='detalle_mantenimiento'),
 
     # 5. Acciones (Botones de la tabla)
-    # URL: /mantencion/5/finalizar/
-    path('<int:pk>/finalizar/', views.finalizar_mantenimiento, name='mantenimiento_finalizar'),
-    
-    # URL: /mantencion/5/cancelar/
-    path('<int:pk>/cancelar/', views.cancelar_mantenimiento, name='mantenimiento_cancelar'),
-
-    
+    path('<int:pk>/finalizar/', views.finalizar_mantenimiento, name='finalizar_mantenimiento'),
+    path('<int:pk>/cancelar/', views.cancelar_mantenimiento, name='cancelar_mantenimiento'),
 ]

@@ -165,12 +165,9 @@
 </head>
 <body class="{% if request.session.usuario_id %}sidebar-toggled{% endif %}">
     
-    <!-- Navbar Superior (Simplificada) -->
     <nav class="navbar navbar-expand-lg navbar-dark bg-agro-primary shadow-sm sticky-top">
         <div class="container-fluid">
             
-            <!-- Botón de Toggle (NUEVO) -->
-            <!-- Este botón siempre es visible y controla la barra lateral -->
             {% if request.session.usuario_id %}
             <button class="btn btn-outline-light me-2" id="sidebarToggle" aria-label="Toggle sidebar">
                 <i class="bi bi-list"></i>
@@ -182,7 +179,6 @@
                 AgroControl
             </a>
             
-            <!-- Contenedor para el menú de usuario, alineado a la derecha -->
             <div class="ms-auto">
                 <ul class="navbar-nav">
                     {% if request.session.usuario_id %}
@@ -209,14 +205,11 @@
         </div>
     </nav>
 
-    <!-- Wrapper principal que contiene el sidebar y el contenido -->
     <div id="wrapper">
 
         {% if request.session.usuario_id %}
-            <!-- Backdrop (Fondo oscuro para móvil) -->
             <div id="sidebar-backdrop"></div>
 
-            <!-- Barra Lateral (Sidebar) -->
             <div id="sidebar">
                 <div class="pt-3">
                     <div class="nav flex-column">
@@ -225,7 +218,7 @@
                             <small class="text-muted px-3">GESTIÓN AGRÍCOLA</small>
                         </div>
                         <a class="nav-link {% if request.resolver_match.app_name == 'cuarteles' %}active{% endif %}" 
-                           href="{% url 'cuarteles:lista_cuarteles' %}">
+                            href="{% url 'cuarteles:lista_cuarteles' %}">
                             <i class="bi bi-map me-2"></i>Cuarteles
                         </a>
                         <a class="nav-link {% if request.resolver_match.app_name == 'riego' %}active{% endif %}" 
@@ -240,20 +233,20 @@
                                 <small class="text-muted px-3">INVENTARIO</small>
                         </div>
                         <a class="nav-link {% if request.resolver_match.app_name == 'inventario' and 'producto' in request.resolver_match.url_name %}active{% endif %}" 
-                           href="{% url 'inventario:lista_productos' %}">
+                            href="{% url 'inventario:lista_productos' %}">
                             <i class="bi bi-box-seam me-2"></i>Productos
                         </a>
                         <a class="nav-link {% if request.resolver_match.app_name == 'inventario' and 'movimiento' in request.resolver_match.url_name %}active{% endif %}" 
-                           href="{% url 'inventario:historial_movimientos' %}">
+                            href="{% url 'inventario:historial_movimientos' %}">
                             <i class="bi bi-clock-history me-2"></i>Movimientos
                         </a>
                         
                         <a class="nav-link {% if request.resolver_match.app_name == 'inventario' and 'maquinaria' in request.resolver_match.url_name %}active{% endif %}" 
-                           href="{% url 'inventario:lista_maquinaria' %}">
+                            href="{% url 'inventario:lista_maquinaria' %}">
                             <i class="bi bi-wrench me-2"></i>Maquinaria y Herramientas
                         </a>
                         <a class="nav-link {% if request.resolver_match.app_name == 'mantenimiento' %}active{% endif %}"
-                           href="{% url 'mantenimiento:dashboard' %}"> 
+                            href="{% url 'mantenimiento:dashboard' %}"> 
                             <i class="bi bi-tools me-2"></i>Mantenimiento
                         </a>
                         
@@ -271,6 +264,11 @@
                         <a class="nav-link {% if 'operario' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'operario_lista' %}">
                             <i class="bi bi-person-badge me-2"></i> Operarios
                         </a>
+
+                        <a class="nav-link {% if request.resolver_match.app_name == 'ordenes_trabajo' %}active{% endif %}" 
+                           href="{% url 'ordenes_trabajo:lista_ordenes' %}">
+                            <i class="bi bi-clipboard-check me-2"></i> Órdenes de Trabajo
+                        </a>
                         {% endif %}
                         
                         <a class="nav-link disabled-temp" href="#" title="Módulo temporalmente deshabilitado">
@@ -281,10 +279,8 @@
             </div>
         {% endif %}
 
-        <!-- Contenido Principal -->
         <main id="main-content" class="{% if not request.session.usuario_id %}col-12{% endif %}">
             
-            <!-- Cabecera de Página (Títulos y Acciones) -->
             {% if request.session.usuario_id %}
             <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
                 <h1 class="h2">{% block page_title %}{% endblock %}</h1>
@@ -294,7 +290,6 @@
             </div>
             {% endif %}
 
-            <!-- Alertas y Mensajes -->
             {% if messages %}
                 {% for message in messages %}
                 <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
@@ -305,7 +300,6 @@
                 {% endfor %}
             {% endif %}
 
-            <!-- Bloque de Contenido Principal -->
             {% block content %}
             {% endblock %}
         </main>
