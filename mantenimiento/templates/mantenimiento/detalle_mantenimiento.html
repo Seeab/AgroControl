@@ -11,7 +11,7 @@
             <div class="card shadow-sm">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h3>{{ titulo }}</h3>
-                    <a href="{% url 'mantencion:dashboard' %}" class="btn btn-secondary btn-sm">
+                    <a href="{% url 'mantenimiento:dashboard' %}" class="btn btn-secondary btn-sm">
                         &larr; Volver al Dashboard
                     </a>
                 </div>
@@ -34,6 +34,11 @@
                             <span class="badge bg-info-subtle text-info-emphasis border border-info-subtle">{{ mantenimiento.maquinaria.nombre }}</span>
                         </dd>
                         
+                        <dt class="col-sm-4">Cantidad en Tarea</dt>
+                        <dd class="col-sm-8">
+                            <span class="fw-bold">{{ mantenimiento.cantidad }}</span> unidad(es)
+                        </dd>
+                        
                         <dt class="col-sm-4">Estado de Tarea</dt>
                         <dd class="col-sm-8">
                             {% if mantenimiento.estado == 'REALIZADO' %}
@@ -49,8 +54,10 @@
                         <dd class="col-sm-8">
                             {% if mantenimiento.maquinaria.estado == 'operativo' %}
                                 <span class="badge bg-success-subtle text-success-emphasis border border-success-subtle">Operativo</span>
+                                <small class="text-muted"> (Stock: {{ mantenimiento.maquinaria.stock_actual }})</small>
                             {% elif mantenimiento.maquinaria.estado == 'mantenimiento' %}
                                 <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle">En Mantenimiento</span>
+                                <small class="text-muted"> (Stock operativo: {{ mantenimiento.maquinaria.stock_actual }})</small>
                             {% elif mantenimiento.maquinaria.estado == 'de_baja' %}
                                 <span class="badge bg-danger-subtle text-danger-emphasis border border-danger-subtle">De Baja</span>
                             {% endif %}

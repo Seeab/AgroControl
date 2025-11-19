@@ -1,0 +1,135 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}{{ titulo }}{% endblock %}
+{% block page_title %}{{ titulo }}{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-10 offset-md-1">
+        <div class="card card-agro">
+            <div class="card-header bg-agro-light">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-file-earmark-arrow-down me-2"></i>Generar Nuevo Reporte
+                </h5>
+            </div>
+            <div class="card-body">
+                <p class="text-muted">
+                    Seleccione el tipo de reporte, el rango de fechas y el formato de exportación.
+                </p>
+                
+                <form action="{% url 'reportes:generar_reporte' %}" method="POST" id="reporteForm">
+                    {% csrf_token %}
+                    <div class="row g-3">
+                        
+                        <div class="col-md-12">
+                            <label for="tipo_reporte" class="form-label fw-semibold">1. Tipo de Reporte</label>
+                            <select id="tipo_reporte" name="tipo_reporte" class="form-select" required>
+                                <option value="" selected disabled>Seleccione un reporte...</option>
+                                <optgroup label="Riego">
+                                    <option value="riego">Reporte de Riegos Realizados</option>
+                                </optgroup>
+                                <optgroup label="Aplicaciones">
+                                    <option value="aplicacion">Reporte de Productos Aplicados</option>
+                                </optgroup>
+                                <optgroup label="Mantenimiento">
+                                    <option value="mantenimiento">Reporte de Mantenimientos</option>
+                                </optgroup>
+                            </select>
+                        </div>
+
+                        <div class="col-md-12">
+                            <label class="form-label fw-semibold">2. Rango de Fechas</label>
+                            <div class="input-group">
+                                <span class="input-group-text">Desde</span>
+                                <input type="date" class="form-control" name="fecha_inicio" required>
+                                <span class="input-group-text">Hasta</span>
+                                <input type="date" class="form-control" name="fecha_fin" required>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6" id="filtro_cuartel_div" style="display: none;">
+                            <label for="filtro_cuartel" class="form-label fw-semibold">Filtro: Sector (Opcional)</label>
+                            <select id="filtro_cuartel" name="filtro_cuartel" class="form-select">
+                                <option value="">Todos los cuarteles</option>
+                                {% for cuartel in cuarteles %}
+                                    <option value="{{ cuartel.id }}">{{ cuartel.nombre }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="col-md-6" id="filtro_tipo_producto_div" style="display: none;">
+                            <label for="filtro_tipo_producto" class="form-label fw-semibold">Filtro: Tipo Producto (Opcional)</label>
+                            <select id="filtro_tipo_producto" name="filtro_tipo_producto" class="form-select">
+                                <option value="">Todos los tipos</option>
+                                {% for key, value in tipos_producto %}
+                                    <option value="{{ key }}">{{ value }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="col-md-6" id="filtro_tipo_equipo_div" style="display: none;">
+                            <label for="filtro_tipo_equipo" class="form-label fw-semibold">Filtro: Categoría Equipo (Opcional)</label>
+                            <select id="filtro_tipo_equipo" name="filtro_tipo_equipo" class="form-select">
+                                <option value="">Todas las categorías</option>
+                                {% for key, value in tipos_equipo %}
+                                    <option value="{{ key }}">{{ value }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                    </div>
+                    
+                    <hr class="my-4">
+
+                    <div class="text-end">
+                        <label class="form-label fw-semibold d-block">3. Exportar</label>
+                        <button type="submit" name="formato" value="excel" class="btn btn-success btn-lg me-2">
+                            <i class="bi bi-file-earmark-excel me-2"></i>Generar Excel
+                        </button>
+                        <button type="submit" name="formato" value="pdf" class="btn btn-danger btn-lg">
+                            <i class="bi bi-file-earmark-pdf me-2"></i>Generar PDF
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Este script simple muestra los filtros opcionales
+// solo cuando se selecciona el reporte correspondiente.
+document.addEventListener('DOMContentLoaded', function() {
+    const tipoReporteSelect = document.getElementById('tipo_reporte');
+    
+    // Filtros de Aplicacion
+    const filtroCuartel = document.getElementById('filtro_cuartel_div');
+    const filtroTipoProducto = document.getElementById('filtro_tipo_producto_div');
+    
+    // Filtro de Mantenimiento
+    const filtroTipoEquipo = document.getElementById('filtro_tipo_equipo_div');
+
+    tipoReporteSelect.addEventListener('change', function() {
+        const valor = this.value;
+        
+        // Ocultar todos por defecto
+        filtroCuartel.style.display = 'none';
+        filtroTipoProducto.style.display = 'none';
+        filtroTipoEquipo.style.display = 'none';
+
+        if (valor === 'aplicacion') {
+            // Mostrar filtros de Aplicacion
+            filtroCuartel.style.display = 'block';
+            filtroTipoProducto.style.display = 'block';
+        } else if (valor === 'mantenimiento') {
+            // Mostrar filtros de Mantenimiento
+            filtroTipoEquipo.style.display = 'block';
+        }
+        // Si es 'riego', no se muestra ningún filtro extra.
+    });
+});
+</script>
+{% endblock %}

@@ -22,10 +22,8 @@ urlpatterns = [
     path('operarios/crear/', views.operario_crear, name='operario_crear'),
     path('operarios/<int:pk>/editar/', views.operario_editar, name='operario_editar'),
     path('operarios/<int:pk>/eliminar/', views.operario_eliminar, name='operario_eliminar'),
-
-    # ✅ NUEVAS URLs PARA ALERTAS DE CERTIFICACIONES (RF008)
-    path('operarios/alertas/', views.alertas_certificaciones, name='alertas_certificaciones'),
-    path('dashboard/alertas/', views.dashboard_alertas, name='dashboard_alertas'),
+    path('perfil/', views.perfil_usuario, name='perfil_usuario'), # <-- ¡NUEVA LÍNEA!
+    
     
    
 ]

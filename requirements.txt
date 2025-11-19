@@ -1,0 +1,17 @@
+# Núcleo de Django
+Django>=4.2,<5.0  # (O la versión que estés usando, ej: 5.2.7)
+
+# Servidor de Producción (Para Render/Docker)
+gunicorn
+
+# Base de Datos (Render usa PostgreSQL)
+psycopg2-binary
+dj-database-url
+
+# Archivos Estáticos (Para servir CSS/JS en producción)
+whitenoise
+
+# Reportes PDF/Excel (RF036)
+pandas
+openpyxl
+WeasyPrint

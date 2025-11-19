@@ -53,12 +53,15 @@ class UsuarioForm(forms.ModelForm):
         password = cleaned_data.get('password')
         password_confirm = cleaned_data.get('password_confirm')
 
-        if password or password_confirm:
+        if password: 
             if password != password_confirm:
                 raise forms.ValidationError('Las contraseñas no coinciden.')
             
-            if len(password) < 6:
-                raise forms.ValidationError('La contraseña debe tener al menos 6 caracteres.')
+            if len(password) < 8:
+                raise forms.ValidationError('La contraseña debe tener al menos 8 caracteres.')
+            
+            if not re.search(r'[A-Za-z]', password) or not re.search(r'[0-9]', password):
+                raise forms.ValidationError('La contraseña debe ser alfanumérica (contener letras y números).')
 
         return cleaned_data
 
@@ -85,14 +88,13 @@ class OperarioForm(forms.ModelForm):
     class Meta:
         model = Operario
         fields = [
-            'nombre_completo', 'cargo', 'rut', 'telefono',  # ✅ CAMBIADO: carnet -> rut
+            'nombre_completo', 'cargo', 'rut', 'telefono',
             'fecha_emision_certificacion', 'fecha_vencimiento_certificacion',
             'certificacion_documento', 'esta_activo'
         ]
         widgets = {
             'nombre_completo': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nombre completo'}),
             'cargo': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Cargo'}),
-            # ✅ CAMBIADO: carnet -> rut
             'rut': forms.TextInput(attrs={
                 'class': 'form-control', 
                 'placeholder': '12345678-9',
@@ -100,8 +102,20 @@ class OperarioForm(forms.ModelForm):
                 'title': 'Formato: 12345678-9'
             }),
             'telefono': forms.TextInput(attrs={'class': 'form-control', 'placeholder': '+56 9 1234 5678'}),
-            'fecha_emision_certificacion': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
-            'fecha_vencimiento_certificacion': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
+            
+            # ==========================================================
+            # --- ¡AQUÍ ESTÁ LA CORRECCIÓN! ---
+            # Agregamos format='%Y-%m-%d' para que el navegador entienda la fecha
+            # ==========================================================
+            'fecha_emision_certificacion': forms.DateInput(
+                attrs={'class': 'form-control', 'type': 'date'},
+                format='%Y-%m-%d'
+            ),
+            'fecha_vencimiento_certificacion': forms.DateInput(
+                attrs={'class': 'form-control', 'type': 'date'},
+                format='%Y-%m-%d'
+            ),
+            
             'certificacion_documento': forms.FileInput(attrs={
                 'class': 'form-control',
                 'accept': '.pdf,.jpg,.jpeg,.png,.gif'
@@ -111,23 +125,18 @@ class OperarioForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # Hacer el campo de archivo no requerido para edición
         if self.instance and self.instance.pk:
             self.fields['certificacion_documento'].required = False
 
-    # ✅ CAMBIADO: clean_carnet -> clean_rut
     def clean_rut(self):
         rut = self.cleaned_data.get('rut')
         
         if rut:
-            # Eliminar espacios y puntos, mantener solo números, guión y K
             rut_limpio = re.sub(r'[^\dkK-]', '', rut.upper())
             
-            # Verificar formato básico
             if not re.match(r'^\d{7,8}-[\dkK]$', rut_limpio):
                 raise forms.ValidationError('El RUT debe tener formato: 12345678-9')
             
-            # La validación completa se hace en el modelo
             return rut_limpio
         
         return rut
@@ -218,7 +227,7 @@ class CambiarPasswordForm(forms.Form):
     password = forms.CharField(
         widget=forms.PasswordInput(attrs={'class': 'form-control'}),
         label='Nueva Contraseña',
-        min_length=6
+        min_length=8 
     )
     password_confirm = forms.CharField(
         widget=forms.PasswordInput(attrs={'class': 'form-control'}),
@@ -232,5 +241,9 @@ class CambiarPasswordForm(forms.Form):
 
         if password and password_confirm and password != password_confirm:
             raise forms.ValidationError('Las contraseñas no coinciden.')
+
+        if password:
+            if not re.search(r'[A-Za-z]', password) or not re.search(r'[0-9]', password):
+                raise forms.ValidationError('La contraseña debe ser alfanumérica (contener letras y números).')
 
         return cleaned_data

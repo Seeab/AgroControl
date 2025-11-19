@@ -165,12 +165,9 @@
 </head>
 <body class="{% if request.session.usuario_id %}sidebar-toggled{% endif %}">
     
-    <!-- Navbar Superior (Simplificada) -->
     <nav class="navbar navbar-expand-lg navbar-dark bg-agro-primary shadow-sm sticky-top">
         <div class="container-fluid">
             
-            <!-- Botón de Toggle (NUEVO) -->
-            <!-- Este botón siempre es visible y controla la barra lateral -->
             {% if request.session.usuario_id %}
             <button class="btn btn-outline-light me-2" id="sidebarToggle" aria-label="Toggle sidebar">
                 <i class="bi bi-list"></i>
@@ -182,7 +179,6 @@
                 AgroControl
             </a>
             
-            <!-- Contenedor para el menú de usuario, alineado a la derecha -->
             <div class="ms-auto">
                 <ul class="navbar-nav">
                     {% if request.session.usuario_id %}
@@ -192,7 +188,7 @@
                             <span class="d-none d-sm-inline">{{ request.session.usuario_nombre }}</span>
                         </a>
                         <ul class="dropdown-menu dropdown-menu-end">
-                            <li><a class="dropdown-item disabled-temp" href="#"><i class="bi bi-person me-2"></i>Perfil</a></li>
+                            <li><a class="dropdown-item" href="{% url 'perfil_usuario' %}"><i class="bi bi-person me-2"></i>Perfil</a></li>
                             <li><hr class="dropdown-divider"></li>
                             <li><a class="dropdown-item" href="{% url 'logout' %}"><i class="bi bi-box-arrow-right me-2"></i>Cerrar Sesión</a></li>
                         </ul>
@@ -209,82 +205,103 @@
         </div>
     </nav>
 
-    <!-- Wrapper principal que contiene el sidebar y el contenido -->
     <div id="wrapper">
 
         {% if request.session.usuario_id %}
-            <!-- Backdrop (Fondo oscuro para móvil) -->
             <div id="sidebar-backdrop"></div>
 
-            <!-- Barra Lateral (Sidebar) -->
             <div id="sidebar">
                 <div class="pt-3">
                     <div class="nav flex-column">
                         
-                        <div class="nav-item mb-2">
-                            <small class="text-muted px-3">GESTIÓN AGRÍCOLA</small>
-                        </div>
-                        <a class="nav-link {% if request.resolver_match.app_name == 'cuarteles' %}active{% endif %}" 
-                           href="{% url 'cuarteles:lista_cuarteles' %}">
-                            <i class="bi bi-map me-2"></i>Cuarteles
-                        </a>
-                        <a class="nav-link {% if request.resolver_match.app_name == 'riego' %}active{% endif %}" 
-                            href="{% url 'riego:dashboard' %}">
-                             <i class="bi bi-droplet me-2"></i>Riego
-                        </a>
-                        <a class="nav-link {% if request.resolver_match.app_name == 'aplicaciones' %}active{% endif %}" href="{% url 'aplicaciones:lista_aplicaciones' %}">
-                            <i class="bi bi-droplet-half me-2"></i>Aplicaciones
-                        </a>
-                        
-                        <div class="nav-item mt-3 mb-2">
-                                <small class="text-muted px-3">INVENTARIO</small>
-                        </div>
-                        <a class="nav-link {% if request.resolver_match.app_name == 'inventario' and 'producto' in request.resolver_match.url_name %}active{% endif %}" 
-                           href="{% url 'inventario:lista_productos' %}">
-                            <i class="bi bi-box-seam me-2"></i>Productos
-                        </a>
-                        <a class="nav-link {% if request.resolver_match.app_name == 'inventario' and 'movimiento' in request.resolver_match.url_name %}active{% endif %}" 
-                           href="{% url 'inventario:historial_movimientos' %}">
-                            <i class="bi bi-clock-history me-2"></i>Movimientos
-                        </a>
-                        
-                        <a class="nav-link {% if request.resolver_match.app_name == 'inventario' and 'maquinaria' in request.resolver_match.url_name %}active{% endif %}" 
-                           href="{% url 'inventario:lista_maquinaria' %}">
-                            <i class="bi bi-wrench me-2"></i>Maquinaria y Herramientas
-                        </a>
-                        <a class="nav-link {% if request.resolver_match.app_name == 'mantenimiento' %}active{% endif %}"
-                           href="{% url 'mantenimiento:dashboard' %}"> 
-                            <i class="bi bi-tools me-2"></i>Mantenimiento
-                        </a>
-                        
-                        <div class="nav-item mt-3 mb-2">
-                            <small class="text-muted px-3">ADMINISTRACIÓN</small>
-                        </div>
-                        <a class="nav-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}" href="{% url 'dashboard' %}">
-                            <i class="bi bi-speedometer2 me-2"></i> Dashboard
-                        </a>
-                        
                         {% if request.session.es_administrador %}
-                        <a class="nav-link {% if 'usuario' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'usuario_lista' %}">
-                            <i class="bi bi-people me-2"></i> Usuarios
-                        </a>
-                        <a class="nav-link {% if 'operario' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'operario_lista' %}">
-                            <i class="bi bi-person-badge me-2"></i> Operarios
-                        </a>
+                            
+                            <div class="nav-item mb-2">
+                                <small class="text-muted px-3">ADMINISTRACIÓN</small>
+                            </div>
+                            <a class="nav-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}" href="{% url 'dashboard' %}">
+                                <i class="bi bi-speedometer2 me-2"></i> Dashboard
+                            </a>
+                            <a class="nav-link {% if 'usuario' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'usuario_lista' %}">
+                                <i class="bi bi-people me-2"></i> Usuarios
+                            </a>
+                            <a class="nav-link {% if 'operario' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'operario_lista' %}">
+                                <i class="bi bi-person-badge me-2"></i> Operarios
+                            </a>
+                            <a class="nav-link {% if request.resolver_match.app_name == 'reportes' %}active{% endif %}" href="{% url 'reportes:pagina_reportes' %}">
+                                <i class="bi bi-file-text me-2"></i>Reportes
+                            </a>
+
+                            <div class="nav-item mt-3 mb-2">
+                                <small class="text-muted px-3">GESTIÓN AGRÍCOLA</small>
+                            </div>
+                            <a class="nav-link {% if request.resolver_match.app_name == 'cuarteles' %}active{% endif %}" 
+                               href="{% url 'cuarteles:lista_cuarteles' %}">
+                                <i class="bi bi-map me-2"></i>Cuarteles
+                            </a>
+                            <a class="nav-link {% if request.resolver_match.app_name == 'riego' %}active{% endif %}" 
+                               href="{% url 'riego:dashboard' %}">
+                                 <i class="bi bi-droplet me-2"></i>Riego
+                            </a>
+                            <a class="nav-link {% if request.resolver_match.app_name == 'aplicaciones' %}active{% endif %}" href="{% url 'aplicaciones:lista_aplicaciones' %}">
+                                <i class="bi bi-droplet-half me-2"></i>Aplicaciones
+                            </a>
+                            
+                            <div class="nav-item mt-3 mb-2">
+                                <small class="text-muted px-3">INVENTARIO Y MANTENIMIENTO</small>
+                            </div>
+                            <a class="nav-link {% if request.resolver_match.app_name == 'inventario' and 'producto' in request.resolver_match.url_name %}active{% endif %}" 
+                               href="{% url 'inventario:lista_productos' %}">
+                                <i class="bi bi-box-seam me-2"></i>Productos
+                            </a>
+                            <a class="nav-link {% if request.resolver_match.app_name == 'inventario' and 'movimiento' in request.resolver_match.url_name %}active{% endif %}" 
+                               href="{% url 'inventario:historial_movimientos' %}">
+                                <i class="bi bi-clock-history me-2"></i>Movimientos
+                            </a>
+                            <a class="nav-link {% if request.resolver_match.app_name == 'inventario' and 'maquinaria' in request.resolver_match.url_name %}active{% endif %}" 
+                               href="{% url 'inventario:lista_maquinaria' %}">
+                                <i class="bi bi-wrench me-2"></i>Maquinaria y Herramientas
+                            </a>
+                            <a class="nav-link {% if request.resolver_match.app_name == 'mantenimiento' %}active{% endif %}"
+                               href="{% url 'mantenimiento:dashboard' %}"> 
+                                <i class="bi bi-tools me-2"></i>Mantenimiento
+                            </a>
+                        
+                        {% elif request.session.usuario_rol == 'regador' %}
+                            <div class="nav-item mb-2">
+                                <small class="text-muted px-3">GESTIÓN AGRÍCOLA</small>
+                            </div>
+                            <a class="nav-link {% if request.resolver_match.app_name == 'riego' %}active{% endif %}" 
+                               href="{% url 'riego:dashboard' %}">
+                                 <i class="bi bi-droplet me-2"></i>Riego
+                            </a>
+
+                        {% elif request.session.usuario_rol == 'aplicador' %}
+                            <div class="nav-item mb-2">
+                                <small class="text-muted px-3">GESTIÓN AGRÍCOLA</small>
+                            </div>
+                            <a class="nav-link {% if request.resolver_match.app_name == 'aplicaciones' %}active{% endif %}" href="{% url 'aplicaciones:lista_aplicaciones' %}">
+                                <i class="bi bi-droplet-half me-2"></i>Aplicaciones
+                            </a>
+
+                        {% elif request.session.usuario_rol == 'encargado de mantencion' %}
+                            <div class="nav-item mb-2">
+                                <small class="text-muted px-3">MANTENIMIENTO</small>
+                            </div>
+                            <a class="nav-link {% if request.resolver_match.app_name == 'mantenimiento' %}active{% endif %}"
+                               href="{% url 'mantenimiento:dashboard' %}"> 
+                                <i class="bi bi-tools me-2"></i>Mantenimiento
+                            </a>
+                        
                         {% endif %}
                         
-                        <a class="nav-link disabled-temp" href="#" title="Módulo temporalmente deshabilitado">
-                            <i class="bi bi-file-text me-2"></i>Reportes
-                        </a>
                     </div>
                 </div>
             </div>
-        {% endif %}
+            {% endif %}
 
-        <!-- Contenido Principal -->
         <main id="main-content" class="{% if not request.session.usuario_id %}col-12{% endif %}">
             
-            <!-- Cabecera de Página (Títulos y Acciones) -->
             {% if request.session.usuario_id %}
             <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
                 <h1 class="h2">{% block page_title %}{% endblock %}</h1>
@@ -294,7 +311,6 @@
             </div>
             {% endif %}
 
-            <!-- Alertas y Mensajes -->
             {% if messages %}
                 {% for message in messages %}
                 <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
@@ -305,7 +321,6 @@
                 {% endfor %}
             {% endif %}
 
-            <!-- Bloque de Contenido Principal -->
             {% block content %}
             {% endblock %}
         </main>
@@ -334,21 +349,9 @@
                 });
             }
 
-            // ---- Lógica para estado 'active' del sidebar (Opcional pero recomendado) ----
-            // Esto asegura que el enlace "padre" se marque como activo.
-            // Por ejemplo, si estás en "crear_producto", el enlace "Productos" se marcará.
-            const currentPath = window.location.pathname;
-            const sidebarLinks = document.querySelectorAll('#sidebar .nav-link');
-
-            sidebarLinks.forEach(link => {
-                const linkPath = link.getAttribute('href');
-                if (linkPath && currentPath.startsWith(linkPath)) {
-                    // Quita 'active' de todos
-                    sidebarLinks.forEach(l => l.classList.remove('active'));
-                    // Añade 'active' al enlace actual
-                    link.classList.add('active');
-                }
-            });
+            // ---- Lógica para estado 'active' del sidebar ----
+            // Esta lógica se movió de JS a CSS/Django para que sea más simple
+            // (ver 'active' en las clases de los nav-link)
         });
     </script>
 

@@ -4,20 +4,14 @@ from django.db.models import Q
 from django.utils import timezone
 from django.db import transaction
 from django.core.exceptions import ValidationError
-from django.views.decorators.http import require_POST # ¡Importante!
+from django.views.decorators.http import require_POST 
 
-
-# Modelos de esta app
 from .models import Mantenimiento
-
-# Modelos de otras apps
 from autenticacion.models import Usuario 
 from inventario.models import EquipoAgricola
-
-# Formularios
 from .forms import MantenimientoForm
 
-# --- Decorador de Login (SIN CAMBIOS) ---
+# ... (decorador login_required) ...
 def login_required(view_func):
     def wrapper(request, *args, **kwargs):
         if not request.session.get('usuario_id'):
@@ -26,51 +20,34 @@ def login_required(view_func):
         return view_func(request, *args, **kwargs)
     return wrapper
 
-# ===============================================================
-#  VISTA PRINCIPAL: dashboard_mantencion (MODIFICADA)
-# ===============================================================
+# ... (dashboard_mantencion sin cambios) ...
 @login_required
 def dashboard_mantencion(request):
-    """
-    Dashboard principal con filtros para TIPO DE EQUIPO y Estado.
-    """
-    
-    # --- 1. LÓGICA DE FILTROS (MODIFICADA) ---
-    tipo_equipo_filtro = request.GET.get('tipo_equipo', '') # <-- CAMBIO: Filtro por tipo de equipo
+    # ... (tu vista de dashboard que filtra por tipo de equipo y estado) ...
+    tipo_equipo_filtro = request.GET.get('tipo_equipo', '')
     estado_filtro = request.GET.get('estado', '')
     
     mantenimientos_list = Mantenimiento.objects.select_related(
         'maquinaria', 'operario_responsable'
     ).order_by('-fecha_mantenimiento')
     
-    if tipo_equipo_filtro: # <-- CAMBIO
-        mantenimientos_list = mantenimientos_list.filter(maquinaria__tipo=tipo_equipo_filtro)
+    if tipo_equipo_filtro:
+        mantenimientos_list = mantenimientos_list.filter(maquinaria__tipo=tipo_equipo_filtro) 
     if estado_filtro:
         mantenimientos_list = mantenimientos_list.filter(estado=estado_filtro)
     
-    # --- 2. LÓGICA DE ESTADÍSTICAS (TARJETAS) ---
-    # Usamos la lista filtrada para las estadísticas principales
     total_mantenciones = mantenimientos_list.count()
     mantenciones_programadas = mantenimientos_list.filter(estado='PROGRAMADO').count()
     mantenciones_realizadas = mantenimientos_list.filter(estado='REALIZADO').count()
     
-    # --- TARJETA "EQUIPOS EN MANTENCIÓN" ELIMINADA ---
-    
-    # --- 3. CONTEXTO PARA LA PLANTILLA ---
     context = {
-        # Estadísticas (3 tarjetas)
         'total_mantenciones': total_mantenciones,
         'mantenciones_programadas': mantenciones_programadas,
         'mantenciones_realizadas': mantenciones_realizadas,
-        
-        # Lista (Sin paginación)
         'mantenimientos_list': mantenimientos_list, 
-        
-        # Datos para rellenar los filtros (MODIFICADOS)
-        'tipo_equipo_choices': EquipoAgricola.TIPO_EQUIPO_CHOICES, # Pasamos los choices de EquipoAgricola
+        'tipo_equipo_choices': EquipoAgricola.TIPO_EQUIPO_CHOICES,
         'tipo_equipo_filtro': tipo_equipo_filtro,
         'estado_filtro': estado_filtro, 
-        
         'titulo': 'Dashboard - Mantenimiento',
         'usuario_nombre': request.session.get('usuario_nombre', 'Usuario')
     }
@@ -78,14 +55,15 @@ def dashboard_mantencion(request):
 
 
 # ===============================================================
-#  VISTAS CRUD (Lógica de "Programar" -> "Finalizar")
+#  VISTAS CRUD (LÓGICA DE STOCK MODIFICADA)
 # ===============================================================
 
 @login_required
 def crear_mantenimiento(request):
     """
     Crea una nueva mantención.
-    Pone el equipo en estado 'mantenimiento'.
+    Resta la 'cantidad' del 'stock_actual' del equipo.
+    Si el stock llega a 0, también cambia el estado del equipo.
     """
     
     usuario_id = request.session.get('usuario_id')
@@ -105,17 +83,27 @@ def crear_mantenimiento(request):
                     mantenimiento.creado_por = usuario_logueado 
                     mantenimiento.estado = 'PROGRAMADO'
                     
+                    # --- NUEVA LÓGICA DE STOCK ---
                     equipo = mantenimiento.maquinaria
+                    cantidad = mantenimiento.cantidad
                     
-                    if equipo.estado != 'operativo':
-                        raise ValidationError(f'El equipo "{equipo.nombre}" ya no está operativo (estado actual: {equipo.get_estado_display()}).')
+                    # 1. Validar stock (seguridad)
+                    if cantidad > equipo.stock_actual:
+                        raise ValidationError(f'Stock insuficiente para "{equipo.nombre}". Stock operativo: {equipo.stock_actual}, se solicitan: {cantidad}.')
                     
-                    equipo.estado = 'mantenimiento'
-                    equipo.save(update_fields=['estado'])
+                    # 2. Restar del stock "operativo"
+                    equipo.stock_actual -= cantidad
                     
+                    # 3. Si el stock operativo llega a 0, cambiar el estado del equipo
+                    if equipo.stock_actual == 0:
+                        equipo.estado = 'mantenimiento'
+                    
+                    equipo.save(update_fields=['stock_actual', 'estado'])
+                    
+                    # 4. Guardar la mantención
                     mantenimiento.save() 
                 
-                messages.success(request, f'Mantención para "{equipo.nombre}" programada. El equipo ahora figura "En Mantenimiento".')
+                messages.success(request, f'Mantención para {cantidad}x "{equipo.nombre}" programada. Stock operativo restante: {equipo.stock_actual}.')
                 return redirect('mantenimiento:dashboard')
             
             except (ValidationError, Exception) as e:
@@ -140,7 +128,7 @@ def crear_mantenimiento(request):
 def editar_mantenimiento(request, pk):
     """
     Edita una mantención 'PROGRAMADA'.
-    Permite cambiar la maquinaria (liberando la antigua y bloqueando la nueva).
+    Debe ajustar el stock si la cantidad o el equipo cambian.
     """
     mantenimiento = get_object_or_404(Mantenimiento.objects.select_related('maquinaria'), pk=pk)
     
@@ -148,7 +136,9 @@ def editar_mantenimiento(request, pk):
         messages.error(request, f'Esta mantención no se puede editar (estado: {mantenimiento.get_estado_display()}).')
         return redirect('mantenimiento:dashboard')
 
-    id_equipo_original = mantenimiento.maquinaria.id
+    # Guardamos los valores originales
+    equipo_original = mantenimiento.maquinaria
+    cantidad_original = mantenimiento.cantidad
 
     if request.method == 'POST':
         form = MantenimientoForm(request.POST, instance=mantenimiento)
@@ -156,27 +146,38 @@ def editar_mantenimiento(request, pk):
         if form.is_valid():
             try:
                 with transaction.atomic():
-                    mantenimiento_editado = form.save()
-                    
-                    id_equipo_nuevo = mantenimiento_editado.maquinaria.id
-                    
-                    if id_equipo_original != id_equipo_nuevo:
-                        
-                        equipo_original = EquipoAgricola.objects.get(id=id_equipo_original)
+                    # 1. Devolver el stock original (temporalmente)
+                    equipo_original.stock_actual += cantidad_original
+                    if equipo_original.stock_actual > 0:
                         equipo_original.estado = 'operativo'
-                        equipo_original.save(update_fields=['estado'])
-                        
-                        equipo_nuevo = mantenimiento_editado.maquinaria
-                        if equipo_nuevo.estado != 'operativo':
-                             raise ValidationError(f'El nuevo equipo "{equipo_nuevo.nombre}" no está operativo.')
-                        
+                    equipo_original.save(update_fields=['stock_actual', 'estado'])
+
+                    # 2. Obtener nuevos valores del form
+                    mantenimiento_editado = form.save(commit=False)
+                    equipo_nuevo = mantenimiento_editado.maquinaria
+                    cantidad_nueva = mantenimiento_editado.cantidad
+                    
+                    # 3. Validar y restar el nuevo stock
+                    # (Necesitamos refrescar el objeto si es el mismo)
+                    if equipo_nuevo.id == equipo_original.id:
+                        equipo_nuevo.refresh_from_db() 
+
+                    if cantidad_nueva > equipo_nuevo.stock_actual:
+                        raise ValidationError(f'Stock insuficiente para "{equipo_nuevo.nombre}". Stock operativo: {equipo_nuevo.stock_actual}, se solicitan: {cantidad_nueva}.')
+
+                    equipo_nuevo.stock_actual -= cantidad_nueva
+                    if equipo_nuevo.stock_actual == 0:
                         equipo_nuevo.estado = 'mantenimiento'
-                        equipo_nuevo.save(update_fields=['estado'])
+                    equipo_nuevo.save(update_fields=['stock_actual', 'estado'])
+                    
+                    # 4. Guardar la mantención editada
+                    mantenimiento_editado.save()
 
                 messages.success(request, 'Mantención actualizada exitosamente.')
                 return redirect('mantenimiento:dashboard')
                 
             except (ValidationError, Exception) as e:
+                # Si falla, revertir el stock original (la transacción lo hace)
                 form.add_error(None, f"Error al actualizar: {str(e)}")
                 messages.error(request, 'No se pudo actualizar la mantención.')
         else:
@@ -195,14 +196,13 @@ def editar_mantenimiento(request, pk):
 
 @login_required
 def detalle_mantenimiento(request, pk):
-    """Muestra el detalle de una mantención."""
+    # ... (Esta vista no cambia) ...
     mantenimiento = get_object_or_404(
         Mantenimiento.objects.select_related(
             'maquinaria', 'operario_responsable', 'creado_por'
         ), 
         pk=pk
     )
-    
     context = {
         'mantenimiento': mantenimiento,
         'titulo': f'Detalle Mantención #{mantenimiento.id}'
@@ -211,7 +211,7 @@ def detalle_mantenimiento(request, pk):
 
 
 # ===============================================================
-#  VISTAS DE ACCIÓN (Lógica de "Programar" -> "Finalizar")
+#  VISTAS DE ACCIÓN (LÓGICA DE STOCK MODIFICADA)
 # ===============================================================
 
 @login_required
@@ -219,7 +219,7 @@ def detalle_mantenimiento(request, pk):
 def finalizar_mantenimiento(request, pk):
     """
     Cambia el estado de 'PROGRAMADO' a 'REALIZADO'
-    y pone el equipo 'operativo'.
+    y DEVUELVE la 'cantidad' al 'stock_actual' del equipo.
     """
     mantenimiento = get_object_or_404(Mantenimiento.objects.select_related('maquinaria'), pk=pk)
     
@@ -230,13 +230,16 @@ def finalizar_mantenimiento(request, pk):
     try:
         with transaction.atomic():
             mantenimiento.estado = 'REALIZADO'
-            mantenimiento.save(update_fields=['estado'])
             
+            # --- NUEVA LÓGICA DE STOCK ---
             equipo = mantenimiento.maquinaria
-            equipo.estado = 'operativo'
-            equipo.save(update_fields=['estado'])
+            equipo.stock_actual += mantenimiento.cantidad
+            equipo.estado = 'operativo' # Al finalizar, siempre vuelve a operativo
+            
+            equipo.save(update_fields=['stock_actual', 'estado'])
+            mantenimiento.save(update_fields=['estado'])
         
-        messages.success(request, f'Mantención ID {mantenimiento.id} finalizada. Equipo "{equipo.nombre}" está "Operativo".')
+        messages.success(request, f'Mantención ID {mantenimiento.id} finalizada. {mantenimiento.cantidad}x "{equipo.nombre}" devuelto/s al stock operativo.')
     
     except Exception as e:
         messages.error(request, f'Error al finalizar Tarea ID {mantenimiento.id}: {str(e)}')
@@ -249,7 +252,7 @@ def finalizar_mantenimiento(request, pk):
 def cancelar_mantenimiento(request, pk):
     """
     Cambia el estado de 'PROGRAMADO' a 'CANCELADO'
-    y pone el equipo 'operativo'.
+    y DEVUELVE la 'cantidad' al 'stock_actual' del equipo.
     """
     mantenimiento = get_object_or_404(Mantenimiento.objects.select_related('maquinaria'), pk=pk)
     
@@ -260,17 +263,19 @@ def cancelar_mantenimiento(request, pk):
     try:
         with transaction.atomic():
             mantenimiento.estado = 'CANCELADO'
-            mantenimiento.save(update_fields=['estado'])
 
+            # --- NUEVA LÓGICA DE STOCK ---
             equipo = mantenimiento.maquinaria
-            equipo.estado = 'operativo'
-            equipo.save(update_fields=['estado'])
+            equipo.stock_actual += mantenimiento.cantidad
+            equipo.estado = 'operativo' # Al cancelar, vuelve a operativo
             
-        messages.success(request, f'Mantención ID {mantenimiento.id} cancelada. Equipo "{equipo.nombre}" está "Operativo".')
+            equipo.save(update_fields=['stock_actual', 'estado'])
+            mantenimiento.save(update_fields=['estado'])
+            
+        messages.success(request, f'Mantención ID {mantenimiento.id} cancelada. {mantenimiento.cantidad}x "{equipo.nombre}" devuelto/s al stock operativo.')
             
         return redirect('mantenimiento:dashboard')
     
     except Exception as e:
         messages.error(request, f'Error al cancelar: {str(e)}')
         return redirect('mantenimiento:dashboard')
-    

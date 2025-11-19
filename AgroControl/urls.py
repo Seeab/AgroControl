@@ -20,6 +20,7 @@ urlpatterns = [
     path('cuarteles/', include('cuarteles.urls', namespace='cuarteles')),
     path('inventario/', include('inventario.urls', namespace='inventario')),
     
+    path('reportes/', include('reportes.urls', namespace='reportes')),
     # --- 2. RUTA RAÍZ (al final) ---
     # La app de autenticación (login/dashboard) va ÚLTIMA
     # porque su ruta '' atrapará todo lo demás.

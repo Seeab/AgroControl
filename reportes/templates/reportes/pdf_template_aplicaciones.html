@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ titulo_reporte }}</title>
+    <style>
+        body { font-family: sans-serif; font-size: 10px; }
+        h1 { color: #2E8B57; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th, td { border: 1px solid #ccc; padding: 5px; text-align: left; vertical-align: top; }
+        th { background-color: #F0FFF0; color: #228B22; }
+        .footer { text-align: right; font-size: 9px; color: #777; margin-top: 20px; }
+    </style>
+</head>
+<body>
+    <h1>{{ titulo_reporte }}</h1>
+    <p><strong>Periodo:</strong> {{ fecha_inicio|date:"d/m/Y" }} al {{ fecha_fin|date:"d/m/Y" }}</p>
+
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Fecha</th>
+                <th>Producto</th>
+                <th>Tipo</th>
+                <th>Dosis/Ha</th>
+                <th>Cant. Total</th>
+                <th>Unidad</th>
+                <th>Cuarteles</th>
+                <th>Aplicador</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in aplicaciones %}
+            <tr>
+                <td>{{ item.aplicacion.id }}</td>
+                <td>{{ item.aplicacion.fecha_aplicacion|date:"d/m/Y" }}</td>
+                <td>{{ item.producto.nombre }}</td>
+                <td>{{ item.producto.get_tipo_display }}</td>
+                <td>{{ item.dosis_por_hectarea }}</td>
+                <td>{{ item.cantidad_utilizada }}</td>
+                <td>{{ item.producto.unidad_medida }}</td>
+                <td>{{ item.aplicacion.cuarteles.all|join:", " }}</td>
+                <td>{{ item.aplicacion.aplicador|default:"N/A" }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    
+    <div style="margin-top: 20px; padding: 10px; background-color: #f9f9f9; border: 1px solid #eee;">
+        <b>Resumen de Totales:</b>
+        {% for total in totales %}
+             {{ total.total|floatformat:2 }} {{ total.producto__unidad_medida }}{% if not forloop.last %} | {% endif %}
+        {% endfor %}
+    </div>
+
+    <div class="footer">Generado el: {{ fecha_generacion|date:"d/m/Y H:i" }}</div>
+</body>
+</html>

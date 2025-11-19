@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Reporte de Riego</title>
+    <style>
+        body { font-family: sans-serif; font-size: 10px; }
+        h1 { color: #2E8B57; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th, td { border: 1px solid #ccc; padding: 5px; text-align: left; vertical-align: top; }
+        th { background-color: #F0FFF0; color: #228B22; }
+        .total { font-weight: bold; font-size: 12px; }
+        .footer { text-align: right; font-size: 9px; color: #777; margin-top: 20px; }
+    </style>
+</head>
+<body>
+    <h1>Reporte de Riegos Realizados</h1>
+    <p><strong>Periodo:</strong> {{ fecha_inicio|date:"d/m/Y" }} al {{ fecha_fin|date:"d/m/Y" }}</p>
+
+    <table>
+        <thead>
+            <tr>
+                <th style="width: 10%;">Fecha</th>
+                <th style="width: 12%;">Cuartel</th>
+                <th style="width: 12%;">Horario</th>
+                <th style="width: 8%;">Duración</th>
+                <th style="width: 8%;">Caudal</th>
+                <th style="width: 10%;">Volumen</th>
+                <th style="width: 25%;">Fertilizantes</th>
+                <th style="width: 15%;">Encargado</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for riego in riegos %}
+            <tr>
+                <td>{{ riego.fecha|date:"d/m/Y" }}</td>
+                <td>{{ riego.cuartel.nombre }}</td>
+                <td>{{ riego.horario_inicio|time:"H:i" }} - {{ riego.horario_fin|time:"H:i" }}</td>
+                <td>{{ riego.get_duracion_display }}</td>
+                <td>{{ riego.caudal_m3h }}</td>
+                <td>{{ riego.volumen_total_m3 }}</td>
+                <td>
+                    {% if riego.incluye_fertilizante %}
+                        {% for f in riego.fertilizantes.all %}
+                            {{ f.producto.nombre }} ({{ f.cantidad_kg }}kg){% if not forloop.last %}, {% endif %}
+                        {% endfor %}
+                    {% else %}
+                        No aplica
+                    {% endif %}
+                </td>
+                <td>{{ riego.encargado_riego|default:"N/A" }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+        <tfoot>
+            <tr class="total">
+                <td colspan="5" style="text-align: right;">Consumo Total de Agua:</td>
+                <td colspan="3">{{ total_agua|floatformat:2 }} m³</td>
+            </tr>
+        </tfoot>
+    </table>
+    <div class="footer">Generado el: {{ fecha_generacion|date:"d/m/Y H:i" }}</div>
+</body>
+</html>

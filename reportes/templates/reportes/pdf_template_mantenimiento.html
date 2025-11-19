@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ titulo_reporte }}</title>
+    <style>
+        body { font-family: sans-serif; font-size: 10px; }
+        h1 { color: #2E8B57; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th, td { border: 1px solid #ccc; padding: 5px; text-align: left; vertical-align: top; }
+        th { background-color: #F0FFF0; color: #228B22; }
+        .footer { text-align: right; font-size: 9px; color: #777; margin-top: 20px; }
+    </style>
+</head>
+<body>
+    <h1>{{ titulo_reporte }}</h1>
+    <p><strong>Periodo:</strong> {{ fecha_inicio|date:"d/m/Y" }} al {{ fecha_fin|date:"d/m/Y" }}</p>
+
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Fecha Prog.</th>
+                <th>Equipo</th>
+                <th>Categoría</th>
+                <th>Cant.</th>
+                <th>Tipo Tarea</th>
+                <th>Estado</th>
+                <th>Responsable</th>
+                <th>Descripción</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for mant in mantenimientos %}
+            <tr>
+                <td>{{ mant.id }}</td>
+                <td>{{ mant.fecha_mantenimiento|date:"d/m/Y H:i" }}</td>
+                <td>{{ mant.maquinaria.nombre }}</td>
+                <td>{{ mant.maquinaria.get_tipo_display }}</td>
+                <td>{{ mant.cantidad }}</td>
+                <td>{{ mant.get_tipo_mantenimiento_display }}</td>
+                <td>{{ mant.get_estado_display }}</td>
+                <td>{{ mant.operario_responsable|default:"N/A" }}</td>
+                <td>{{ mant.descripcion_trabajo }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <div class="footer">Generado el: {{ fecha_generacion|date:"d/m/Y H:i" }}</div>
+</body>
+</html>

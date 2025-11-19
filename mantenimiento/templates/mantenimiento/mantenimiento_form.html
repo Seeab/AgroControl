@@ -36,6 +36,14 @@
                             </div>
                             
                             <div class="col-md-6">
+                                <label for="{{ form.cantidad.id_for_label }}" class="form-label fw-semibold">{{ form.cantidad.label }}</label>
+                                {{ form.cantidad }}
+                                {% if form.cantidad.errors %}
+                                    <div class="text-danger small mt-1">{{ form.cantidad.errors.as_text }}</div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-6">
                                 <label for="{{ form.tipo_mantenimiento.id_for_label }}" class="form-label fw-semibold">{{ form.tipo_mantenimiento.label }}</label>
                                 {{ form.tipo_mantenimiento }}
                                 {% if form.tipo_mantenimiento.errors %}
@@ -51,8 +59,7 @@
                                 {% endif %}
                             </div>
 
-                            <div class="col-md-6">
-                                <label for="{{ form.operario_responsable.id_for_label }}" class="form-label fw-semibold">{{ form.operario_responsable.label }}</label>
+                            <div class="col-12"> <label for="{{ form.operario_responsable.id_for_label }}" class="form-label fw-semibold">{{ form.operario_responsable.label }}</label>
                                 {{ form.operario_responsable }}
                                 {% if form.operario_responsable.errors %}
                                     <div class="text-danger small mt-1">{{ form.operario_responsable.errors.as_text }}</div>

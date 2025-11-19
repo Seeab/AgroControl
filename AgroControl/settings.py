@@ -94,8 +94,31 @@ DATABASES = {
 
 # Configuración para login/logout
 LOGIN_URL = '/login/'  # ⬅️ Tu URL de login
-LOGIN_REDIRECT_URL = '/dashboard/'  # ⬅️ Donde redirigir después del login
 LOGOUT_REDIRECT_URL = '/login/'  # ⬅️ Donde redirigir después del logout
+
+# ==============================================
+#  CONFIGURACIÓN DE SESIONES (AgroControl)
+# ==============================================
+
+# 1. Duración de la sesión (en segundos)
+# 3600 = 1 hora. 
+# Si el usuario no hace nada en 1 hora, se le cerrará la sesión.
+SESSION_COOKIE_AGE = 3600 
+
+# 2. ¿Cerrar sesión al cerrar el navegador?
+# True = Si cierra Chrome/Edge, tiene que loguearse de nuevo (Más seguro).
+# False = Puede cerrar y abrir el navegador y seguir logueado (Más cómodo).
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+
+# 3. Renovar la sesión con actividad
+# True = Si el usuario hace click, el contador de 1 hora se reinicia.
+# (Es lo ideal para que no se le cierre mientras trabaja).
+SESSION_SAVE_EVERY_REQUEST = True
+
+# 4. Seguridad (Para producción/HTTPS)
+# Ponlos en True cuando subas a Render y tengas HTTPS activado.
+# SESSION_COOKIE_SECURE = True 
+# CSRF_COOKIE_SECURE = True
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
 

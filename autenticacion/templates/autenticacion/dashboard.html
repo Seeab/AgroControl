@@ -1,27 +1,30 @@
 {% extends 'base.html' %}
+{% load humanize %}
 
 {% block title %}Dashboard - AgroControl{% endblock %}
 {% block page_title %}Dashboard{% endblock %}
 
 {% block content %}
+
 <div class="row mb-4">
-    <!-- Card: Total Usuarios -->
-    <div class="col-md-4">
-        <div class="card text-white bg-primary mb-3">
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card card-agro border-start border-primary border-4 h-100">
             <div class="card-body">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                        <h6 class="card-title text-white-50 mb-2">Usuarios Activos</h6>
-                        <h2 class="mb-0">{{ total_usuarios }}</h2>
+                <div class="row align-items-center h-100">
+                    <div class="col">
+                        <div class="text-xs fw-bold text-primary text-uppercase mb-1">
+                            Usuarios Activos
+                        </div>
+                        <div class="h5 mb-0 fw-bold text-gray-800">{{ total_usuarios }}</div>
                     </div>
-                    <div class="fs-1">
-                        <i class="bi bi-people"></i>
+                    <div class="col-auto">
+                        <i class="bi bi-people text-primary fa-2x"></i>
                     </div>
                 </div>
             </div>
             {% if request.session.es_administrador %}
-            <div class="card-footer bg-primary border-0">
-                <a href="{% url 'usuario_lista' %}" class="text-white text-decoration-none small">
+            <div class="card-footer bg-white border-0">
+                <a href="{% url 'usuario_lista' %}" class="text-primary text-decoration-none small fw-bold">
                     Ver todos <i class="bi bi-arrow-right"></i>
                 </a>
             </div>
@@ -29,23 +32,24 @@
         </div>
     </div>
 
-    <!-- Card: Total Operarios -->
-    <div class="col-md-4">
-        <div class="card text-white bg-success mb-3">
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card card-agro border-start border-success border-4 h-100">
             <div class="card-body">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                        <h6 class="card-title text-white-50 mb-2">Operarios Activos</h6>
-                        <h2 class="mb-0">{{ total_operarios }}</h2>
+                <div class="row align-items-center h-100">
+                    <div class="col">
+                        <div class="text-xs fw-bold text-success text-uppercase mb-1">
+                            Operarios Activos
+                        </div>
+                        <div class="h5 mb-0 fw-bold text-gray-800">{{ total_operarios }}</div>
                     </div>
-                    <div class="fs-1">
-                        <i class="bi bi-person-badge"></i>
+                    <div class="col-auto">
+                        <i class="bi bi-person-badge text-success fa-2x"></i>
                     </div>
                 </div>
             </div>
             {% if request.session.es_administrador %}
-            <div class="card-footer bg-success border-0">
-                <a href="{% url 'operario_lista' %}" class="text-white text-decoration-none small">
+            <div class="card-footer bg-white border-0">
+                <a href="{% url 'operario_lista' %}" class="text-success text-decoration-none small fw-bold">
                     Ver todos <i class="bi bi-arrow-right"></i>
                 </a>
             </div>
@@ -53,38 +57,268 @@
         </div>
     </div>
 
-    <!-- Card: Info del Sistema -->
-    <div class="col-md-4">
-        <div class="card text-white bg-info mb-3">
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card card-agro border-start border-success border-4 h-100">
             <div class="card-body">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                        <h6 class="card-title text-white-50 mb-2">Sistema</h6>
-                        <h2 class="mb-0">v1.0</h2>
+                <div class="row align-items-center h-100">
+                    <div class="col">
+                        <div class="text-xs fw-bold text-success text-uppercase mb-1">
+                            Aplicaciones Hoy (Realizadas)
+                        </div>
+                        <div class="h5 mb-0 fw-bold text-gray-800">{{ apps_realizadas_hoy }}</div>
                     </div>
-                    <div class="fs-1">
-                        <i class="bi bi-gear"></i>
+                    <div class="col-auto">
+                        <i class="bi bi-droplet-half text-success fa-2x"></i>
                     </div>
                 </div>
             </div>
-            <div class="card-footer bg-info border-0">
-                <span class="text-white small">AgroControl</span>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card card-agro border-start border-warning border-4 h-100">
+            <div class="card-body">
+                <div class="row align-items-center h-100">
+                    <div class="col">
+                        <div class="text-xs fw-bold text-warning text-uppercase mb-1">
+                            Mantenciones Hoy (Realizadas)
+                        </div>
+                        <div class="h5 mb-0 fw-bold text-gray-800">{{ mant_realizadas_hoy }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-tools text-warning fa-2x"></i>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Usuarios Recientes -->
+
+<div class="row mb-4">
+    <div class="col-xl-6 col-md-6 mb-4">
+        <div class="card card-agro border-start border-info border-4 h-100">
+            <div class="card-body">
+                <div class="row align-items-center h-100">
+                    <div class="col">
+                        <div class="text-xs fw-bold text-info text-uppercase mb-1">
+                            Volumen Riego Hoy (Realizados)
+                        </div>
+                        <div class="h5 mb-0 fw-bold text-gray-800">{{ volumen_total_dia|floatformat:2 }} m³</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-bucket text-info fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-6 col-md-6 mb-4">
+        <div class="card card-agro border-start border-primary border-4 h-100">
+            <div class="card-body">
+                <div class="row align-items-center h-100">
+                    <div class="col">
+                        <div class="text-xs fw-bold text-primary text-uppercase mb-1">
+                            Caudal Promedio Hoy (Realizados)
+                        </div>
+                        <div class="h5 mb-0 fw-bold text-gray-800">{{ caudal_promedio_dia|floatformat:2 }} m³/h</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-speedometer2 text-primary fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card card-agro mb-4">
+    <div class="card-header bg-agro-light">
+        <h5 class="card-title mb-0 text-danger">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i>Alertas Prioritarias
+        </h5>
+    </div>
+    <div class="card-body">
+        
+        {% if alertas_stock %}
+            <h6 class="text-danger">Stock Crítico</h6>
+            <div class="list-group list-group-flush mb-3">
+                {% for prod in alertas_stock %}
+                <a href="{% url 'inventario:lista_productos' %}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                    <div>
+                        <strong class="text-danger">{{ prod.nombre }}</strong>
+                        <small class="d-block text-muted">{{ prod.get_tipo_display }}</small>
+                    </div>
+                    <span class="badge bg-danger-subtle text-danger-emphasis border border-danger-subtle rounded-pill">
+                        Quedan: {{ prod.stock_actual|floatformat:0 }} {{ prod.unidad_medida }}
+                    </span>
+                </a>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        {% if alertas_mantencion %}
+            <h6 class="text-danger">Mantenciones Atrasadas</h6>
+            <div class="list-group list-group-flush mb-3">
+                {% for mant in alertas_mantencion %}
+                <a href="{% url 'mantenimiento:mantenimiento_detalle' mant.id %}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                    <div>
+                        <strong>{{ mant.maquinaria.nombre }}</strong>
+                        <small class="d-block text-muted">Atrasada desde: {{ mant.fecha_mantenimiento|date:"d/m/Y" }}</small>
+                    </div>
+                    <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill">
+                        {{ mant.fecha_mantenimiento|naturaltime }}
+                    </span>
+                </a>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        {% if alertas_riego %}
+            <h6 class="text-danger">Riegos Atrasados</h6>
+            <div class="list-group list-group-flush mb-3">
+                {% for riego in alertas_riego %}
+                <a href="{% url 'riego:riego_detalle' riego.id %}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                    <div>
+                        <strong>Cuartel {{ riego.cuartel.nombre }}</strong>
+                        <small class="d-block text-muted">Programado para: {{ riego.fecha|date:"d/m/Y" }}</small>
+                    </div>
+                    <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill">
+                        {{ riego.fecha|date:"d/m/Y" }}
+                    </span>
+                </a>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        {% if alertas_aplicaciones %}
+            <h6 class="text-danger">Aplicaciones Atrasadas</h6>
+            <div class="list-group list-group-flush mb-3">
+                {% for app in alertas_aplicaciones %}
+                <a href="{% url 'aplicaciones:detalle_aplicacion' app.id %}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                    <div>
+                        <strong>APL-{{ app.id }}</strong>
+                        <small class="d-block text-muted">Atrasada desde: {{ app.fecha_aplicacion|date:"d/m/Y H:i" }}</small>
+                    </div>
+                    <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill">
+                        {{ app.fecha_aplicacion|naturaltime }}
+                    </span>
+                </a>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        {% if alertas_certificaciones %}
+            <h6 class="text-danger">Certificaciones por Vencer</h6>
+            <div class="list-group list-group-flush mb-3">
+                {% for op in alertas_certificaciones %}
+                <a href="{% url 'operario_lista' %}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                    <div>
+                        <strong>{{ op.nombre_completo }}</strong>
+                        <small class="d-block text-muted">Cargo: {{ op.cargo }}</small>
+                    </div>
+                    <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill">
+                        Vence: {{ op.fecha_vencimiento_certificacion|date:"d/m/Y" }}
+                    </span>
+                </a>
+                {% endfor %}
+            </div>
+        {% endif %}
+        
+        {% if alertas_mortalidad %}
+            <h6 class="text-danger">Alerta de Mortalidad en Cuarteles</h6>
+            <div class="list-group list-group-flush mb-3">
+                {% for cuartel in alertas_mortalidad %}
+                <a href="{% url 'cuarteles:lista_cuarteles' %}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                    <div>
+                        <strong>{{ cuartel.nombre }}</strong>
+                        <small class="d-block text-muted">Variedad: {{ cuartel.variedad }}</small>
+                    </div>
+                    <span class="badge bg-danger-subtle text-danger-emphasis border border-danger-subtle rounded-pill">
+                        {{ cuartel.porcentaje_mortalidad|floatformat:1 }}% mortalidad
+                    </span>
+                </a>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        {% if not alertas_stock and not alertas_mantencion and not alertas_certificaciones and not alertas_mortalidad and not alertas_riego and not alertas_aplicaciones %}
+            <div class="text-center py-3">
+                <i class="bi bi-check-circle-fill display-4 text-success"></i>
+                <h5 class="text-muted mt-2">Todo en orden</h5>
+                <p class="text-muted">No hay alertas prioritarias.</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<div class="card card-agro mb-4">
+    <div class="card-header bg-agro-light">
+        <h5 class="card-title mb-0">
+            <i class="bi bi-calendar-day me-2"></i>Actividades del Día (Hoy)
+        </h5>
+    </div>
+    <div class="card-body">
+        {% if not actividades_riego and not actividades_apps and not actividades_mant %}
+            <div class="text-center py-3">
+                <i class="bi bi-moon-fill display-4 text-muted"></i>
+                <p class="text-muted mt-2">No hay actividades registradas para hoy.</p>
+            </div>
+        {% endif %}
+
+        {% if actividades_riego %}
+            <h6><i class="bi bi-droplet me-2 text-primary"></i>Riegos</h6>
+            <ul class="list-group list-group-flush mb-3">
+                {% for act in actividades_riego %}
+                <a href="{% url 'riego:riego_detalle' act.id %}" class="list-group-item list-group-item-action">
+                    <strong>Cuartel {{ act.cuartel.nombre }}:</strong>
+                    {{ act.horario_inicio|time:"H:i" }} - {{ act.horario_fin|time:"H:i" }}.
+                    ({{ act.get_estado_display }})
+                </a>
+                {% endfor %}
+            </ul>
+        {% endif %}
+
+        {% if actividades_apps %}
+            <h6><i class="bi bi-droplet-half me-2 text-success"></i>Aplicaciones</h6>
+            <ul class="list-group list-group-flush mb-3">
+                {% for act in actividades_apps %}
+                <a href="{% url 'aplicaciones:detalle_aplicacion' act.id %}" class="list-group-item list-group-item-action">
+                    <strong>APL-{{ act.id }}:</strong>
+                    {{ act.get_primer_producto.producto.nombre|default:"N/A" }} 
+                    {% if act.get_total_productos > 1 %}(+{{ act.get_total_productos|add:"-1" }} más){% endif %}.
+                    ({{ act.get_estado_display }})
+                </a>
+                {% endfor %}
+            </ul>
+        {% endif %}
+
+        {% if actividades_mant %}
+            <h6><i class="bi bi-tools me-2 text-warning"></i>Mantenimientos</h6>
+            <ul class="list-group list-group-flush mb-3">
+                {% for act in actividades_mant %}
+                <a href="{% url 'mantenimiento:mantenimiento_detalle' act.id %}" class="list-group-item list-group-item-action">
+                    <strong>{{ act.maquinaria.nombre }}:</strong>
+                    {{ act.get_tipo_mantenimiento_display }}.
+                    ({{ act.get_estado_display }})
+                </a>
+                {% endfor %}
+            </ul>
+        {% endif %}
+    </div>
+</div>
+
 <div class="row">
     <div class="col-12">
-        <div class="card">
-            <div class="card-header bg-white">
-                <h5 class="mb-0"><i class="bi bi-clock-history me-2"></i>Usuarios Registrados Recientemente</h5>
+        <div class="card card-agro">
+            <div class="card-header bg-agro-light">
+                <h5 class="card-title mb-0"><i class="bi bi-clock-history me-2"></i>Usuarios Registrados Recientemente</h5>
             </div>
             <div class="card-body">
                 <div class="table-responsive">
-                    <table class="table table-hover">
-                        <thead class="table-light">
+                    <table class="table table-hover table-agro">
+                        <thead>
                             <tr>
                                 <th>Usuario</th>
                                 <th>Nombre Completo</th>
@@ -105,7 +339,7 @@
                                 <td>{{ usuario.get_full_name }}</td>
                                 <td>
                                     {% if usuario.rol %}
-                                    <span class="badge bg-info">{{ usuario.rol.nombre }}</span>
+                                    <span class="badge bg-info-subtle text-info-emphasis border border-info-subtle">{{ usuario.rol.nombre }}</span>
                                     {% else %}
                                     <span class="text-muted">Sin rol</span>
                                     {% endif %}
@@ -113,9 +347,9 @@
                                 <td>{{ usuario.fecha_registro|date:"d/m/Y H:i" }}</td>
                                 <td>
                                     {% if usuario.esta_activo %}
-                                    <span class="badge bg-success">Activo</span>
+                                    <span class="badge bg-success-subtle text-success-emphasis border border-success-subtle">Activo</span>
                                     {% else %}
-                                    <span class="badge bg-secondary">Inactivo</span>
+                                    <span class="badge bg-secondary-subtle text-secondary-emphasis border border-secondary-subtle">Inactivo</span>
                                     {% endif %}
                                 </td>
                             </tr>
@@ -134,13 +368,12 @@
     </div>
 </div>
 
-<!-- Accesos Rápidos -->
 {% if request.session.es_administrador %}
 <div class="row mt-4">
     <div class="col-12">
-        <div class="card">
-            <div class="card-header bg-white">
-                <h5 class="mb-0"><i class="bi bi-lightning me-2"></i>Accesos Rápidos</h5>
+        <div class="card card-agro">
+            <div class="card-header bg-agro-light">
+                <h5 class="card-title mb-0"><i class="bi bi-lightning me-2"></i>Accesos Rápidos</h5>
             </div>
             <div class="card-body">
                 <div class="row">
