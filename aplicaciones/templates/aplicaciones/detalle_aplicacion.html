@@ -1,96 +1,135 @@
 {% extends 'base.html' %}
 {% load humanize %}
 
+{% block title %}Detalle Aplicación APL-{{ aplicacion.id }} - AgroControl{% endblock %}
+
 {% block content %}
 <div class="container mt-4">
     <div class="row">
         <div class="col-md-8 offset-md-2">
             
-            <div class="card shadow-sm">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <h3>Detalle APL-{{ aplicacion.id }}</h3>
-                    <a href="{% url 'aplicaciones:lista_aplicaciones' %}" class="btn btn-secondary btn-sm">
-                        &larr; Volver al Listado
+            <div class="card card-agro shadow-sm">
+                <div class="card-header bg-agro-light d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-eye me-2"></i>Detalle APL-{{ aplicacion.id }}
+                    </h5>
+                    <a href="{% url 'aplicaciones:lista_aplicaciones' %}" class="btn btn-outline-secondary btn-sm">
+                        <i class="bi bi-arrow-left me-1"></i>Volver
                     </a>
                 </div>
                 <div class="card-body">
                     
-                    <h5 class="card-title">
-                        Aplicación del {{ aplicacion.fecha_aplicacion|date:"d/m/Y" }}
-                    </h5>
-                    <p class="card-subtitle mb-2 text-muted">
-                        Realizada por: {{ aplicacion.aplicador.get_full_name|default:aplicacion.aplicador.nombre_usuario|default:aplicacion.aplicador }} | 
-                        Fecha: {{ aplicacion.fecha_aplicacion|date:"d/m/Y H:i" }}
-                    </p>
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <h5 class="card-title text-agro-primary mb-1">
+                                Aplicación del {{ aplicacion.fecha_aplicacion|date:"d/m/Y" }}
+                            </h5>
+                            <p class="text-muted mb-0">
+                                <i class="bi bi-person me-1"></i>Aplicador: <strong>{{ aplicacion.aplicador.get_full_name|default:aplicacion.aplicador.nombre_usuario }}</strong>
+                            </p>
+                            <p class="text-muted small">
+                                <i class="bi bi-clock me-1"></i>{{ aplicacion.fecha_aplicacion|date:"H:i" }} hrs
+                            </p>
+                        </div>
+                        <div>
+                            {% if aplicacion.estado == 'realizada' %}
+                                <span class="badge bg-success-subtle text-success-emphasis border border-success-subtle px-3 py-2 rounded-pill">
+                                    <i class="bi bi-check-circle me-1"></i>Realizada
+                                </span>
+                            {% elif aplicacion.estado == 'programada' %}
+                                <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle px-3 py-2 rounded-pill">
+                                    <i class="bi bi-clock-history me-1"></i>Programada
+                                </span>
+                            {% else %}
+                                <span class="badge bg-danger-subtle text-danger-emphasis border border-danger-subtle px-3 py-2 rounded-pill">
+                                    <i class="bi bi-x-circle me-1"></i>Cancelada
+                                </span>
+                            {% endif %}
+                        </div>
+                    </div>
                     
-                    <hr>
+                    <hr class="my-4">
                     
-                    <h4>Productos y Dosis</h4>
-                    <div class="table-responsive">
-                        <table class="table table-sm table-bordered">
-                            <thead class="table-light">
+                    <h5 class="text-agro-primary mb-3">Productos y Dosis</h5>
+                    <div class="table-responsive mb-4">
+                        <table class="table table-hover table-agro table-bordered">
+                            <thead>
                                 <tr>
                                     <th>Producto</th>
                                     <th>Dosis/Ha</th>
-                                    <th>Cantidad Utilizada</th>
+                                    <th>Cantidad Total</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {% for app_prod in aplicacion.aplicacionproducto_set.all %}
                                 <tr>
-                                    <td>{{ app_prod.producto.nombre }}</td>
+                                    <td>
+                                        <div class="fw-bold">{{ app_prod.producto.nombre }}</div>
+                                        <small class="text-muted">{{ app_prod.producto.tipo|title }}</small>
+                                    </td>
                                     <td>{{ app_prod.dosis_por_hectarea|floatformat:2 }} {{ app_prod.producto.unidad_medida }}/Ha</td>
-                                    <td><strong>{{ app_prod.cantidad_utilizada|floatformat:2 }} {{ app_prod.producto.unidad_medida }}</strong></td>
+                                    <td class="bg-light"><strong>{{ app_prod.cantidad_utilizada|floatformat:2 }} {{ app_prod.producto.unidad_medida }}</strong></td>
                                 </tr>
                                 {% empty %}
                                 <tr>
-                                    <td colspan="3" class="text-center">No se registraron productos.</td>
+                                    <td colspan="3" class="text-center text-muted py-3">No se registraron productos.</td>
                                 </tr>
                                 {% endfor %}
                             </tbody>
                         </table>
                     </div>
-                    <h4 class="mt-4">Detalles de Aplicación</h4>
-                    <dl class="row">
-                        <dt class="col-sm-4">Área Total Tratada</dt>
-                        <dd class="col-sm-8">{{ aplicacion.area_tratada|floatformat:2 }} Ha</dd>
-                    </dl>
 
-                    <h4>Cuarteles Tratados</h4>
-                    <ul>
-                        {% for cuartel in aplicacion.cuarteles.all %}
-                            <li>{{ cuartel.nombre }} ({{ cuartel.area_hectareas }} Ha)</li>
-                        {% empty %}
-                            <li>No se especificaron cuarteles.</li>
-                        {% endfor %}
-                    </ul>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <h5 class="text-agro-primary mb-3">Detalles de Aplicación</h5>
+                            <ul class="list-group list-group-flush border rounded">
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    <span class="text-muted">Área Tratada</span>
+                                    <span class="fw-bold">{{ aplicacion.area_tratada|floatformat:2 }} Ha</span>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    <span class="text-muted">Objetivo</span>
+                                    <span>{{ aplicacion.objetivo|default:"N/A" }}</span>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    <span class="text-muted">Método</span>
+                                    <span>{{ aplicacion.metodo_aplicacion|default:"N/A" }}</span>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    <span class="text-muted">Equipo</span>
+                                    <span>{{ aplicacion.equipo_utilizado.nombre|default:"N/A" }}</span>
+                                </li>
+                            </ul>
+                        </div>
 
-                    <h4>Información Adicional</h4>
-                    <dl class="row">
-                        <dt class="col-sm-4">Objetivo</dt>
-                        <dd class="col-sm-8">{{ aplicacion.objetivo|default:"N/A" }}</dd>
-                        
-                        <dt class="col-sm-4">Método</dt>
-                        <dd class="col-sm-8">{{ aplicacion.metodo_aplicacion|default:"N/A" }}</dd>
-                        
-                        <dt class="col-sm-4">Equipo Utilizado</dt>
-                        <dd class="col-sm-8">{{ aplicacion.equipo_utilizado.nombre|default:"N/A" }}</dd>
-                    </dl>
+                        <div class="col-md-6">
+                            <h5 class="text-agro-primary mb-3">Cuarteles Tratados</h5>
+                            <div class="list-group border rounded">
+                                {% for cuartel in aplicacion.cuarteles.all %}
+                                    <div class="list-group-item">
+                                        <i class="bi bi-geo-alt text-danger me-2"></i>{{ cuartel.nombre }} 
+                                        <small class="text-muted">({{ cuartel.area_hectareas }} Ha)</small>
+                                    </div>
+                                {% empty %}
+                                    <div class="list-group-item text-muted">No se especificaron cuarteles.</div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
 
                     {% if movimiento %}
-                    <div class="alert alert-success mt-3">
-                        <i class="bi bi-check-circle-fill me-2"></i>
-                        <strong>Inventario Actualizado:</strong> Se generó el movimiento 
-                        <a href="{% url 'inventario:detalle_movimiento' movimiento.id %}" class="alert-link">
-                            MOV-{{ movimiento.id }} (Ref: {{ movimiento.referencia }})
-                        </a>.
-                    </div>
-                    {% else %}
-                    <div class="alert alert-warning mt-3">
-                        <i class="bi bi-exclamation-triangle-fill me-2"></i>
-                        No se encontró un movimiento de inventario asociado (ej: aplicación programada o cancelada).
+                    <div class="alert alert-success mt-4 d-flex align-items-center">
+                        <i class="bi bi-box-seam me-3 fs-4"></i>
+                        <div>
+                            <strong>Inventario Actualizado</strong><br>
+                            Se generó el movimiento <a href="{% url 'inventario:detalle_movimiento' movimiento.id %}" class="alert-link">MOV-{{ movimiento.id }}</a> asociado a esta aplicación.
+                        </div>
                     </div>
                     {% endif %}
+
+                </div>
+                <div class="card-footer bg-light text-muted small text-end">
+                    Registrado por {{ aplicacion.creado_por.nombre_usuario }} el {{ aplicacion.fecha_creacion|date:"d/m/Y H:i" }}
                 </div>
             </div>
 

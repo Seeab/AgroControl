@@ -1,0 +1,266 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}Órdenes de Trabajo - AgroControl{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="h3 mb-1">
+            <i class="bi bi-clipboard-check text-agro-primary me-2"></i>Gestión de Órdenes de Trabajo
+        </h1>
+        <p class="text-muted">Supervisión centralizada de Riegos, Aplicaciones y Mantenimientos.</p>
+    </div>
+    <div>
+        <a href="{% url 'ordenes_trabajo:crear_orden' %}" class="btn btn-agro-primary">
+            <i class="bi bi-plus-circle me-2"></i>Generar Nueva Orden
+        </a>
+    </div>
+</div>
+
+<!-- Tarjetas de Estadísticas -->
+<div class="row mb-4">
+    <div class="col-xl-4 col-md-6 mb-4">
+        <div class="card card-agro border-start border-agro-primary border-4">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col">
+                        <div class="text-xs fw-bold text-agro-primary text-uppercase mb-1">
+                            Total Órdenes
+                        </div>
+                        <div class="h5 mb-0 fw-bold text-gray-800">{{ total_ordenes }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-clipboard-check text-agro-primary fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-4 col-md-6 mb-4">
+        <div class="card card-agro border-start border-warning border-4">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col">
+                        <div class="text-xs fw-bold text-warning text-uppercase mb-1">
+                            Tareas Programadas
+                        </div>
+                        <div class="h5 mb-0 fw-bold text-gray-800">{{ total_programadas }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-clock-history text-warning fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-4 col-md-6 mb-4">
+        <div class="card card-agro border-start border-success border-4">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col">
+                        <div class="text-xs fw-bold text-success text-uppercase mb-1">
+                            Tareas Realizadas
+                        </div>
+                        <div class="h5 mb-0 fw-bold text-gray-800">{{ total_realizadas }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-check-circle-fill text-success fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Filtros de Búsqueda -->
+<div class="card card-agro mb-4">
+    <div class="card-header bg-agro-light">
+        <h5 class="card-title mb-0">
+            <i class="bi bi-funnel me-2"></i>Filtros de Búsqueda
+        </h5>
+    </div>
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <div class="col-md-4">
+                <label class="form-label fw-semibold">Estado</label>
+                <select name="estado" class="form-select">
+                    <option value="">Todos los estados</option>
+                    <option value="programada" {% if filtro_estado == 'programada' %}selected{% endif %}>Programada (Aplicación)</option>
+                    <option value="programado" {% if filtro_estado == 'programado' %}selected{% endif %}>Programado (Riego/Mant.)</option>
+                    <option value="realizada" {% if filtro_estado == 'realizada' %}selected{% endif %}>Realizada (Aplicación)</option>
+                    <option value="realizado" {% if filtro_estado == 'realizado' %}selected{% endif %}>Realizado (Riego/Mant.)</option>
+                    <option value="cancelada" {% if filtro_estado == 'cancelada' %}selected{% endif %}>Cancelada (Aplicación)</option>
+                    <option value="cancelado" {% if filtro_estado == 'cancelado' %}selected{% endif %}>Cancelado (Riego/Mant.)</option>
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label fw-semibold">Tipo de Tarea</label>
+                <select name="tipo" class="form-select">
+                    <option value="">Todos los tipos</option>
+                    <option value="aplicacion" {% if filtro_tipo == 'aplicacion' %}selected{% endif %}>Aplicación</option>
+                    <option value="riego" {% if filtro_tipo == 'riego' %}selected{% endif %}>Riego</option>
+                    <option value="mantenimiento" {% if filtro_tipo == 'mantenimiento' %}selected{% endif %}>Mantenimiento</option>
+                </select>
+            </div>
+            <div class="col-md-4 d-flex align-items-end">
+                <button type="submit" class="btn btn-agro-primary me-2">
+                    <i class="bi bi-funnel me-1"></i>Filtrar
+                </button>
+                <a href="{% url 'ordenes_trabajo:lista_ordenes' %}" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-clockwise me-1"></i>Limpiar
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Tabla de Órdenes de Trabajo -->
+<div class="card card-agro">
+    <div class="card-header bg-agro-light d-flex justify-content-between align-items-center">
+        <h5 class="card-title mb-0">
+            <i class="bi bi-list-ul me-2"></i>Lista de Órdenes de Trabajo
+        </h5>
+        <!-- Mostramos el conteo total del paginador -->
+        <span class="badge bg-agro-primary">{{ ordenes.paginator.count }} registros encontrados</span>
+    </div>
+    
+    <div class="card-body">
+        {% if ordenes %}
+        <div class="table-responsive">
+            <table class="table table-hover table-agro">
+                <thead>
+                    <tr>
+                        <th><i class="bi bi-calendar-event me-1"></i>Tarea (ID y Fecha)</th>
+                        <th><i class="bi bi-card-text me-1"></i>Descripción</th>
+                        <th><i class="bi bi-person-check me-1"></i>Responsable Asignado</th>
+                        <th><i class="bi bi-activity me-1"></i>Estado</th>
+                        <th class="text-end"><i class="bi bi-gear me-1"></i>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for o in ordenes %}
+                    <tr>
+                        <td>
+                            <div class="fw-bold text-agro-primary">{{ o.id_str }}</div>
+                            <small class="text-muted">{{ o.fecha_tarea|date:"d/m/Y H:i" }}</small>
+                        </td>
+                        <td>
+                            {% if o.tipo_orden == 'Aplicación' %}
+                                <i class="bi bi-droplet-half me-1" title="Aplicación"></i>
+                            {% elif o.tipo_orden == 'Riego' %}
+                                <i class="bi bi-droplet me-1" title="Riego"></i>
+                            {% elif o.tipo_orden == 'Mantenimiento' %}
+                                <i class="bi bi-tools me-1" title="Mantenimiento"></i>
+                            {% endif %}
+                            <strong>{{ o.tipo_orden }}:</strong>
+                            <span class="text-muted">{{ o.descripcion }}</span>
+                        </td>
+                        <td>
+                            {% if o.responsable %}
+                                {{ o.responsable.get_full_name|default:o.responsable.nombre_usuario }}
+                            {% else %}
+                                <span class="text-danger">Sin Asignar</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if o.estado == 'realizada' or o.estado == 'realizado' %}
+                                <span class="badge bg-success-subtle text-success-emphasis border border-success-subtle">
+                                    <i class="bi bi-check-circle me-1"></i>Realizada
+                                </span>
+                            {% elif o.estado == 'programada' or o.estado == 'programado' %}
+                                <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle">
+                                    <i class="bi bi-clock-history me-1"></i>Programada
+                                </span>
+                            {% else %}
+                                <span class="badge bg-danger-subtle text-danger-emphasis border border-danger-subtle">
+                                    <i class="bi bi-x-circle me-1"></i>Cancelada
+                                </span>
+                            {% endif %}
+                        </td>
+                        <td class="text-end">
+                            <div class="btn-group btn-group-sm">
+                                <a href="{{ o.url_detalle }}" class="btn btn-outline-info" 
+                                   data-bs-toggle="tooltip" title="Ver Detalle Específico">
+                                    <i class="bi bi-eye"></i> Ver Detalle
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Controles de Paginación -->
+        {% if ordenes.has_other_pages %}
+        <nav aria-label="Navegación de páginas" class="mt-4">
+            <ul class="pagination justify-content-center">
+                
+                <!-- Botón Anterior -->
+                {% if ordenes.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ ordenes.previous_page_number }}&estado={{ filtro_estado }}&tipo={{ filtro_tipo }}" aria-label="Anterior">
+                            <span aria-hidden="true">&laquo;</span>
+                        </a>
+                    </li>
+                {% else %}
+                    <li class="page-item disabled">
+                        <span class="page-link">&laquo;</span>
+                    </li>
+                {% endif %}
+
+                <!-- Números de Página -->
+                {% for i in ordenes.paginator.page_range %}
+                    {% if ordenes.number == i %}
+                        <li class="page-item active"><span class="page-link bg-agro-primary border-agro-primary">{{ i }}</span></li>
+                    {% else %}
+                        <!-- Mostrar solo páginas cercanas a la actual (opcional, simple por ahora) -->
+                         <li class="page-item">
+                            <a class="page-link text-agro-primary" href="?page={{ i }}&estado={{ filtro_estado }}&tipo={{ filtro_tipo }}">{{ i }}</a>
+                        </li>
+                    {% endif %}
+                {% endfor %}
+
+                <!-- Botón Siguiente -->
+                {% if ordenes.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ ordenes.next_page_number }}&estado={{ filtro_estado }}&tipo={{ filtro_tipo }}" aria-label="Siguiente">
+                            <span aria-hidden="true">&raquo;</span>
+                        </a>
+                    </li>
+                {% else %}
+                    <li class="page-item disabled">
+                        <span class="page-link">&raquo;</span>
+                    </li>
+                {% endif %}
+            </ul>
+        </nav>
+        <p class="text-center text-muted small mt-2">
+            Mostrando página {{ ordenes.number }} de {{ ordenes.paginator.num_pages }}
+        </p>
+        {% endif %}
+
+        {% else %}
+        <div class="text-center py-5">
+            <i class="bi bi-inboxes display-1 text-muted"></i>
+            <h4 class="text-muted mt-3">No se encontraron órdenes de trabajo</h4>
+            <p class="text-muted">Comienza generando la primera orden de trabajo.</p>
+            <a href="{% url 'ordenes_trabajo:crear_orden' %}" class="btn btn-agro-primary mt-2">
+                <i class="bi bi-plus-circle me-2"></i>Generar Primera Orden
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Inicializar tooltips de Bootstrap
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl)
+    })
+</script>
+{% endblock %}

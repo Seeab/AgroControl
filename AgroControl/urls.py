@@ -9,21 +9,18 @@ urlpatterns = [
     path('admin/', admin.site.urls),
 
     # --- 1. RUTAS DE APPS (con prefijo) ---
-    # Pon todas tus apps que tienen prefijo PRIMERO.
-    # Asegúrate de que CADA UNA tenga su 'namespace'.
-    
     path('aplicaciones/', include('aplicaciones.urls', namespace='aplicaciones')),
     path('riego/', include('riego.urls', namespace='riego')),
     path('mantenimiento/', include('mantenimiento.urls', namespace='mantenimiento')),
     
-    # ¡ESTAS LÍNEAS SON LAS QUE PROBABLEMENTE TIENES MAL!
     path('cuarteles/', include('cuarteles.urls', namespace='cuarteles')),
     path('inventario/', include('inventario.urls', namespace='inventario')),
     
     path('reportes/', include('reportes.urls', namespace='reportes')),
+    # <-- CORRECCIÓN: Añadido 'namespace' para consistencia
+    path('ordenes/', include('ordenes_trabajo.urls', namespace='ordenes_trabajo')),
+    
     # --- 2. RUTA RAÍZ (al final) ---
-    # La app de autenticación (login/dashboard) va ÚLTIMA
-    # porque su ruta '' atrapará todo lo demás.
     path('', include('autenticacion.urls')),
 ]
 
