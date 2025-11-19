@@ -271,7 +271,7 @@
             <h6><i class="bi bi-droplet me-2 text-primary"></i>Riegos</h6>
             <ul class="list-group list-group-flush mb-3">
                 {% for act in actividades_riego %}
-                <a href="{% url 'riego:riego_detalle' act.id %}" class="list-group-item list-group-item-action">
+                <a href="{% url 'riego:detalle_riego' act.id %}" class="list-group-item list-group-item-action">
                     <strong>Cuartel {{ act.cuartel.nombre }}:</strong>
                     {{ act.horario_inicio|time:"H:i" }} - {{ act.horario_fin|time:"H:i" }}.
                     ({{ act.get_estado_display }})
@@ -298,7 +298,7 @@
             <h6><i class="bi bi-tools me-2 text-warning"></i>Mantenimientos</h6>
             <ul class="list-group list-group-flush mb-3">
                 {% for act in actividades_mant %}
-                <a href="{% url 'mantenimiento:mantenimiento_detalle' act.id %}" class="list-group-item list-group-item-action">
+                <a href="{% url 'mantenimiento:detalle_mantenimiento' act.id %}" class="list-group-item list-group-item-action">
                     <strong>{{ act.maquinaria.nombre }}:</strong>
                     {{ act.get_tipo_mantenimiento_display }}.
                     ({{ act.get_estado_display }})
