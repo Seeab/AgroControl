@@ -162,7 +162,7 @@
             <h6 class="text-danger">Mantenciones Atrasadas</h6>
             <div class="list-group list-group-flush mb-3">
                 {% for mant in alertas_mantencion %}
-                <a href="{% url 'mantenimiento:mantenimiento_detalle' mant.id %}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                <a href="{% url 'mantenimiento:detalle_mantenimiento' mant.id %}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
                     <div>
                         <strong>{{ mant.maquinaria.nombre }}</strong>
                         <small class="d-block text-muted">Atrasada desde: {{ mant.fecha_mantenimiento|date:"d/m/Y" }}</small>
@@ -179,7 +179,7 @@
             <h6 class="text-danger">Riegos Atrasados</h6>
             <div class="list-group list-group-flush mb-3">
                 {% for riego in alertas_riego %}
-                <a href="{% url 'riego:riego_detalle' riego.id %}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                <a href="{% url 'riego:detalle_riego' riego.id %}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
                     <div>
                         <strong>Cuartel {{ riego.cuartel.nombre }}</strong>
                         <small class="d-block text-muted">Programado para: {{ riego.fecha|date:"d/m/Y" }}</small>
