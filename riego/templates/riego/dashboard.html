@@ -95,6 +95,7 @@
         </div>
     </div>
 </div>
+
 <div class="card card-agro mb-4">
     <div class="card-header bg-agro-light">
         <h5 class="card-title mb-0">
@@ -155,6 +156,7 @@
                         <th><i class="bi bi-stopwatch me-1"></i>Duración</th>
                         <th><i class="bi bi-water me-1"></i>Volumen Total</th>
                         <th><i class="bi bi-flower1 me-1"></i>Fertilizante</th>
+                        <th><i class="bi bi-person me-1"></i>Responsable</th>
                         <th class="text-end"><i class="bi bi-gear me-1"></i>Acciones</th>
                     </tr>
                 </thead>
@@ -207,13 +209,23 @@
                                 </span>
                             {% endif %}
                         </td>
+                        
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-person-circle text-muted me-2"></i>
+                                <span class="text-dark">
+                                    {{ riego.encargado_riego|default:"Sin asignar" }}
+                                </span>
+                            </div>
+                        </td>
+
                         <td class="text-end">
                             <div class="btn-group btn-group-sm">
                                 
                                 {% if riego.estado == 'PROGRAMADO' %}
                                     <form action="{% url 'riego:finalizar_riego' riego.id %}" method="POST" class="d-inline">
                                         {% csrf_token %}
-                                        <button type="submit" class="btn btn-outline-success" 
+                                        <button type="submit" class="btn btn-outline-success"
                                                 data-bs-toggle="tooltip" title="Finalizar Riego (Descontar Stock)">
                                             <i class="bi bi-check-lg"></i>
                                         </button>
@@ -226,14 +238,14 @@
                                     
                                     <form action="{% url 'riego:cancelar_riego' riego.id %}" method="POST" class="d-inline">
                                         {% csrf_token %}
-                                        <button type="submit" class="btn btn-outline-danger" 
+                                        <button type="submit" class="btn btn-outline-danger"
                                                 data-bs-toggle="tooltip" title="Cancelar Riego">
-                                            <i class="bi bi-x-lg"></i> 
+                                            <i class="bi bi-x-lg"></i>
                                         </button>
                                     </form>
                                 
                                 {% else %}
-                                    <a href="{% url 'riego:detalle_riego' riego.id %}" class="btn btn-outline-info" 
+                                    <a href="{% url 'riego:detalle_riego' riego.id %}" class="btn btn-outline-info"
                                        data-bs-toggle="tooltip" title="Ver Detalle">
                                         <i class="bi bi-eye"></i>
                                     </a>
@@ -259,7 +271,7 @@
                 {% endif %}
             </h4>
             <p class="text-muted">Comienza registrando el primer riego.</p>
-            <a href="{% url 'riego:riego_crear' %}" class="btn btn-agro-primary mt-2">
+            <a href="{% url 'riego:crear_riego' %}" class="btn btn-agro-primary mt-2">
                 <i class="bi bi-plus-circle me-2"></i>Registrar Primer Riego
             </a>
         </div>

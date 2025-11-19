@@ -109,6 +109,7 @@
         </form>
     </div>
 </div>
+
 <div class="card card-agro">
     <div class="card-header bg-agro-light d-flex justify-content-between align-items-center">
         <h5 class="card-title mb-0">
@@ -124,10 +125,11 @@
                 <thead>
                     <tr>
                         <th><i class="bi bi-calendar-event me-1"></i>Aplicación</th>
-                        <th><i class="bi bi-box-seam me-1"></i>Productos (Aplicador/Equipo)</th>
+                        <th><i class="bi bi-box-seam me-1"></i>Productos</th>
                         <th><i class="bi bi-speedometer2 me-1"></i>Área Tratada</th>
                         <th><i class="bi bi-droplet-fill me-1"></i>Total Utilizado (1er Prod.)</th>
                         <th><i class="bi bi-activity me-1"></i>Estado</th>
+                        <th><i class="bi bi-person me-1"></i>Responsable</th>
                         <th class="text-end"><i class="bi bi-gear me-1"></i>Acciones</th>
                     </tr>
                 </thead>
@@ -138,6 +140,7 @@
                             <div class="fw-bold text-agro-primary">APL-{{ app.id }}</div>
                             <small class="text-muted">{{ app.fecha_aplicacion|date:"d/m/Y H:i" }}</small>
                         </td>
+                        
                         <td>
                             {% with primer_producto=app.get_primer_producto %}
                                 {% if primer_producto %}
@@ -150,19 +153,8 @@
                             {% if app.get_total_productos > 1 %}
                                 <span class="badge bg-secondary">+{{ app.get_total_productos|add:"-1" }} más</span>
                             {% endif %}
-                            
-                            <br>
-                            <small class="text-muted">{{ app.aplicador.get_full_name|default:app.aplicador.nombre_usuario|default:app.aplicador }}</small>
-                            
-                            {% if app.equipo_utilizado %}
-                                <br>
-                                <small class="text-primary-emphasis"
-                                        data-bs-toggle="tooltip" 
-                                        title="Equipo Utilizado">
-                                    <i class="bi bi-truck me-1"></i>{{ app.equipo_utilizado.nombre }}
-                                </small>
-                            {% endif %}
                         </td>
+
                         <td>
                             <span class="text-muted">{{ app.area_tratada|floatformat:2 }} Ha</span>
                         </td>
@@ -191,6 +183,26 @@
                                 </span>
                             {% endif %}
                         </td>
+
+                        <td>
+                            <div class="d-flex flex-column">
+                                <div class="d-flex align-items-center">
+                                    <i class="bi bi-person-circle text-muted me-2"></i>
+                                    <span class="text-dark">
+                                        {{ app.aplicador.get_full_name|default:app.aplicador.nombre_usuario|default:app.aplicador }}
+                                    </span>
+                                </div>
+                                
+                                {% if app.equipo_utilizado %}
+                                    <small class="text-primary-emphasis mt-1 ms-4"
+                                           data-bs-toggle="tooltip" 
+                                           title="Equipo Utilizado">
+                                        <i class="bi bi-truck me-1"></i>{{ app.equipo_utilizado.nombre }}
+                                    </small>
+                                {% endif %}
+                            </div>
+                        </td>
+
                         <td class="text-end">
                             <div class="btn-group btn-group-sm">
                                 {% if app.estado == 'programada' %}

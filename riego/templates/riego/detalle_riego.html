@@ -8,84 +8,142 @@
     <div class="row">
         <div class="col-md-8 offset-md-2">
             
-            <div class="card shadow-sm">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <h3>Detalle Riego #{{ riego.id }}</h3>
-                    <a href="{% url 'riego:dashboard' %}" class="btn btn-secondary btn-sm">
-                        &larr; Volver al Dashboard
+            <div class="card card-agro shadow-sm">
+                <div class="card-header bg-agro-light d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-droplet me-2"></i>Detalle Riego #{{ riego.id }}
+                    </h5>
+                    <a href="{% url 'riego:dashboard' %}" class="btn btn-outline-secondary btn-sm">
+                        <i class="bi bi-arrow-left me-1"></i>Volver
                     </a>
                 </div>
                 <div class="card-body">
                     
-                    <h5 class="card-title">
-                        Riego del {{ riego.fecha|date:"d/m/Y" }}
+                    <div class="d-flex justify-content-between align-items-start mb-4">
+                        <div>
+                            <h5 class="card-title text-agro-primary mb-1">
+                                Riego en {{ riego.cuartel.nombre }}
+                            </h5>
+                            <p class="text-muted mb-0">
+                                <i class="bi bi-calendar-event me-1"></i>{{ riego.fecha|date:"l d/m/Y" }}
+                            </p>
+                        </div>
+                        <div>
+                            {% if riego.estado == 'REALIZADO' %}
+                                <span class="badge bg-success-subtle text-success-emphasis border border-success-subtle px-3 py-2 rounded-pill">
+                                    <i class="bi bi-check-circle me-1"></i>Realizado
+                                </span>
+                            {% elif riego.estado == 'PROGRAMADO' %}
+                                <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle px-3 py-2 rounded-pill">
+                                    <i class="bi bi-clock me-1"></i>Programado
+                                </span>
+                            {% else %}
+                                <span class="badge bg-secondary-subtle text-secondary-emphasis border border-secondary-subtle px-3 py-2 rounded-pill">
+                                    {{ riego.estado }}
+                                </span>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="row g-4 mb-4">
+                        <div class="col-md-6">
+                            <h6 class="text-uppercase text-muted small fw-bold mb-3">Datos de Ejecución</h6>
+                            <ul class="list-group list-group-flush border rounded">
+                                <li class="list-group-item d-flex justify-content-between">
+                                    <span class="text-muted">Horario</span>
+                                    <span class="fw-bold">{{ riego.horario_inicio|time:"H:i" }} - {{ riego.horario_fin|time:"H:i" }}</span>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between">
+                                    <span class="text-muted">Duración</span>
+                                    <span>{{ riego.get_duracion_display }}</span>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    <span class="text-muted">Encargado</span>
+                                    <span>
+                                        {% if riego.encargado_riego %}
+                                            <i class="bi bi-person me-1"></i>{{ riego.encargado_riego.get_full_name }}
+                                        {% else %}
+                                            <span class="text-danger">Sin asignar</span>
+                                        {% endif %}
+                                    </span>
+                                </li>
+                            </ul>
+                        </div>
+
+                        <div class="col-md-6">
+                            <h6 class="text-uppercase text-muted small fw-bold mb-3">Métricas de Agua</h6>
+                            <div class="card bg-light border-0">
+                                <div class="card-body text-center">
+                                    <div class="row">
+                                        <div class="col-6 border-end">
+                                            <div class="text-muted small mb-1">Caudal</div>
+                                            <div class="h5 mb-0 text-primary">{{ riego.caudal_m3h|floatformat:2 }}</div>
+                                            <small class="text-muted">m³/h</small>
+                                        </div>
+                                        <div class="col-6">
+                                            <div class="text-muted small mb-1">Volumen Total</div>
+                                            <div class="h4 mb-0 text-agro-primary fw-bold">{{ riego.volumen_total_m3|floatformat:2 }}</div>
+                                            <small class="text-muted">m³</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <hr class="my-4">
+                    
+                    <h5 class="text-agro-primary mb-3">
+                        {% if riego.incluye_fertilizante %}
+                            <i class="bi bi-clipboard-data me-2"></i>Fertirriego
+                        {% else %}
+                            <i class="bi bi-clipboard-x me-2 text-muted"></i>Sin Fertilizantes
+                        {% endif %}
                     </h5>
 
-                    <p class="card-subtitle mb-2 text-muted">
-                        Encargado: {{ riego.encargado_riego|default:"Sin Asignar" }}
-                    </p>
-                    <hr>
-                    
-                    <h4 class="mt-4">Fertilizantes Utilizados</h4>
+                    {% if riego.incluye_fertilizante %}
                     <div class="table-responsive">
-                        <table class="table table-sm table-bordered">
-                            <thead class="table-light">
+                        <table class="table table-hover table-agro table-bordered">
+                            <thead>
                                 <tr>
                                     <th>Producto</th>
-                                    <th>Cantidad Utilizada</th>
+                                    <th class="text-center">Tipo</th>
+                                    <th class="text-end">Cantidad Utilizada</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {% for fert in fertilizantes %}
                                 <tr>
-                                    <td>{{ fert.producto.nombre }}</td>
-                                    <td><strong>{{ fert.cantidad_kg|floatformat:2 }} kg</strong></td>
+                                    <td class="fw-bold">{{ fert.producto.nombre }}</td>
+                                    <td class="text-center"><span class="badge bg-secondary">Fertilizante</span></td>
+                                    <td class="text-end bg-light"><strong>{{ fert.cantidad_kg|floatformat:2 }} kg</strong></td>
                                 </tr>
                                 {% empty %}
                                 <tr>
-                                    <td colspan="2" class="text-center">No se registraron fertilizantes.</td>
+                                    <td colspan="3" class="text-center text-muted py-3">
+                                        Se marcó "Con Fertilizante" pero no hay productos registrados.
+                                    </td>
                                 </tr>
                                 {% endfor %}
                             </tbody>
                         </table>
                     </div>
+                    {% else %}
+                        <p class="text-muted fst-italic px-3">Este riego fue solo de agua, no se aplicaron fertilizantes.</p>
+                    {% endif %}
+
+                    {% if riego.observaciones %}
+                    <div class="mt-4">
+                        <h6 class="text-uppercase text-muted small fw-bold mb-2">Observaciones</h6>
+                        <div class="p-3 bg-light rounded border">
+                            {{ riego.observaciones|linebreaks }}
+                        </div>
+                    </div>
+                    {% endif %}
                     
-                    <h4 class="mt-4">Detalles del Riego</h4>
-                    <dl class="row">
-                        <dt class="col-sm-4">Cuartel</dt>
-                        <dd class="col-sm-8">
-                            <span class="badge bg-info-subtle text-info-emphasis border border-info-subtle">{{ riego.cuartel.nombre }}</span>
-                        </dd>
-                        
-                        <dt class="col-sm-4">Estado</dt>
-                        <dd class="col-sm-8">
-                            {% if riego.estado == 'REALIZADO' %}
-                                <span class="badge bg-success-subtle text-success-emphasis border border-success-subtle"><i class="bi bi-check-circle me-1"></i>Realizado</span>
-                            {% elif riego.estado == 'PROGRAMADO' %}
-                                <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle"><i class="bi bi-clock me-1"></i>Programado</span>
-                            {% elif riego.estado == 'CANCELADO' %}
-                                <span class="badge bg-danger-subtle text-danger-emphasis border border-danger-subtle"><i class="bi bi-x-circle me-1"></i>Cancelado</span>
-                            {% else %}
-                                <span class="badge bg-secondary-subtle text-secondary-emphasis border border-secondary-subtle">{{ riego.estado }}</span>
-                            {% endif %}
-                        </dd>
-
-                        <dt class="col-sm-4">Horario</dt>
-                        <dd class="col-sm-8">{{ riego.horario_inicio|time:"H:i" }} - {{ riego.horario_fin|time:"H:i" }}</dd>
-
-                        <dt class="col-sm-4">Duración</dt>
-                        <dd class="col-sm-8">{{ riego.get_duracion_display }}</dd>
-
-                        <dt class="col-sm-4">Caudal Aplicado</dt>
-                        <dd class="col-sm-8">{{ riego.caudal_m3h|floatformat:2 }} m³/h</dd>
-
-                        <dt class="col-sm-4">Volumen Total</dt>
-                        <dd class="col-sm-8"><strong>{{ riego.volumen_total_m3|floatformat:2 }} m³</strong></dd>
-
-                        <dt class="col-sm-4">Observaciones</dt>
-                        <dd class="col-sm-8">{{ riego.observaciones|default:"N/A" }}</dd>
-                    </dl>
-                    
+                </div>
+                <div class="card-footer bg-light text-muted small text-end">
+                    Registrado el {{ riego.creado_en|date:"d/m/Y H:i" }}
                 </div>
             </div>
 

@@ -4,217 +4,155 @@
 {% block title %}Crear Control de Riego - AgroControl{% endblock %}
 
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <div>
-        <h1 class="h3 mb-1">
-            <i class="bi bi-droplet text-agro-primary me-2"></i>Crear Control de Riego
-        </h1>
-        <p class="text-muted">Registra una nueva actividad de riego en el sistema.</p>
-    </div>
-    <div>
-        <a href="{% url 'riego:dashboard' %}" class="btn btn-outline-secondary">
-            <i class="bi bi-arrow-left me-2"></i>Volver a la Lista
-        </a>
-    </div>
-</div>
-
-<div class="row justify-content-center">
-    <div class="col-md-10">
-        <div class="card">
-            <div class="card-header bg-primary text-white">
-                <h5 class="mb-0">
-                    <i class="bi bi-droplet-fill me-2"></i>Datos del Riego
-                </h5>
-            </div>
-            <div class="card-body">
-                <form method="post" novalidate id="riegoForm">
-                    {% csrf_token %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-10 offset-md-1">
+            
+            <div class="card card-agro shadow-sm">
+                <div class="card-header bg-agro-light">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-droplet me-2"></i>{{ titulo }}
+                    </h5>
+                </div>
+                <div class="card-body">
                     
-                    {% if form.non_field_errors %}
-                    <div class="alert alert-danger">
-                        {{ form.non_field_errors }}
-                    </div>
-                    {% endif %}
-                    
-                    <div class="row">
-                        <!-- SECCIÓN 1: Ubicación y Fecha -->
-                                                
-                        <div class="col-12">
-                            <h6 class="border-bottom pb-2 mb-3">Ubicación y Fecha</h6>
+                    <form method="post" novalidate id="riegoForm">
+                        {% csrf_token %}
+                        
+                        <!-- Errores Generales -->
+                        {% if form.non_field_errors %}
+                        <div class="alert alert-danger">
+                            <i class="bi bi-exclamation-triangle me-2"></i>
+                            {{ form.non_field_errors }}
+                        </div>
+                        {% endif %}
+                        
+                        <!-- SECCIÓN 1: Ubicación y Estado -->
+                        <h5 class="mt-2 text-agro-primary">Ubicación y Estado</h5>
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label for="{{ form.cuartel.id_for_label }}" class="form-label fw-semibold">{{ form.cuartel.label }}</label>
+                                {{ form.cuartel }}
+                                <div class="text-danger small mt-1">{{ form.cuartel.errors }}</div>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="{{ form.fecha.id_for_label }}" class="form-label fw-semibold">{{ form.fecha.label }}</label>
+                                {{ form.fecha }}
+                                <div class="text-danger small mt-1">{{ form.fecha.errors }}</div>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="{{ form.estado.id_for_label }}" class="form-label fw-semibold">{{ form.estado.label }}</label>
+                                {{ form.estado }}
+                                <div class="text-danger small mt-1">{{ form.estado.errors }}</div>
+                            </div>
                         </div>
 
-                        <div class="col-md-6 mb-3">
-                            <label for="{{ form.cuartel.id_for_label }}" class="form-label">
-                                Cuartel/Sector <span class="text-danger">*</span>
-                            </label>
-                            {{ form.cuartel }}
-                            {% if form.cuartel.errors %}
-                            <div class="text-danger small mt-1">{{ form.cuartel.errors }}</div>
-                            {% endif %}
+                        <!-- SECCIÓN 2: Horarios y Caudal -->
+                        <h5 class="mt-3 text-agro-primary">Mediciones y Horarios</h5>
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label for="{{ form.horario_inicio.id_for_label }}" class="form-label fw-semibold">{{ form.horario_inicio.label }}</label>
+                                {{ form.horario_inicio }}
+                                <div class="text-danger small mt-1">{{ form.horario_inicio.errors }}</div>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="{{ form.horario_fin.id_for_label }}" class="form-label fw-semibold">{{ form.horario_fin.label }}</label>
+                                {{ form.horario_fin }}
+                                <div class="text-danger small mt-1">{{ form.horario_fin.errors }}</div>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="{{ form.caudal_m3h.id_for_label }}" class="form-label fw-semibold">{{ form.caudal_m3h.label }}</label>
+                                {{ form.caudal_m3h }}
+                                <div class="text-danger small mt-1">{{ form.caudal_m3h.errors }}</div>
+                            </div>
                         </div>
 
-                        <div class="col-md-6 mb-3">
-                            <label for="{{ form.fecha.id_for_label }}" class="form-label">
-                                Fecha <span class="text-danger">*</span>
-                            </label>
-                            {{ form.fecha }}
-                            {% if form.fecha.errors %}
-                            <div class="text-danger small mt-1">{{ form.fecha.errors }}</div>
-                            {% endif %}
-                        </div>
-
-                        <div class="col-md-6 mb-3">
-                            <label for="{{ form.estado.id_for_label }}" class="form-label">
-                                Estado <span class="text-danger">*</span>
-                            </label>
-                            {{ form.estado }}
-                            {% if form.estado.errors %}
-                            <div class="text-danger small mt-1">{{ form.estado.errors }}</div>
-                            {% endif %}
-                        </div>
-                        <!-- SECCIÓN 2: Horarios -->
-                        <div class="col-12 mt-3">
-                            <h6 class="border-bottom pb-2 mb-3">Horarios</h6>
-                        </div>
-                        
-                        <div class="col-md-6 mb-3">
-                            <label for="{{ form.horario_inicio.id_for_label }}" class="form-label">
-                                Horario de Inicio <span class="text-danger">*</span>
-                            </label>
-                            {{ form.horario_inicio }}
-                            {% if form.horario_inicio.errors %}
-                            <div class="text-danger small mt-1">{{ form.horario_inicio.errors }}</div>
-                            {% endif %}
-                        </div>
-                        
-                        <div class="col-md-6 mb-3">
-                            <label for="{{ form.horario_fin.id_for_label }}" class="form-label">
-                                Horario de Fin <span class="text-danger">*</span>
-                            </label>
-                            {{ form.horario_fin }}
-                            {% if form.horario_fin.errors %}
-                            <div class="text-danger small mt-1">{{ form.horario_fin.errors }}</div>
-                            {% endif %}
-                            <small class="form-text text-muted">
-                                La duración y volumen se calcularán automáticamente
-                            </small>
-                        </div>
-                        
-                        <!-- SECCIÓN 3: Mediciones -->
-                        <div class="col-12 mt-3">
-                            <h6 class="border-bottom pb-2 mb-3">Mediciones de Agua</h6>
-                        </div>
-                        
-                        <div class="col-md-12 mb-3">
-                            <label for="{{ form.caudal_m3h.id_for_label }}" class="form-label">
-                                Caudal (m³/h) <span class="text-danger">*</span>
-                            </label>
-                            {{ form.caudal_m3h }}
-                            <small class="form-text text-muted">
-                                Metros cúbicos por hora
-                            </small>
-                            {% if form.caudal_m3h.errors %}
-                            <div class="text-danger small mt-1">{{ form.caudal_m3h.errors }}</div>
-                            {% endif %}
-                        </div>
-                        
-                        <!-- SECCIÓN 4: Fertirriego -->
-                        <div class="col-12 mt-3">
-                            <h6 class="border-bottom pb-2 mb-3">Fertirriego</h6>
-                        </div>
-                        
-                        <div class="col-md-12 mb-3">
+                        <!-- SECCIÓN 3: Fertirriego -->
+                        <hr class="my-4">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h5 class="text-agro-primary mb-0">Fertirriego</h5>
                             <div class="form-check form-switch">
                                 {{ form.incluye_fertilizante }}
-                                <label class="form-check-label" for="{{ form.incluye_fertilizante.id_for_label }}">
-                                    <strong>¿Este riego incluye fertilizante?</strong>
+                                <label class="form-check-label fw-semibold" for="{{ form.incluye_fertilizante.id_for_label }}">
+                                    ¿Incluye Fertilizante?
                                 </label>
                             </div>
                         </div>
                         
-                        <!-- SECCIÓN DE FERTILIZANTES (se muestra/oculta con JavaScript) -->
-                        <div id="fertilizantes-section" class="col-12" style="display: none;">
-                            <div class="mb-3">
-                                <div class="alert alert-info">
-                                    <i class="bi bi-info-circle me-2"></i>
-                                    Registra los fertilizantes aplicados durante este riego
-                                </div>
+                        <!-- Contenedor dinámico de fertilizantes -->
+                        <div id="fertilizantes-section" style="display: none;">
+                            <div class="alert alert-light border border-agro-primary text-agro-primary mb-3">
+                                <i class="bi bi-info-circle me-2"></i>Agrega los fertilizantes y la cantidad en kg.
                             </div>
                             
                             {{ formset.management_form }}
                             
                             <div id="fertilizantes-container">
                                 {% for fertilizante_form in formset %}
-                                <div class="fertilizante-form border rounded p-3 mb-3">
-                                    <div class="row">
-                                        <div class="col-md-6">
-                                            <label class="form-label">Fertilizante</label>
-                                            {{ fertilizante_form.producto }}
-                                            {% if fertilizante_form.producto.errors %}
-                                            <div class="text-danger small mt-1">{{ fertilizante_form.producto.errors }}</div>
-                                            {% endif %}
-                                        </div>
-                                        <div class="col-md-4">
-                                            <label class="form-label">Cantidad (kg)</label>
-                                            {{ fertilizante_form.cantidad_kg }}
-                                            {% if fertilizante_form.cantidad_kg.errors %}
-                                            <div class="text-danger small mt-1">{{ fertilizante_form.cantidad_kg.errors }}</div>
-                                            {% endif %}
-                                        </div>
-                                        <div class="col-md-2">
-                                            <label class="form-label d-block">&nbsp;</label>
-                                            {% if formset.can_delete %}
-                                                {{ fertilizante_form.DELETE }} <label for="{{ fertilizante_form.DELETE.id_for_label }}">Eliminar</label>
-                                            {% endif %}
-                                        </div>
+                                <div class="fertilizante-form row align-items-center mb-3 p-2 border rounded bg-light">
+                                    <!-- Campos ocultos (ID, DELETE) -->
+                                    {% for hidden in fertilizante_form.hidden_fields %}
+                                        {{ hidden }}
+                                    {% endfor %}
+
+                                    <div class="col-md-6">
+                                        {% if forloop.first %}<label class="form-label fw-semibold small">Fertilizante</label>{% endif %}
+                                        {{ fertilizante_form.producto }}
+                                        <div class="text-danger small mt-1">{{ fertilizante_form.producto.errors }}</div>
                                     </div>
-                                    {{ fertilizante_form.id }}
+                                    
+                                    <div class="col-md-4">
+                                        {% if forloop.first %}<label class="form-label fw-semibold small">Cantidad (kg)</label>{% endif %}
+                                        {{ fertilizante_form.cantidad_kg }}
+                                        <div class="text-danger small mt-1">{{ fertilizante_form.cantidad_kg.errors }}</div>
+                                    </div>
+                                    
+                                    <div class="col-md-2 text-center">
+                                        {% if forloop.first %}<label class="form-label fw-semibold small d-block">&nbsp;</label>{% endif %}
+                                        {% if formset.can_delete and fertilizante_form.instance.pk %}
+                                            <div class="form-check d-inline-block">
+                                                {{ fertilizante_form.DELETE }}
+                                                <label class="form-check-label text-danger small" for="{{ fertilizante_form.DELETE.id_for_label }}">Eliminar</label>
+                                            </div>
+                                        {% endif %}
+                                    </div>
                                 </div>
                                 {% endfor %}
                             </div>
                             
-                            <button type="button" class="btn btn-success btn-sm" id="add-fertilizante">
-                                <i class="bi bi-plus-circle me-1"></i>Agregar otro fertilizante
+                            <button type="button" class="btn btn-success btn-sm mt-2" id="add-fertilizante">
+                                <i class="bi bi-plus-circle me-1"></i> Añadir otro fertilizante
                             </button>
                         </div>
                         
-                        <!-- SECCIÓN 5: Responsable y Observaciones -->
-                        <div class="col-12 mt-3">
-                            <h6 class="border-bottom pb-2 mb-3">Responsable y Observaciones</h6>
+                        <!-- SECCIÓN 4: Responsable -->
+                        <hr class="my-4">
+                        <h5 class="text-agro-primary">Responsable y Observaciones</h5>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.encargado_riego.id_for_label }}" class="form-label fw-semibold">{{ form.encargado_riego.label }}</label>
+                                {{ form.encargado_riego }}
+                                <div class="text-danger small mt-1">{{ form.encargado_riego.errors }}</div>
+                            </div>
+                            <div class="col-12 mb-3">
+                                <label for="{{ form.observaciones.id_for_label }}" class="form-label fw-semibold">{{ form.observaciones.label }}</label>
+                                {{ form.observaciones }}
+                                <div class="text-danger small mt-1">{{ form.observaciones.errors }}</div>
+                            </div>
                         </div>
-                        
-                        <div class="col-md-6 mb-3">
-                            <label for="{{ form.encargado_riego.id_for_label }}" class="form-label">
-                                Encargado de Riego
-                            </label>
-                            {{ form.encargado_riego }}
-                            {% if form.encargado_riego.errors %}
-                            <div class="text-danger small mt-1">{{ form.encargado_riego.errors }}</div>
-                            {% endif %}
+
+                        <!-- Botones Finales -->
+                        <div class="mt-4 border-top pt-3 text-end">
+                            <a href="{% url 'riego:dashboard' %}" class="btn btn-outline-secondary me-2">
+                                Cancelar
+                            </a>
+                            <button type="submit" class="btn btn-agro-primary">
+                                <i class="bi bi-check-circle me-2"></i> {{ boton_texto|default:"Guardar Riego" }}
+                            </button>
                         </div>
-                        
-                        <div class="col-md-12 mb-3">
-                            <label for="{{ form.observaciones.id_for_label }}" class="form-label">
-                                Observaciones
-                            </label>
-                            {{ form.observaciones }}
-                            {% if form.observaciones.errors %}
-                            <div class="text-danger small mt-1">{{ form.observaciones.errors }}</div>
-                            {% endif %}
-                        </div>
-                    </div>
-                    
-                    <hr class="my-4">
-                    
-                    <div class="d-flex justify-content-between">
-                        <a href="{% url 'riego:dashboard' %}" class="btn btn-outline-secondary">
-                            <i class="bi bi-x-circle me-2"></i>Cancelar
-                        </a>
-                        <button type="submit" class="btn btn-primary">
-                            <i class="bi bi-check-circle me-2"></i>Guardar Riego
-                        </button>
-                    </div>
-                </form>
+
+                    </form>
+                </div>
             </div>
         </div>
     </div>
@@ -244,28 +182,54 @@ document.addEventListener('DOMContentLoaded', function() {
         checkboxFertilizante.addEventListener('change', toggleFertilizantes);
     }
     
-    // Agregar más fertilizantes
-    document.getElementById('add-fertilizante')?.addEventListener('click', function() {
-        const totalForms = document.getElementById('id_fertilizantes-TOTAL_FORMS');
-        const container = document.getElementById('fertilizantes-container');
-        
-        const newIndex = parseInt(totalForms.value);
-        const newForm = container.children[0].cloneNode(true);
-        
-        // Actualizar índices
-        newForm.innerHTML = newForm.innerHTML.replace(/fertilizantes-0-/g, `fertilizantes-${newIndex}-`);
-        newForm.innerHTML = newForm.innerHTML.replace(/id_fertilizantes-0-/g, `id_fertilizantes-${newIndex}-`);
-        
-        // Limpiar valores
-        newForm.querySelectorAll('input, select').forEach(input => {
-            if (input.type !== 'hidden' && input.name !== 'DELETE') {
-                input.value = '';
+    // Lógica para agregar más fertilizantes
+    const addBtn = document.getElementById('add-fertilizante');
+    if (addBtn) {
+        addBtn.addEventListener('click', function() {
+            const totalFormsInput = document.getElementById('id_fertilizantes-TOTAL_FORMS');
+            const container = document.getElementById('fertilizantes-container');
+            
+            const currentFormCount = parseInt(totalFormsInput.value);
+            
+            // Clonamos el primer elemento del contenedor (asumiendo que siempre hay al menos uno inicial o "extra")
+            // Si no hay formularios iniciales, Django suele renderizar al menos uno extra=1
+            const firstForm = container.querySelector('.fertilizante-form');
+            
+            if (firstForm) {
+                const newForm = firstForm.cloneNode(true);
+                
+                // Regex para actualizar los índices (ej: fertilizantes-0-producto -> fertilizantes-1-producto)
+                const regex = new RegExp(`fertilizantes-(\\d+)-`, 'g');
+                newForm.innerHTML = newForm.innerHTML.replace(regex, `fertilizantes-${currentFormCount}-`);
+                
+                // Limpiar valores de los inputs
+                newForm.querySelectorAll('input, select').forEach(input => {
+                    if (input.type !== 'hidden' && input.name !== 'DELETE') {
+                        input.value = '';
+                    }
+                    // Remover checkbox de eliminar si es un form nuevo
+                    if (input.name.endsWith('DELETE')) {
+                       // Opcional: ocultar el check de eliminar en nuevos si se desea
+                       input.checked = false; 
+                    }
+                });
+
+                // Opcional: Remover las etiquetas (labels) si solo queremos que aparezcan en la primera fila
+                // Como estamos clonando la primera fila, si esta tiene labels, la nueva también.
+                // Si quieres quitar labels de la 2da fila en adelante:
+                newForm.querySelectorAll('label').forEach(label => {
+                     // Si el label no es del checkbox (que se necesita), lo ocultamos o borramos texto
+                     if (!label.classList.contains('form-check-label')) {
+                         label.innerHTML = ''; // O label.remove()
+                         label.classList.add('d-none'); // Ocultar visualmente
+                     }
+                });
+
+                container.appendChild(newForm);
+                totalFormsInput.value = currentFormCount + 1;
             }
         });
-        
-        container.appendChild(newForm);
-        totalForms.value = newIndex + 1;
-    });
+    }
 });
 </script>
 {% endblock %}
