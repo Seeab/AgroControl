@@ -1,6 +1,7 @@
 {% comment %}
-    PLANTILLA BASE ACTUALIZADA (v2.1)
-    - Se agregó el módulo de Órdenes de Trabajo en la barra lateral (Admin).
+    PLANTILLA BASE CORREGIDA (v3.0)
+    - Fix: Barra lateral fija (position: fixed) para que te siga al bajar.
+    - Fix: Scroll independiente en la barra lateral (overflow-y: auto).
 {% endcomment %}
 <!DOCTYPE html>
 <html lang="es" data-bs-theme="light">
@@ -18,15 +19,16 @@
             --agro-secondary: #3CB371;
             --agro-light: #F0FFF0;
             --agro-dark: #228B22;
-            --sidebar-width: 280px; /* Ancho de la barra lateral */
+            --sidebar-width: 280px;
+            --navbar-height: 60px; /* Altura fija para cálculos exactos */
         }
         
         body {
-            /* Evita el desbordamiento horizontal causado por las transiciones */
             overflow-x: hidden;
+            background-color: #ffffff;
         }
 
-        /* --- Estilos de Color (Sin cambios) --- */
+        /* --- Estilos de Color --- */
         .bg-agro-primary { background-color: var(--agro-primary) !important; }
         .bg-agro-secondary { background-color: var(--agro-secondary) !important; }
         .bg-agro-light { background-color: var(--agro-light) !important; }
@@ -43,23 +45,39 @@
             border-color: var(--agro-dark);
         }
 
-        /* --- Estilos de Layout (Nuevos) --- */
-        #wrapper {
-            display: flex;
-            min-height: 100vh;
+        /* --- Navbar Fija --- */
+        .navbar {
+            min-height: var(--navbar-height);
+            z-index: 1030; /* Por encima del sidebar */
         }
 
-        /* --- Barra Lateral (Actualizada) --- */
+        /* --- Layout Principal --- */
+        #wrapper {
+            display: flex;
+            width: 100%;
+            margin-top: 0; /* El padding del navbar lo maneja Bootstrap sticky-top */
+        }
+
+        /* --- Barra Lateral (CORREGIDO) --- */
         #sidebar {
+            /* FIJA para que te siga siempre */
+            position: fixed;
+            top: var(--navbar-height); /* Empieza debajo del navbar */
+            bottom: 0; /* Llega hasta el final de la pantalla */
+            left: 0;
             width: var(--sidebar-width);
-            min-height: 100vh;
+            z-index: 1000;
+            
             background-color: #f8f9fa;
             border-right: 1px solid #dee2e6;
             transition: margin-left 0.3s ease-in-out;
-            /* Se superpone y tiene sombra para destacar */
-            box-shadow: 0 0.125rem 0.25rem rgba(0,0,0,0.075); 
+            box-shadow: 0 0.125rem 0.25rem rgba(0,0,0,0.075);
+            
+            /* SCROLL INDEPENDIENTE (Para móviles) */
+            overflow-y: auto; 
         }
         
+        /* Estilos de los links del sidebar */
         #sidebar .nav-link {
             color: #495057;
             padding: 0.75rem 1rem;
@@ -78,20 +96,21 @@
             color: white;
         }
         
-        /* --- Contenido Principal (Actualizado) --- */
+        /* --- Contenido Principal (CORREGIDO) --- */
         #main-content {
             flex-grow: 1;
             padding: 1.5rem;
-            background-color: #ffffff;
             transition: margin-left 0.3s ease-in-out;
+            
+            /* En Desktop, empujamos el contenido a la derecha porque el sidebar es fixed */
+            margin-left: var(--sidebar-width);
             width: calc(100% - var(--sidebar-width));
-            margin-left: 0;
         }
 
         /* --- Lógica de Colapso (Desktop) --- */
-        /* Cuando el sidebar está colapsado... */
+        /* Cuando ocultamos el sidebar en PC */
         body.sidebar-toggled #sidebar {
-            margin-left: calc(var(--sidebar-width) * -1); /* Oculta el sidebar a la izquierda */
+            margin-left: calc(var(--sidebar-width) * -1);
         }
         
         body.sidebar-toggled #main-content {
@@ -99,28 +118,29 @@
             width: 100%;
         }
 
-        /* --- Adaptabilidad Móvil (Nuevo) --- */
+        /* --- Adaptabilidad Móvil --- */
         @media (max-width: 767.98px) {
             #sidebar {
-                /* En móvil, el sidebar es un "offcanvas" */
-                position: fixed;
-                top: 0;
-                left: 0;
-                z-index: 1040; /* Por encima del backdrop */
-                margin-left: calc(var(--sidebar-width) * -1); /* Oculto por defecto */
+                /* En móvil empieza oculto */
+                margin-left: calc(var(--sidebar-width) * -1);
+                /* En móvil ocupa toda la altura o respeta el navbar? 
+                   Respetamos navbar para que el botón toggle siga visible */
+                top: var(--navbar-height);
+                height: calc(100vh - var(--navbar-height));
             }
 
             #main-content {
+                /* En móvil el contenido siempre ocupa el 100% */
                 width: 100%;
                 margin-left: 0;
             }
 
-            /* Muestra el sidebar cuando está "toggled" */
+            /* Cuando se activa en móvil, mostramos el sidebar */
             body.sidebar-toggled #sidebar {
                 margin-left: 0;
             }
 
-            /* Backdrop para oscurecer el fondo en móvil */
+            /* Backdrop oscuro */
             #sidebar-backdrop {
                 position: fixed;
                 top: 0;
@@ -128,16 +148,15 @@
                 width: 100%;
                 height: 100%;
                 background-color: rgba(0, 0, 0, 0.5);
-                z-index: 1030; /* Debajo del sidebar */
-                display: none; /* Oculto por defecto */
+                z-index: 900; /* Debajo del sidebar (1000) pero sobre el contenido */
+                display: none;
             }
             body.sidebar-toggled #sidebar-backdrop {
                 display: block;
             }
         }
 
-
-        /* --- Estilos de Tarjetas y Tablas (Sin cambios) --- */
+        /* --- Estilos Extra --- */
         .card-agro {
             border: 1px solid #dee2e6;
             border-radius: 0.5rem;
@@ -153,16 +172,13 @@
         .nav-link.disabled-temp {
             color: #6c757d !important;
             pointer-events: none;
-            cursor: default;
             opacity: 0.6;
         }
     </style>
     
     {% block extra_css %}{% endblock %}
 </head>
-<body class="{% if request.session.usuario_id %}sidebar-toggled{% endif %}">
-    
-    <nav class="navbar navbar-expand-lg navbar-dark bg-agro-primary shadow-sm sticky-top">
+<body class="{% if request.session.usuario_id %}sidebar-toggled{% endif %}"> <nav class="navbar navbar-expand-lg navbar-dark bg-agro-primary shadow-sm sticky-top">
         <div class="container-fluid">
             
             {% if request.session.usuario_id %}
@@ -208,8 +224,7 @@
             <div id="sidebar-backdrop"></div>
 
             <div id="sidebar">
-                <div class="pt-3">
-                    <div class="nav flex-column">
+                <div class="pt-3 pb-5"> <div class="nav flex-column">
                         
                         {% if request.session.es_administrador %}
                             
@@ -299,7 +314,7 @@
                     </div>
                 </div>
             </div>
-            {% endif %}
+        {% endif %}
 
         <main id="main-content" class="{% if not request.session.usuario_id %}col-12{% endif %}">
             
@@ -331,7 +346,6 @@
     
     <script>
         document.addEventListener('DOMContentLoaded', function () {
-            // Lógica para el botón de colapsar la barra lateral
             const sidebarToggle = document.getElementById('sidebarToggle');
             const sidebarBackdrop = document.getElementById('sidebar-backdrop');
             
@@ -342,17 +356,11 @@
                 });
             }
 
-            // Lógica para el backdrop (fondo oscuro en móvil)
             if (sidebarBackdrop) {
-                // Cierra el sidebar si se hace clic en el fondo oscuro
                 sidebarBackdrop.addEventListener('click', function() {
                     document.body.classList.remove('sidebar-toggled');
                 });
             }
-
-            // ---- Lógica para estado 'active' del sidebar ----
-            // Esta lógica se movió de JS a CSS/Django para que sea más simple
-            // (ver 'active' en las clases de los nav-link)
         });
     </script>
 
