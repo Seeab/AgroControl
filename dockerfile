@@ -1,5 +1,5 @@
 # Usamos una imagen ligera de Python
-FROM python:3.11.9-slim
+FROM python:3.10-slim
 
 # Evita que Python genere archivos .pyc y buffer de salida
 ENV PYTHONDONTWRITEBYTECODE 1
