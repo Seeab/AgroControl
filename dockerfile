@@ -1,7 +1,7 @@
-# Usamos una imagen ligera de Python
-FROM python:3.10-slim
+# Usamos Python 3.11 slim como querías
+FROM python:3.11-slim
 
-# Evita que Python genere archivos .pyc y buffer de salida
+# Variables de entorno para optimizar Python
 ENV PYTHONDONTWRITEBYTECODE 1
 ENV PYTHONUNBUFFERED 1
 
@@ -9,7 +9,6 @@ ENV PYTHONUNBUFFERED 1
 WORKDIR /app
 
 # 1. Instalar dependencias del SISTEMA para WeasyPrint y Postgres
-# Esto es lo que te salva de errores al generar PDFs
 RUN apt-get update && apt-get install -y \
     build-essential \
     libpq-dev \
@@ -29,9 +28,9 @@ RUN pip install -r requirements.txt
 # 3. Copiar el proyecto
 COPY . .
 
-# 4. Recolectar archivos estáticos
+# 4. Recolectar estáticos
 RUN python manage.py collectstatic --noinput
 
-# 5. Comando para iniciar Gunicorn
-# Asegúrate de que 'AgroControl' coincida con el nombre de la carpeta donde está wsgi.py
-CMD ["gunicorn", "AgroControl.wsgi:application", "--bind", "0.0.0.0:8000"]
+# 5. Comando de inicio (MODIFICADO PARA EVITAR ERROR 128)
+# Usamos "sh -c" para asegurar que el sistema encuentre gunicorn correctamente
+CMD ["sh", "-c", "gunicorn AgroControl.wsgi:application --bind 0.0.0.0:8000"]
