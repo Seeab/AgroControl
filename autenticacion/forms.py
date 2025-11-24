@@ -247,3 +247,59 @@ class CambiarPasswordForm(forms.Form):
                 raise forms.ValidationError('La contraseña debe ser alfanumérica (contener letras y números).')
 
         return cleaned_data
+    
+class PerfilForm(forms.ModelForm):
+    """
+    Formulario igual a UsuarioForm pero para auto-edición.
+    Incluye cambio de contraseña pero EXCLUYE roles y permisos.
+    """
+    password = forms.CharField(
+        widget=forms.PasswordInput(attrs={'class': 'form-control', 'placeholder': 'Nueva Contraseña'}),
+        label='Nueva Contraseña',
+        required=False,
+        help_text='Dejar en blanco si no desea cambiar la contraseña'
+    )
+    password_confirm = forms.CharField(
+        widget=forms.PasswordInput(attrs={'class': 'form-control', 'placeholder': 'Confirmar nueva contraseña'}),
+        label='Confirmar nueva contraseña',
+        required=False
+    )
+
+    class Meta:
+        model = Usuario
+        # Excluimos 'rol', 'esta_activo', 'es_administrador'
+        fields = ['nombre_usuario', 'correo_electronico', 'nombres', 'apellidos']
+        widgets = {
+            'nombre_usuario': forms.TextInput(attrs={'class': 'form-control', 'readonly': 'readonly'}), # Solo lectura
+            'correo_electronico': forms.EmailInput(attrs={'class': 'form-control'}),
+            'nombres': forms.TextInput(attrs={'class': 'form-control'}),
+            'apellidos': forms.TextInput(attrs={'class': 'form-control'}),
+        }
+
+    def clean(self):
+        cleaned_data = super().clean()
+        password = cleaned_data.get('password')
+        password_confirm = cleaned_data.get('password_confirm')
+
+        if password: 
+            if password != password_confirm:
+                raise forms.ValidationError('Las contraseñas no coinciden.')
+            
+            if len(password) < 8:
+                raise forms.ValidationError('La contraseña debe tener al menos 8 caracteres.')
+            
+            if not re.search(r'[A-Za-z]', password) or not re.search(r'[0-9]', password):
+                raise forms.ValidationError('La contraseña debe ser alfanumérica.')
+
+        return cleaned_data
+
+    def save(self, commit=True):
+        usuario = super().save(commit=False)
+        password = self.cleaned_data.get('password')
+        
+        if password:
+            usuario.set_password(password)
+        
+        if commit:
+            usuario.save()
+        return usuario

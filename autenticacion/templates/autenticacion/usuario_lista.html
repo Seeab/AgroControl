@@ -3,124 +3,227 @@
 {% block title %}Gestión de Usuarios - AgroControl{% endblock %}
 {% block page_title %}Gestión de Usuarios{% endblock %}
 
-{% block page_actions %}
-<a href="{% url 'usuario_crear' %}" class="btn btn-primary">
-    <i class="bi bi-plus-circle me-2"></i>Nuevo Usuario
-</a>
-{% endblock %}
-
 {% block content %}
-<div class="row mb-3">
-    <div class="col-md-6">
-        <form method="get" class="d-flex">
-            <input type="text" name="q" class="form-control me-2" placeholder="Buscar usuarios..." value="{{ query }}">
-            <button type="submit" class="btn btn-outline-primary">
-                <i class="bi bi-search"></i>
-            </button>
-            {% if query %}
-            <a href="{% url 'usuario_lista' %}" class="btn btn-outline-secondary ms-2">
-                <i class="bi bi-x-circle"></i>
-            </a>
-            {% endif %}
-        </form>
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="h3 mb-1">
+            <i class="bi bi-people-fill text-agro-primary me-2"></i>Gestión de Usuarios
+        </h1>
+        <p class="text-muted">Administra las cuentas de acceso al sistema y sus roles.</p>
+    </div>
+    <a href="{% url 'usuario_crear' %}" class="btn btn-agro-primary">
+        <i class="bi bi-plus-circle me-2"></i>Nuevo Usuario
+    </a>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-4 mb-3">
+        <div class="card card-agro border-start border-primary border-4 h-100">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col">
+                        <div class="text-xs fw-bold text-primary text-uppercase mb-1">Total Usuarios</div>
+                        <div class="h5 mb-0 fw-bold text-gray-800">{{ total_usuarios }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-folder-fill text-primary fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4 mb-3">
+        <div class="card card-agro border-start border-success border-4 h-100">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col">
+                        <div class="text-xs fw-bold text-success text-uppercase mb-1">Usuarios Activos</div>
+                        <div class="h5 mb-0 fw-bold text-gray-800">{{ usuarios_activos }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-person-check-fill text-success fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4 mb-3">
+        <div class="card card-agro border-start border-secondary border-4 h-100">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col">
+                        <div class="text-xs fw-bold text-secondary text-uppercase mb-1">Usuarios Inactivos</div>
+                        <div class="h5 mb-0 fw-bold text-gray-800">{{ usuarios_inactivos }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-person-dash-fill text-secondary fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 
-<div class="card">
+<div class="card card-agro mb-4">
+    <div class="card-header bg-agro-light">
+        <h5 class="card-title mb-0">
+            <i class="bi bi-funnel me-2"></i>Filtros y Búsqueda
+        </h5>
+    </div>
+    <div class="card-body">
+        <div class="row g-3 align-items-end">
+            <div class="col-md-6">
+                <form method="get" class="d-flex">
+                    <div class="input-group">
+                        <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
+                        <input type="text" name="q" class="form-control" placeholder="Buscar por usuario, nombre o correo..." value="{{ query }}">
+                        <button type="submit" class="btn btn-agro-primary">Buscar</button>
+                    </div>
+                    {% if query %}
+                    <a href="{% url 'usuario_lista' %}" class="btn btn-outline-secondary ms-2" title="Limpiar búsqueda">
+                        <i class="bi bi-x-lg"></i>
+                    </a>
+                    {% endif %}
+                </form>
+            </div>
+
+            <div class="col-md-6 text-md-end">
+                <label class="form-label d-block small text-muted mb-1">Filtros Rápidos:</label>
+                <div class="btn-group btn-group-sm" role="group">
+                    <button type="button" class="btn btn-outline-secondary active" data-filtro="todos">Todos</button>
+                    <button type="button" class="btn btn-outline-danger" data-filtro="admins"><i class="bi bi-shield-lock"></i> Admins</button>
+                    <button type="button" class="btn btn-outline-success" data-filtro="activos"><i class="bi bi-check-circle"></i> Activos</button>
+                    <button type="button" class="btn btn-outline-secondary" data-filtro="inactivos"><i class="bi bi-dash-circle"></i> Inactivos</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card card-agro">
+    <div class="card-header bg-agro-light d-flex justify-content-between align-items-center">
+        <h5 class="card-title mb-0">
+            <i class="bi bi-list-ul me-2"></i>Listado de Usuarios
+        </h5>
+        <span class="badge bg-agro-primary">{{ page_obj.paginator.count }} usuarios</span>
+    </div>
     <div class="card-body">
         <div class="table-responsive">
-            <table class="table table-hover">
+            <table class="table table-hover table-agro align-middle">
                 <thead>
                     <tr>
-                        <th>Usuario</th>
-                        <th>Nombre Completo</th>
-                        <th>Correo</th>
-                        <th>Rol</th>
-                        <th>Estado</th>
-                        <th>Fecha Registro</th>
-                        <th>Acciones</th>
+                        <th><i class="bi bi-person-circle me-1"></i>Usuario</th>
+                        <th><i class="bi bi-person-vcard me-1"></i>Nombre Completo</th>
+                        <th><i class="bi bi-envelope me-1"></i>Correo</th>
+                        <th><i class="bi bi-shield-lock me-1"></i>Rol</th>
+                        <th><i class="bi bi-toggle-on me-1"></i>Estado</th>
+                        <th><i class="bi bi-calendar-event me-1"></i>Registro</th>
+                        <th class="text-end"><i class="bi bi-gear me-1"></i>Acciones</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for usuario in page_obj %}
-                    <tr>
+                    <tr class="{% if not usuario.esta_activo %}table-light text-muted{% endif %}">
                         <td>
-                            <strong>{{ usuario.nombre_usuario }}</strong>
+                            <div class="fw-bold text-primary">{{ usuario.nombre_usuario }}</div>
                             {% if usuario.es_administrador %}
                             <span class="badge bg-danger ms-1">Admin</span>
                             {% endif %}
                         </td>
                         <td>{{ usuario.get_full_name }}</td>
-                        <td>{{ usuario.correo_electronico|default:"-" }}</td>
+                        <td>
+                            {% if usuario.correo_electronico %}
+                            <a href="mailto:{{ usuario.correo_electronico }}" class="text-decoration-none text-muted">{{ usuario.correo_electronico }}</a>
+                            {% else %}<span class="text-muted">-</span>{% endif %}
+                        </td>
                         <td>
                             {% if usuario.rol %}
-                            <span class="badge bg-info">{{ usuario.rol.nombre }}</span>
-                            {% else %}
-                            <span class="text-muted">Sin rol</span>
-                            {% endif %}
+                            <span class="badge bg-info-subtle text-info-emphasis border border-info-subtle">{{ usuario.rol.nombre }}</span>
+                            {% else %}<span class="text-muted small">Sin rol</span>{% endif %}
                         </td>
                         <td>
                             {% if usuario.esta_activo %}
-                            <span class="badge bg-success">Activo</span>
+                            <span class="badge bg-success-subtle text-success-emphasis border border-success-subtle">Activo</span>
                             {% else %}
-                            <span class="badge bg-secondary">Inactivo</span>
+                            <span class="badge bg-secondary-subtle text-secondary-emphasis border border-secondary-subtle">Inactivo</span>
                             {% endif %}
                         </td>
                         <td>{{ usuario.fecha_registro|date:"d/m/Y" }}</td>
-                        <td>
-                            <a href="{% url 'usuario_editar' usuario.id %}" class="btn btn-sm btn-outline-primary" title="Editar">
-                                <i class="bi bi-pencil"></i>
-                            </a>
-                            {% if usuario.esta_activo %}
-                            <a href="{% url 'usuario_eliminar' usuario.id %}" class="btn btn-sm btn-outline-danger" title="Desactivar">
-                                <i class="bi bi-trash"></i>
-                            </a>
-                            {% endif %}
+                        <td class="text-end">
+                            <div class="btn-group btn-group-sm">
+                                <a href="{% url 'usuario_editar' usuario.id %}" class="btn btn-outline-primary" data-bs-toggle="tooltip" title="Editar"><i class="bi bi-pencil"></i></a>
+                                {% if usuario.esta_activo %}
+                                <a href="{% url 'usuario_eliminar' usuario.id %}" class="btn btn-outline-danger" data-bs-toggle="tooltip" title="Desactivar"><i class="bi bi-trash"></i></a>
+                                {% endif %}
+                            </div>
                         </td>
                     </tr>
                     {% empty %}
                     <tr>
-                        <td colspan="7" class="text-center text-muted py-4">
-                            {% if query %}
-                            No se encontraron usuarios que coincidan con "{{ query }}"
-                            {% else %}
-                            No hay usuarios registrados
-                            {% endif %}
+                        <td colspan="7" class="text-center py-5">
+                            <i class="bi bi-people display-4 text-muted"></i>
+                            <h4 class="text-muted mt-3">No se encontraron usuarios</h4>
+                            {% if query %}<p class="text-muted">Intenta con otra búsqueda.</p>{% endif %}
                         </td>
                     </tr>
                     {% endfor %}
                 </tbody>
             </table>
         </div>
-        
-        <!-- Paginación -->
         {% if page_obj.has_other_pages %}
-        <nav>
+        <nav class="mt-4">
             <ul class="pagination justify-content-center">
                 {% if page_obj.has_previous %}
-                <li class="page-item">
-                    <a class="page-link" href="?page=1{% if query %}&q={{ query }}{% endif %}">Primera</a>
-                </li>
-                <li class="page-item">
-                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if query %}&q={{ query }}{% endif %}">Anterior</a>
-                </li>
+                <li class="page-item"><a class="page-link" href="?page=1{% if query %}&q={{ query }}{% endif %}"><i class="bi bi-chevron-double-left"></i> Primera</a></li>
+                <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if query %}&q={{ query }}{% endif %}"><i class="bi bi-chevron-left"></i> Anterior</a></li>
                 {% endif %}
-                
-                <li class="page-item active">
-                    <span class="page-link">{{ page_obj.number }} de {{ page_obj.paginator.num_pages }}</span>
-                </li>
-                
+                <li class="page-item disabled"><a class="page-link" href="#">Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}</a></li>
                 {% if page_obj.has_next %}
-                <li class="page-item">
-                    <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if query %}&q={{ query }}{% endif %}">Siguiente</a>
-                </li>
-                <li class="page-item">
-                    <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if query %}&q={{ query }}{% endif %}">Última</a>
-                </li>
+                <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}{% if query %}&q={{ query }}{% endif %}">Siguiente <i class="bi bi-chevron-right"></i></a></li>
+                <li class="page-item"><a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if query %}&q={{ query }}{% endif %}">Última <i class="bi bi-chevron-double-right"></i></a></li>
                 {% endif %}
             </ul>
         </nav>
         {% endif %}
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Tooltips
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) { return new bootstrap.Tooltip(tooltipTriggerEl) })
+
+    // Filtros Rápidos JS (Mismo código de antes)
+    const botonesFiltro = document.querySelectorAll('[data-filtro]');
+    if (botonesFiltro.length > 0) {
+        botonesFiltro.forEach(btn => {
+            btn.addEventListener('click', function() {
+                const filtro = this.getAttribute('data-filtro');
+                botonesFiltro.forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                const filas = document.querySelectorAll('tbody tr');
+                filas.forEach(fila => {
+                    if (fila.querySelector('td[colspan]')) return;
+                    let mostrar = true;
+                    const celdas = fila.querySelectorAll('td');
+                    const usuarioCell = celdas[0];
+                    const estadoCell = celdas[4];
+                    switch(filtro) {
+                        case 'admins': mostrar = usuarioCell.querySelector('.badge.bg-danger') !== null; break;
+                        case 'activos': mostrar = estadoCell.textContent.includes('Activo'); break;
+                        case 'inactivos': mostrar = estadoCell.textContent.includes('Inactivo'); break;
+                        case 'todos': default: mostrar = true;
+                    }
+                    fila.style.display = mostrar ? '' : 'none';
+                });
+            });
+        });
+    }
+});
+</script>
 {% endblock %}

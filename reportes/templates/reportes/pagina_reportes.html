@@ -67,6 +67,16 @@
                                 {% endfor %}
                             </select>
                         </div>
+                        
+                        <div class="col-md-6" id="filtro_producto_riego_div" style="display: none;">
+                            <label for="filtro_producto_especifico" class="form-label fw-semibold">Filtro: Fertilizante (Opcional)</label>
+                            <select id="filtro_producto_especifico" name="filtro_producto_especifico" class="form-select">
+                                <option value="">Todos los fertilizantes</option>
+                                {% for prod in fertilizantes %}
+                                    <option value="{{ prod.id }}">{{ prod.nombre }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
 
                         <div class="col-md-6" id="filtro_tipo_equipo_div" style="display: none;">
                             <label for="filtro_tipo_equipo" class="form-label fw-semibold">Filtro: Categoría Equipo (Opcional)</label>
@@ -100,35 +110,36 @@
 
 {% block extra_js %}
 <script>
-// Este script simple muestra los filtros opcionales
-// solo cuando se selecciona el reporte correspondiente.
 document.addEventListener('DOMContentLoaded', function() {
     const tipoReporteSelect = document.getElementById('tipo_reporte');
     
-    // Filtros de Aplicacion
+    // Filtros
     const filtroCuartel = document.getElementById('filtro_cuartel_div');
-    const filtroTipoProducto = document.getElementById('filtro_tipo_producto_div');
-    
-    // Filtro de Mantenimiento
+    const filtroTipoProducto = document.getElementById('filtro_tipo_producto_div'); // Solo Aplicaciones
+    const filtroProductoRiego = document.getElementById('filtro_producto_riego_div'); // Solo Riego (Fertilizantes)
     const filtroTipoEquipo = document.getElementById('filtro_tipo_equipo_div');
 
     tipoReporteSelect.addEventListener('change', function() {
         const valor = this.value;
         
-        // Ocultar todos por defecto
+        // 1. Ocultar todos primero
         filtroCuartel.style.display = 'none';
         filtroTipoProducto.style.display = 'none';
+        filtroProductoRiego.style.display = 'none';
         filtroTipoEquipo.style.display = 'none';
 
+        // 2. Mostrar según selección
         if (valor === 'aplicacion') {
-            // Mostrar filtros de Aplicacion
             filtroCuartel.style.display = 'block';
             filtroTipoProducto.style.display = 'block';
-        } else if (valor === 'mantenimiento') {
-            // Mostrar filtros de Mantenimiento
+        } 
+        else if (valor === 'riego') {
+            filtroCuartel.style.display = 'block';
+            filtroProductoRiego.style.display = 'block'; // <--- Mostramos el nuevo filtro
+        } 
+        else if (valor === 'mantenimiento') {
             filtroTipoEquipo.style.display = 'block';
         }
-        // Si es 'riego', no se muestra ningún filtro extra.
     });
 });
 </script>

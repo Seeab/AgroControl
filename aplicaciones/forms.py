@@ -1,28 +1,19 @@
-# aplicaciones/forms.py
-
 from django import forms
 from django.forms import inlineformset_factory
 from .models import AplicacionFitosanitaria, AplicacionProducto
 from cuarteles.models import Cuartel
 from inventario.models import Producto, EquipoAgricola
-# --- CORRECCIÓN 1: Importar tu modelo Usuario, NO el de Django ---
 from autenticacion.models import Usuario 
 
 class AplicacionForm(forms.ModelForm):
     
     # --- Campos personalizados ---
+    # Inicialmente definimos el queryset vacío o general,
+    # pero lo filtraremos dinámicamente en el __init__
     aplicador = forms.ModelChoiceField(
-        # --- CORRECCIÓN 2: Usar tu 'Usuario' y filtrar por el rol correcto ---
-        # Asumo que tienes un Rol con nombre 'aplicador'
-        queryset=Usuario.objects.filter(
-            esta_activo=True, 
-            rol__nombre='aplicador' # O el filtro que definas para "aplicadores"
-        ).order_by('nombres', 'apellidos'),
+        queryset=Usuario.objects.none(), # Se llena en __init__
         widget=forms.Select(attrs={'class': 'form-control'})
     )
-    
-    # --- CAMPO ELIMINADO ---
-    # producto = forms.ModelChoiceField(...)
     
     cuarteles = forms.ModelMultipleChoiceField(
         queryset=Cuartel.objects.all().order_by('nombre'), 
@@ -45,61 +36,71 @@ class AplicacionForm(forms.ModelForm):
 
     class Meta:
         model = AplicacionFitosanitaria
-        # --- CAMPOS MODIFICADOS ---
-        # Quitamos 'producto' y 'cantidad_utilizada'
         fields = [
             'aplicador', 'fecha_aplicacion', 'cuarteles', 
             'objetivo', 'metodo_aplicacion', 'estado',
             'equipo_utilizado'
         ]
         widgets = {
-            # 'cantidad_utilizada': forms.NumberInput(...) # ELIMINADO
             'objetivo': forms.TextInput(attrs={'class': 'form-control'}),
             'metodo_aplicacion': forms.TextInput(attrs={'class': 'form-control'}),
             'estado': forms.Select(attrs={'class': 'form-control'}),
         }
 
+    def __init__(self, *args, **kwargs):
+        # Extraemos el usuario que pasaremos desde la vista
+        self.usuario_actual = kwargs.pop('usuario_actual', None)
+        super().__init__(*args, **kwargs)
+        
+        # ==========================================================
+        # --- LÓGICA DE FILTRADO DE APLICADORES (RF018) ---
+        # ==========================================================
+        if self.usuario_actual:
+            # 1. Si es Administrador: Ve a TODOS los aplicadores activos
+            if self.usuario_actual.es_administrador:
+                self.fields['aplicador'].queryset = Usuario.objects.filter(
+                    esta_activo=True, 
+                    rol__nombre='aplicador' 
+                ).order_by('nombres')
+            
+            # 2. Si es un Aplicador normal: Solo se ve a sí mismo
+            else:
+                self.fields['aplicador'].queryset = Usuario.objects.filter(
+                    pk=self.usuario_actual.pk
+                )
+                # Y lo preseleccionamos automáticamente
+                self.fields['aplicador'].initial = self.usuario_actual
+                # Opcional: Hacer el campo de solo lectura o deshabilitado visualmente
+                # self.fields['aplicador'].widget.attrs['readonly'] = True 
+        else:
+            # Fallback por si algo falla (no debería pasar)
+            self.fields['aplicador'].queryset = Usuario.objects.none()
+
     def clean(self):
         """
-        Validación central (RF020) y cálculos (LÓGICA INVERTIDA)
-        (MODIFICADO)
+        Validación central y cálculos de área.
         """
         cleaned_data = super().clean()
-        
-        # --- LÓGICA DE STOCK ELIMINADA ---
-        # La validación de stock ahora se hace en el FormSet.
         
         cuarteles = cleaned_data.get('cuarteles')
 
         if cuarteles:
-            # 1. Calcular área total y guardarla en el form
             try:
                 area_total = sum(c.area_hectareas for c in cuarteles if c.area_hectareas)
                 if area_total <= 0:
                         raise forms.ValidationError(
                             "El área total de los cuarteles seleccionados debe ser mayor a 0."
                         )
-                # Guardamos esto para que el formset lo use
                 cleaned_data['area_tratada'] = area_total 
             except Exception as e:
                 raise forms.ValidationError(f"Error al calcular el área: {e}")
         else:
              cleaned_data['area_tratada'] = 0
-             # Opcional: ¿lanzar error si no hay cuarteles?
-             # raise forms.ValidationError("Debe seleccionar al menos un cuartel.")
-
-        # --- LÓGICA DE DOSIS ELIMINADA ---
-        # La dosis se calcula por producto en el modelo 'AplicacionProducto'
 
         return cleaned_data
 
-# --- NUEVO FORMULARIO PARA EL INLINE ---
+# --- El resto del archivo (AplicacionProductoForm y FormSet) sigue igual ---
 class AplicacionProductoForm(forms.ModelForm):
-    """
-    Formulario para la tabla intermedia AplicacionProducto
-    """
-    
-    # Hacemos el queryset más específico
     producto = forms.ModelChoiceField(
         queryset=Producto.objects.filter(esta_activo=True).order_by('nombre'),
         widget=forms.Select(attrs={'class': 'form-control producto-select'})
@@ -114,13 +115,10 @@ class AplicacionProductoForm(forms.ModelForm):
         fields = ['producto', 'cantidad_utilizada']
 
     def clean(self):
-        """Validación de stock por cada producto (RF020)"""
         cleaned_data = super().clean()
-        
         producto = cleaned_data.get('producto')
         cantidad_utilizada = cleaned_data.get('cantidad_utilizada')
         
-        # Esta validación solo se aplica si el form NO está marcado para borrarse
         if not cleaned_data.get('DELETE', False):
             if producto and cantidad_utilizada:
                 if cantidad_utilizada > producto.stock_actual:
@@ -138,15 +136,13 @@ class AplicacionProductoForm(forms.ModelForm):
 
         return cleaned_data
 
-# --- NUEVO FORMSET ---
-# Creamos el FormSet que unirá AplicacionFitosanitaria con AplicacionProducto
 AplicacionProductoFormSet = inlineformset_factory(
-    AplicacionFitosanitaria,       # Modelo Padre
-    AplicacionProducto,            # Modelo Hijo (intermedio)
-    form=AplicacionProductoForm,   # Formulario para el hijo
-    extra=1,                       # Empezar con 1 formulario vacío
-    can_delete=True,               # Permitir borrar productos
+    AplicacionFitosanitaria,
+    AplicacionProducto, 
+    form=AplicacionProductoForm,
+    extra=1,
+    can_delete=True,
     fk_name='aplicacion',
-    min_num=1,                     # Exigir al menos 1 producto
+    min_num=1,
     validate_min=True,
 )

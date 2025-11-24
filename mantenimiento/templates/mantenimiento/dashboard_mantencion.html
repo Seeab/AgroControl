@@ -12,7 +12,7 @@
         <p class="text-muted">Control de mantenimiento y calibración de maquinaria.</p>
     </div>
     <div>
-        <a href="{% url 'mantenimiento:crear_mantenimiento' %}" class="btn btn-agro-primary">
+        <a href="{% url 'mantenimiento:mantenimiento_crear' %}" class="btn btn-agro-primary">
             <i class="bi bi-plus-circle me-2"></i>Nueva Mantención
         </a>
     </div>
@@ -133,7 +133,8 @@
                     <tr>
                         <th><i class="bi bi-calendar-event me-1"></i>Fecha Programada</th>
                         <th><i class="bi bi-truck me-1"></i>Maquinaria</th>
-                        <th><i class="bi bi-123 me-1"></i>Cantidad</th> <th><i class="bi bi-gear-wide-connected me-1"></i>Tipo Tarea</th>
+                        <th><i class="bi bi-123 me-1"></i>Cantidad</th>
+                        <th><i class="bi bi-gear-wide-connected me-1"></i>Tipo Tarea</th>
                         <th><i class="bi bi-flag me-1"></i>Estado</th>
                         <th><i class="bi bi-person me-1"></i>Responsable</th>
                         <th class="text-end"><i class="bi bi-gear me-1"></i>Acciones</th>
@@ -182,31 +183,40 @@
                         <td class="text-end">
                             <div class="btn-group btn-group-sm">
                                 
-                                {% if mant.estado == 'PROGRAMADO' %}
-                                    <form action="{% url 'mantenimiento:finalizar_mantenimiento' mant.id %}" method="POST" class="d-inline">
-                                        {% csrf_token %}
-                                        <button type="submit" class="btn btn-outline-success" 
-                                                data-bs-toggle="tooltip" title="Finalizar Tarea (Equipo Operativo)">
-                                            <i class="bi bi-check-lg"></i>
-                                        </button>
-                                    </form>
+                                {% if request.session.es_administrador or mant.operario_responsable.id == request.session.usuario_id or not mant.operario_responsable %}
                                     
-                                    <a href="{% url 'mantenimiento:editar_mantenimiento' mant.id %}" class="btn btn-outline-primary"
-                                       data-bs-toggle="tooltip" title="Editar Tarea">
-                                        <i class="bi bi-pencil"></i>
-                                    </a>
+                                    {% if mant.estado == 'PROGRAMADO' %}
+                                        <form action="{% url 'mantenimiento:mantenimiento_finalizar' mant.id %}" method="POST" class="d-inline">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn btn-outline-success" 
+                                                    data-bs-toggle="tooltip" title="Finalizar Tarea (Devolver Stock)">
+                                                <i class="bi bi-check-lg"></i>
+                                            </button>
+                                        </form>
+                                        
+                                        <a href="{% url 'mantenimiento:mantenimiento_editar' mant.id %}" class="btn btn-outline-primary"
+                                           data-bs-toggle="tooltip" title="Editar Tarea">
+                                            <i class="bi bi-pencil"></i>
+                                        </a>
+                                        
+                                        <form action="{% url 'mantenimiento:mantenimiento_cancelar' mant.id %}" method="POST" class="d-inline">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn btn-outline-danger" 
+                                                    data-bs-toggle="tooltip" title="Cancelar Tarea">
+                                                <i class="bi bi-x-lg"></i> 
+                                            </button>
+                                        </form>
                                     
-                                    <form action="{% url 'mantenimiento:cancelar_mantenimiento' mant.id %}" method="POST" class="d-inline">
-                                        {% csrf_token %}
-                                        <button type="submit" class="btn btn-outline-danger" 
-                                                data-bs-toggle="tooltip" title="Cancelar Tarea (Equipo Operativo)">
-                                            <i class="bi bi-x-lg"></i> 
-                                        </button>
-                                    </form>
-                                
+                                    {% else %}
+                                        <a href="{% url 'mantenimiento:mantenimiento_detalle' mant.id %}" class="btn btn-outline-info" 
+                                           data-bs-toggle="tooltip" title="Ver Detalle">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                    {% endif %}
+
                                 {% else %}
-                                    <a href="{% url 'mantenimiento:detalle_mantenimiento' mant.id %}" class="btn btn-outline-info" 
-                                       data-bs-toggle="tooltip" title="Ver Detalle">
+                                    <a href="{% url 'mantenimiento:mantenimiento_detalle' mant.id %}" class="btn btn-outline-secondary" 
+                                       data-bs-toggle="tooltip" title="Ver Detalle (Solo Lectura)">
                                         <i class="bi bi-eye"></i>
                                     </a>
                                 {% endif %}

@@ -205,34 +205,45 @@
 
                         <td class="text-end">
                             <div class="btn-group btn-group-sm">
-                                {% if app.estado == 'programada' %}
-                                    <form action="{% url 'aplicaciones:finalizar_aplicacion' app.id %}" method="POST" class="d-inline">
-                                        {% csrf_token %}
-                                        <button type="submit" class="btn btn-outline-success" 
-                                                data-bs-toggle="tooltip" title="Finalizar Tarea (Descontar Stock)">
-                                            <i class="bi bi-check-lg"></i>
-                                        </button>
-                                    </form>
+                                
+                                {% if request.session.es_administrador or app.aplicador.id == request.session.usuario_id %}
                                     
-                                    <a href="{% url 'aplicaciones:editar_aplicacion' app.id %}" class="btn btn-outline-primary"
-                                       data-bs-toggle="tooltip" title="Editar Tarea">
-                                        <i class="bi bi-pencil"></i>
-                                    </a>
+                                    {% if app.estado == 'programada' %}
+                                        <form action="{% url 'aplicaciones:finalizar_aplicacion' app.id %}" method="POST" class="d-inline">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn btn-outline-success" 
+                                                    data-bs-toggle="tooltip" title="Finalizar y Descontar Stock">
+                                                <i class="bi bi-check-lg"></i>
+                                            </button>
+                                        </form>
+                                        
+                                        <a href="{% url 'aplicaciones:editar_aplicacion' app.id %}" class="btn btn-outline-primary"
+                                        data-bs-toggle="tooltip" title="Editar">
+                                            <i class="bi bi-pencil"></i>
+                                        </a>
+                                        
+                                        <form action="{% url 'aplicaciones:cancelar_aplicacion' app.id %}" method="POST" class="d-inline">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn btn-outline-danger" 
+                                                    data-bs-toggle="tooltip" title="Cancelar">
+                                                <i class="bi bi-x-lg"></i> 
+                                            </button>
+                                        </form>
                                     
-                                    <form action="{% url 'aplicaciones:cancelar_aplicacion' app.id %}" method="POST" class="d-inline">
-                                        {% csrf_token %}
-                                        <button type="submit" class="btn btn-outline-danger" 
-                                                data-bs-toggle="tooltip" title="Cancelar Tarea">
-                                            <i class="bi bi-x-lg"></i>
-                                        </button>
-                                    </form>
+                                    {% else %}
+                                        <a href="{% url 'aplicaciones:detalle_aplicacion' app.id %}" class="btn btn-outline-info" 
+                                        data-bs-toggle="tooltip" title="Ver Detalle">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                    {% endif %}
 
                                 {% else %}
-                                    <a href="{% url 'aplicaciones:detalle_aplicacion' app.id %}" class="btn btn-outline-info" 
-                                       data-bs-toggle="tooltip" title="Ver Detalle">
+                                    <a href="{% url 'aplicaciones:detalle_aplicacion' app.id %}" class="btn btn-outline-secondary" 
+                                    data-bs-toggle="tooltip" title="Ver Detalle (Solo Lectura)">
                                         <i class="bi bi-eye"></i>
                                     </a>
                                 {% endif %}
+                                
                             </div>
                         </td>
                     </tr>

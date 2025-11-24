@@ -122,6 +122,17 @@ SESSION_SAVE_EVERY_REQUEST = True
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
 
+# ==========================================
+# CONFIGURACIÓN DE CORREO (Gmail)
+# ==========================================
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = 'noreplyagrocontrol@gmail.com'  # <--- PON TU CORREO AQUÍ
+EMAIL_HOST_PASSWORD = 'uzmm flrg qoii hznl'  # <--- PON TU CONTRASEÑA DE APLICACIÓN AQUÍ
+DEFAULT_FROM_EMAIL = 'AgroControl <noreplyagrocontrol@gmail.com>'
+
 AUTH_PASSWORD_VALIDATORS = [
     {
         'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',

@@ -6,150 +6,105 @@
 {% block content %}
 <div class="container mt-4">
     <div class="row">
-        <div class="col-md-8 offset-md-2">
+        <div class="col-md-10 offset-md-1">
             
-<<<<<<< HEAD
-            <div class="card shadow-sm">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <h3>{{ titulo }}</h3>
-                    <a href="{% url 'mantenimiento:dashboard' %}" class="btn btn-secondary btn-sm">
-                        &larr; Volver al Dashboard
-=======
             <div class="card card-agro shadow-sm">
                 <div class="card-header bg-agro-light d-flex justify-content-between align-items-center">
                     <h5 class="card-title mb-0">
-                        <i class="bi bi-tools me-2"></i>{{ titulo }}
+                        <i class="bi bi-eye me-2"></i>{{ titulo }}
                     </h5>
                     <a href="{% url 'mantenimiento:dashboard' %}" class="btn btn-outline-secondary btn-sm">
                         <i class="bi bi-arrow-left me-1"></i>Volver
->>>>>>> ec66ebdcb14269cd5e891e71ce891526dadf76c2
                     </a>
                 </div>
+                
                 <div class="card-body">
                     
-                    <div class="d-flex justify-content-between align-items-start mb-4">
-                        <div>
-                            <h5 class="card-title text-agro-primary mb-1">
-                                {{ mantenimiento.get_tipo_mantenimiento_display }}
-                            </h5>
-                            <h6 class="text-muted">
-                                <i class="bi bi-truck me-1"></i>{{ mantenimiento.maquinaria.nombre }}
-                            </h6>
-                        </div>
-                        
-<<<<<<< HEAD
-                        <dt class="col-sm-4">Cantidad en Tarea</dt>
-                        <dd class="col-sm-8">
-                            <span class="fw-bold">{{ mantenimiento.cantidad }}</span> unidad(es)
-                        </dd>
-                        
-                        <dt class="col-sm-4">Estado de Tarea</dt>
-                        <dd class="col-sm-8">
-=======
-                        <!-- Estado de la Tarea -->
-                        <div>
->>>>>>> ec66ebdcb14269cd5e891e71ce891526dadf76c2
-                            {% if mantenimiento.estado == 'REALIZADO' %}
-                                <span class="badge bg-success-subtle text-success-emphasis border border-success-subtle px-3 py-2 rounded-pill">
-                                    <i class="bi bi-check-circle me-1"></i>Realizado
-                                </span>
-                            {% elif mantenimiento.estado == 'PROGRAMADO' %}
-                                <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle px-3 py-2 rounded-pill">
-                                    <i class="bi bi-clock me-1"></i>Programado
-                                </span>
-                            {% elif mantenimiento.estado == 'CANCELADO' %}
-                                <span class="badge bg-danger-subtle text-danger-emphasis border border-danger-subtle px-3 py-2 rounded-pill">
-                                    <i class="bi bi-x-circle me-1"></i>Cancelado
-                                </span>
-                            {% endif %}
-                        </dd>
-
-                        <dt class="col-sm-4">Estado del Equipo</dt>
-                        <dd class="col-sm-8">
-                            {% if mantenimiento.maquinaria.estado == 'operativo' %}
-                                <span class="badge bg-success-subtle text-success-emphasis border border-success-subtle">Operativo</span>
-                                <small class="text-muted"> (Stock: {{ mantenimiento.maquinaria.stock_actual }})</small>
-                            {% elif mantenimiento.maquinaria.estado == 'mantenimiento' %}
-                                <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle">En Mantenimiento</span>
-                                <small class="text-muted"> (Stock operativo: {{ mantenimiento.maquinaria.stock_actual }})</small>
-                            {% elif mantenimiento.maquinaria.estado == 'de_baja' %}
-                                <span class="badge bg-danger-subtle text-danger-emphasis border border-danger-subtle">De Baja</span>
-                            {% endif %}
-                        </dd>
-
-                        <dt class="col-sm-4">Fecha Programada</dt>
-                        <dd class="col-sm-8">{{ mantenimiento.fecha_mantenimiento|date:"l, d 'de' F 'de' Y" }} a las {{ mantenimiento.fecha_mantenimiento|time:"H:i" }} hrs.</dd>
-
-                        <dt class="col-sm-4">Responsable</dt>
-                        <dd class="col-sm-8">{{ mantenimiento.operario_responsable|default:"Sin asignar" }}</dd>
-                    </dl>
-
-                    <h4 class="mt-4">Descripción del Trabajo</h4>
-                    <p class="text-muted" style="white-space: pre-wrap;">
-                        {{ mantenimiento.descripcion_trabajo|default:"N/A" }}
-                    </p>
-                        </div>
+                    <div class="mb-4 border-bottom pb-3">
+                        <h2 class="text-agro-primary mb-1">
+                            {{ mantenimiento.get_tipo_mantenimiento_display }}
+                        </h2>
+                        <h5 class="text-muted">
+                            <i class="bi bi-truck me-2"></i>{{ mantenimiento.maquinaria.nombre }}
+                        </h5>
                     </div>
-                    
-                    <div class="row g-4">
-                        <!-- Columna Izquierda: Datos Clave -->
-                        <div class="col-md-6">
-                            <h6 class="text-uppercase text-muted small fw-bold mb-3">Información General</h6>
-                            
-                            <ul class="list-group list-group-flush border rounded">
-                                <li class="list-group-item d-flex justify-content-between">
-                                    <span class="text-muted">ID Tarea</span>
-                                    <span class="fw-bold font-monospace">MAN-{{ mantenimiento.id }}</span>
-                                </li>
-                                <li class="list-group-item d-flex justify-content-between">
-                                    <span class="text-muted">Fecha Programada</span>
-                                    <span class="text-end">
-                                        {{ mantenimiento.fecha_mantenimiento|date:"d/m/Y" }}<br>
-                                        <small class="text-muted">{{ mantenimiento.fecha_mantenimiento|time:"H:i" }} hrs</small>
-                                    </span>
-                                </li>
-                                <li class="list-group-item d-flex justify-content-between align-items-center">
-                                    <span class="text-muted">Responsable</span>
-                                    <span>
-                                        {% if mantenimiento.operario_responsable %}
-                                            <i class="bi bi-person-check me-1 text-primary"></i>{{ mantenimiento.operario_responsable.get_full_name }}
-                                        {% else %}
-                                            <span class="text-danger">Sin asignar</span>
-                                        {% endif %}
-                                    </span>
-                                </li>
-                            </ul>
-                        </div>
 
-                        <!-- Columna Derecha: Estado Equipo -->
+                    <div class="row g-4">
                         <div class="col-md-6">
-                            <h6 class="text-uppercase text-muted small fw-bold mb-3">Estado del Equipo</h6>
-                            
-                            <div class="p-3 border rounded bg-light text-center">
-                                <div class="mb-2 text-muted small">El equipo se encuentra actualmente:</div>
-                                {% if mantenimiento.maquinaria.estado == 'operativo' %}
-                                    <span class="badge bg-success fs-6">
-                                        <i class="bi bi-check-lg me-1"></i>Operativo
-                                    </span>
-                                {% elif mantenimiento.maquinaria.estado == 'mantenimiento' %}
-                                    <span class="badge bg-warning text-dark fs-6">
-                                        <i class="bi bi-cone-striped me-1"></i>En Mantenimiento
-                                    </span>
-                                {% elif mantenimiento.maquinaria.estado == 'de_baja' %}
-                                    <span class="badge bg-danger fs-6">
-                                        <i class="bi bi-x-octagon me-1"></i>De Baja
-                                    </span>
-                                {% endif %}
-                                <div class="mt-2 small text-muted">{{ mantenimiento.maquinaria.get_tipo_display }}</div>
+                            <div class="card h-100 border-0 bg-light">
+                                <div class="card-body">
+                                    <h6 class="card-subtitle mb-3 text-muted fw-bold text-uppercase">Detalles de la Tarea</h6>
+                                    
+                                    <div class="mb-3">
+                                        <small class="d-block text-muted">Fecha Programada</small>
+                                        <strong class="fs-5">{{ mantenimiento.fecha_mantenimiento|date:"d/m/Y" }}</strong>
+                                        <span class="text-muted">{{ mantenimiento.fecha_mantenimiento|time:"H:i" }} hrs</span>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <small class="d-block text-muted">Cantidad</small>
+                                        <strong>{{ mantenimiento.cantidad }}</strong> unidad(es)
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <small class="d-block text-muted">Estado Tarea</small>
+                                        {% if mantenimiento.estado == 'REALIZADO' %}
+                                            <span class="badge bg-success"><i class="bi bi-check-circle me-1"></i>Realizado</span>
+                                        {% elif mantenimiento.estado == 'PROGRAMADO' %}
+                                            <span class="badge bg-warning text-dark"><i class="bi bi-clock me-1"></i>Programado</span>
+                                        {% elif mantenimiento.estado == 'CANCELADO' %}
+                                            <span class="badge bg-danger"><i class="bi bi-x-circle me-1"></i>Cancelado</span>
+                                        {% endif %}
+                                    </div>
+
+                                    <div class="mb-0">
+                                        <small class="d-block text-muted">Responsable Asignado</small>
+                                        {% if mantenimiento.operario_responsable %}
+                                            <div class="d-flex align-items-center mt-1">
+                                                <i class="bi bi-person-circle text-secondary me-2 fs-5"></i>
+                                                <span>{{ mantenimiento.operario_responsable.get_full_name }}</span>
+                                            </div>
+                                        {% else %}
+                                            <span class="text-danger fst-italic">Sin asignar</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
                             </div>
                         </div>
-                        
-                        <!-- Fila Completa: Descripción -->
+
+                        <div class="col-md-6">
+                            <div class="card h-100 border-secondary">
+                                <div class="card-body">
+                                    <h6 class="card-subtitle mb-3 text-muted fw-bold text-uppercase">Estado del Equipo</h6>
+                                    
+                                    <div class="text-center py-3">
+                                        <div class="mb-2">El equipo se encuentra actualmente:</div>
+                                        {% if mantenimiento.maquinaria.estado == 'operativo' %}
+                                            <h4 class="text-success"><i class="bi bi-check-lg me-2"></i>Operativo</h4>
+                                        {% elif mantenimiento.maquinaria.estado == 'mantenimiento' %}
+                                            <h4 class="text-warning"><i class="bi bi-cone-striped me-2"></i>En Mantenimiento</h4>
+                                        {% elif mantenimiento.maquinaria.estado == 'de_baja' %}
+                                            <h4 class="text-danger"><i class="bi bi-x-octagon me-2"></i>De Baja</h4>
+                                        {% endif %}
+                                        <div class="badge bg-secondary mt-2">{{ mantenimiento.maquinaria.get_tipo_display }}</div>
+                                    </div>
+
+                                    <hr>
+                                    <div class="d-flex justify-content-between px-3">
+                                        <span>Stock Total Actual:</span>
+                                        <span class="fw-bold">{{ mantenimiento.maquinaria.stock_actual }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row mt-4">
                         <div class="col-12">
-                            <h6 class="text-uppercase text-muted small fw-bold mb-2">Descripción del Trabajo</h6>
-                            <div class="p-3 bg-light rounded border border-light-subtle">
+                            <h6 class="text-uppercase text-muted fw-bold mb-2">Descripción del Trabajo</h6>
+                            <div class="p-3 rounded border bg-white">
                                 {% if mantenimiento.descripcion_trabajo %}
-                                    {{ mantenimiento.descripcion_trabajo|linebreaks }}
+                                    <p class="mb-0" style="white-space: pre-wrap;">{{ mantenimiento.descripcion_trabajo }}</p>
                                 {% else %}
                                     <span class="text-muted fst-italic">Sin descripción detallada.</span>
                                 {% endif %}
@@ -158,9 +113,14 @@
                     </div>
 
                 </div>
+
                 <div class="card-footer bg-light text-muted small d-flex justify-content-between">
-                    <span>Registrado por: {{ mantenimiento.creado_por|default:"Sistema" }}</span>
-                    <span>Actualizado: {{ mantenimiento.fecha_actualizacion|naturaltime }}</span>
+                    <span>
+                        <i class="bi bi-pencil-square me-1"></i>Registrado por: {{ mantenimiento.creado_por|default:"Sistema" }}
+                    </span>
+                    <span>
+                        <i class="bi bi-clock-history me-1"></i>Actualizado: {{ mantenimiento.fecha_actualizacion|naturaltime }}
+                    </span>
                 </div>
             </div>
 

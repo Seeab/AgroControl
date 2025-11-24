@@ -22,7 +22,8 @@ urlpatterns = [
     path('operarios/crear/', views.operario_crear, name='operario_crear'),
     path('operarios/<int:pk>/editar/', views.operario_editar, name='operario_editar'),
     path('operarios/<int:pk>/eliminar/', views.operario_eliminar, name='operario_eliminar'),
-    path('perfil/', views.perfil_usuario, name='perfil_usuario'), # <-- ¡NUEVA LÍNEA!
+    path('perfil/', views.perfil_usuario, name='perfil_usuario'),
+    path('perfil/editar', views.editar_perfil, name='editar_perfil'),  # <-- ¡NUEVA LÍNEA!
     
     
    

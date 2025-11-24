@@ -13,6 +13,7 @@ from django.http import JsonResponse
 from .models import Usuario, Operario, Rol
 from .forms import UsuarioForm, OperarioForm, LoginForm, RecuperarPasswordForm, CambiarPasswordForm
 from django.db.models import Sum, Avg, F, Value, ExpressionWrapper, FloatField
+import json
 
 # Importamos los modelos de TODAS las apps
 from riego.models import ControlRiego
@@ -20,6 +21,9 @@ from aplicaciones.models import AplicacionFitosanitaria
 from mantenimiento.models import Mantenimiento
 from inventario.models import Producto
 from cuarteles.models import Cuartel, Hilera
+from .forms import PerfilForm
+
+from inventario.models import Producto, EquipoAgricola
 
 # ==================== AUTENTICACIÓN ====================
 
@@ -143,125 +147,197 @@ def perfil_usuario(request):
         'titulo': 'Mi Perfil'
     }
     return render(request, 'autenticacion/perfil.html', context)
+
+@login_required
+def editar_perfil(request):
+    usuario = get_object_or_404(Usuario, pk=request.session.get('usuario_id'))
+    
+    if request.method == 'POST':
+        form = PerfilForm(request.POST, instance=usuario)
+        if form.is_valid():
+            usuario_guardado = form.save()
+            request.session['usuario_nombre'] = usuario_guardado.get_full_name()
+            messages.success(request, 'Tus datos han sido actualizados correctamente.')
+            return redirect('perfil_usuario')
+    else:
+        form = PerfilForm(instance=usuario)
+
+    context = {
+        'form': form,
+        'usuario': usuario, # Pasamos el usuario para lógica visual si hace falta
+        'titulo': 'Editar Mis Datos',
+        'boton_texto': 'Guardar Cambios'
+    }
+    # Usamos la plantilla con el diseño que pediste
+    return render(request, 'autenticacion/perfil_editar.html', context)
+
 # ==================== DASHBOARD (COMBINADO Y ACTUALIZADO) ====================
 
-@admin_required 
-def dashboard(request): # O como se llame tu vista de dashboard principal
+# En autenticacion/views.py
+
+@login_required
+def dashboard(request):
     """
     Vista principal del dashboard (COMBINADA).
-    Muestra estadísticas de usuarios, métricas de apps, y alertas.
     """
     
-    # --- 1. DATOS ORIGINALES DE TU DASHBOARD (Usuarios/Operarios) ---
+    # 1. Configurar fechas (Rango de todo el día de hoy)
+    now = timezone.now()
+    # Convertir a hora local si es necesario, pero para filtrar por día usamos esto:
+    hoy_inicio = now.replace(hour=0, minute=0, second=0, microsecond=0)
+    hoy_fin = now.replace(hour=23, minute=59, second=59, microsecond=999999)
+    
+    hoy_fecha = now.date() # Para campos DateField
+
+    # --- 1. DATOS DE USUARIOS ---
     total_usuarios = Usuario.objects.filter(esta_activo=True).count()
     total_operarios = Operario.objects.filter(esta_activo=True).count()
     usuarios_recientes = Usuario.objects.order_by('-fecha_registro')[:5] 
 
-    # --- 2. DATOS NUEVOS (Métricas, Alertas, Actividades) ---
+    # --- 2. ACTIVIDADES (Corrección de filtros) ---
     
-    hoy = timezone.now().date()
-    ahora = timezone.now()
-    treinta_dias_despues = hoy + timedelta(days=30)
+    # Riego (Usa DateField 'fecha')
+    actividades_riego = ControlRiego.objects.filter(fecha=hoy_fecha).order_by('-fecha')
     
-    # --- RF029: Actividades en Tiempo Real ---
-    actividades_riego = ControlRiego.objects.filter(fecha=hoy).order_by('-fecha')
-    actividades_apps = AplicacionFitosanitaria.objects.filter(fecha_aplicacion__date=hoy).order_by('-fecha_aplicacion')
-    actividades_mant = Mantenimiento.objects.filter(fecha_mantenimiento__date=hoy).order_by('-fecha_mantenimiento')
+    # Aplicaciones (Usa DateTimeField 'fecha_aplicacion')
+    # Usamos __range para cubrir todo el día
+    actividades_apps = AplicacionFitosanitaria.objects.filter(
+        fecha_aplicacion__range=(hoy_inicio, hoy_fin)
+    ).order_by('-fecha_aplicacion')
     
-    # --- RF031: Métricas de Riego del Día (Realizados) ---
-    riegos_realizados_hoy = ControlRiego.objects.filter(fecha=hoy, estado='REALIZADO')
+    # Mantenimiento (Usa DateTimeField 'fecha_mantenimiento')
+    actividades_mant = Mantenimiento.objects.filter(
+        fecha_mantenimiento__range=(hoy_inicio, hoy_fin)
+    ).order_by('-fecha_mantenimiento')
+
+
+    # --- 3. MÉTRICAS DEL DÍA ---
     
+    # Riego (Realizados hoy)
+    riegos_realizados_hoy = ControlRiego.objects.filter(fecha=hoy_fecha, estado='REALIZADO')
     volumen_total_dia = riegos_realizados_hoy.aggregate(total=Sum('volumen_total_m3'))['total'] or 0
     caudal_promedio_dia = riegos_realizados_hoy.aggregate(avg=Avg('caudal_m3h'))['avg'] or 0.0
     
-    # --- RF031 (extendido): Métricas de Apps y Mantención ---
-    apps_realizadas_hoy = AplicacionFitosanitaria.objects.filter(fecha_aplicacion__date=hoy, estado='realizada').count()
-    mant_realizadas_hoy = Mantenimiento.objects.filter(fecha_mantenimiento__date=hoy, estado='REALIZADO').count()
+    # Conteos para el gráfico de donas (Realizados)
+    apps_realizadas_hoy = AplicacionFitosanitaria.objects.filter(
+        fecha_aplicacion__range=(hoy_inicio, hoy_fin), 
+        estado='realizada'
+    ).count()
+    
+    mant_realizadas_hoy = Mantenimiento.objects.filter(
+        fecha_mantenimiento__range=(hoy_inicio, hoy_fin), 
+        estado='REALIZADO'
+    ).count()
+    
+    # Conteos TOTALES para el gráfico (Programados + Realizados)
+    count_riego = actividades_riego.count()
+    count_apps = actividades_apps.count()
+    count_mant = actividades_mant.count()
 
-    
-    # --- RF032: Alertas y Notificaciones Prioritarias ---
-    
-    # Alerta 1: Stock Bajo (RF028)
+
+    # --- 4. ALERTAS Y OTROS DATOS (Igual que antes) ---
+    ahora = timezone.now()
+    treinta_dias_despues = ahora.date() + timedelta(days=30)
+
     alertas_stock = Producto.objects.filter(esta_activo=True, stock_actual__lt=F('stock_minimo'))
     
-    # Alerta 2: Tareas de Mantenimiento Atrasadas
     alertas_mantencion = Mantenimiento.objects.filter(
         estado='PROGRAMADO', 
         fecha_mantenimiento__lt=ahora
     ).order_by('fecha_mantenimiento')
 
-    # Alerta 3: Riegos Atrasados
     alertas_riego = ControlRiego.objects.filter(
         estado='PROGRAMADO',
-        fecha__lt=hoy # Riegos programados para antes de hoy
+        fecha__lt=hoy_fecha 
     ).order_by('fecha')
     
-    # Alerta 4: Aplicaciones Atrasadas
     alertas_aplicaciones = AplicacionFitosanitaria.objects.filter(
         estado='programada',
         fecha_aplicacion__lt=ahora
     ).order_by('fecha_aplicacion')
 
-    # Alerta 5: Certificaciones por Vencer (RF008)
     alertas_certificaciones = Operario.objects.filter(
         esta_activo=True,
-        fecha_vencimiento_certificacion__range=[hoy, treinta_dias_despues]
+        fecha_vencimiento_certificacion__range=[hoy_fecha, treinta_dias_despues]
     ).order_by('fecha_vencimiento_certificacion')
     
-    # Alerta 6: Mortalidad de Plantas (RF013) - ¡CORREGIDO!
-    
-    # 1. Anotamos cada cuartel con la suma de sus hileras
+    # Alerta Mortalidad
     cuarteles_con_conteo = Cuartel.objects.annotate(
-        # --- ¡CORRECCIÓN AQUÍ! ---
-        # Forzamos la SUMA a ser un DecimalField
-        total_muertas=Coalesce(
-            Sum('hileras__plantas_muertas_actuales', output_field=DecimalField()), 
-            Value(0, output_field=DecimalField())
-        ),
-        # --- ¡Y CORRECCIÓN AQUÍ! ---
-        total_iniciales=Coalesce(
-            Sum('hileras__plantas_totales_iniciales', output_field=DecimalField()), 
-            Value(0, output_field=DecimalField())
-        )
-    )
-
-    # 2. Filtramos para evitar división por cero
-    cuarteles_con_conteo = cuarteles_con_conteo.filter(total_iniciales__gt=0)
-
-    # 3. Calculamos el porcentaje
+        total_muertas=Coalesce(Sum('hileras__plantas_muertas_actuales', output_field=DecimalField()), Value(0, output_field=DecimalField())),
+        total_iniciales=Coalesce(Sum('hileras__plantas_totales_iniciales', output_field=DecimalField()), Value(0, output_field=DecimalField()))
+    ).filter(total_iniciales__gt=0)
+    
     alertas_mortalidad = cuarteles_con_conteo.annotate(
         porcentaje_mortalidad=ExpressionWrapper(
             (F('total_muertas') * 100.0 / F('total_iniciales')),
-            output_field=FloatField() # Le decimos a Django que el resultado es un Float
+            output_field=FloatField()
         )
-    ).filter(
-        porcentaje_mortalidad__gt=5 # <-- UMBRAL DE ALERTA (5%)
-    ).order_by('-porcentaje_mortalidad')
-        
-    # --- 3. CONSTRUIR EL CONTEXTO FINAL ---
+    ).filter(porcentaje_mortalidad__gt=5).order_by('-porcentaje_mortalidad')
+
+
+    # --- 5. DATOS PARA GRÁFICOS ---
+
+    # Gráfico Agua (7 días)
+    fechas_grafico = []
+    consumo_grafico = []
+    for i in range(6, -1, -1):
+        fecha_iter = hoy_fecha - timedelta(days=i)
+        vol = ControlRiego.objects.filter(fecha=fecha_iter, estado='REALIZADO').aggregate(total=Sum('volumen_total_m3'))['total'] or 0
+        fechas_grafico.append(fecha_iter.strftime('%d/%m'))
+        consumo_grafico.append(float(vol))
+
+    # Gráfico Stock Crítico
+    prods_criticos = Producto.objects.filter(esta_activo=True).order_by('stock_actual')[:5]
+    stock_labels = [p.nombre for p in prods_criticos]
+    stock_data = [float(p.stock_actual) for p in prods_criticos]
+
+    # Gráfico Maquinaria
+    equipos_op = EquipoAgricola.objects.filter(estado='operativo').count()
+    equipos_mant = EquipoAgricola.objects.filter(estado='mantenimiento').count()
+    equipos_baja = EquipoAgricola.objects.filter(estado='de_baja').count()
+
+    # Gráfico Cuarteles
+    cuartel_labels = []
+    cuartel_data = []
+    for c in cuarteles_con_conteo:
+        cuartel_labels.append(c.nombre)
+        muertas = float(c.total_muertas)
+        total = float(c.total_iniciales)
+        if total > 0:
+            supervivencia = ((total - muertas) / total) * 100
+        else:
+            supervivencia = 0
+        cuartel_data.append(round(supervivencia, 1))
+
     context = {
         'titulo': 'Dashboard Administrativo',
         'usuario_nombre': request.session.get('usuario_nombre', 'Usuario'),
-        
         'total_usuarios': total_usuarios,
         'total_operarios': total_operarios,
         'usuarios_recientes': usuarios_recientes,
-
         'actividades_riego': actividades_riego,
         'actividades_apps': actividades_apps,
         'actividades_mant': actividades_mant,
-        
         'volumen_total_dia': volumen_total_dia,
         'caudal_promedio_dia': caudal_promedio_dia,
         'apps_realizadas_hoy': apps_realizadas_hoy,
         'mant_realizadas_hoy': mant_realizadas_hoy,
-        
         'alertas_stock': alertas_stock,
         'alertas_mantencion': alertas_mantencion,
         'alertas_riego': alertas_riego,
         'alertas_aplicaciones': alertas_aplicaciones,
         'alertas_certificaciones': alertas_certificaciones,
         'alertas_mortalidad': alertas_mortalidad,
+
+        # Listas puras para los gráficos
+        'chart_water_labels': fechas_grafico,
+        'chart_water_data': consumo_grafico,
+        'chart_activity_data': [count_riego, count_apps, count_mant], # TOTALES del día
+        'chart_stock_labels': stock_labels,
+        'chart_stock_data': stock_data,
+        'chart_machinery_data': [equipos_op, equipos_mant, equipos_baja],
+        'chart_cuartel_labels': cuartel_labels,
+        'chart_cuartel_data': cuartel_data,
     }
     
     return render(request, 'autenticacion/dashboard.html', context)
@@ -272,20 +348,41 @@ def dashboard(request): # O como se llame tu vista de dashboard principal
 
 @admin_required
 def usuario_lista(request):
+    """Lista de usuarios con búsqueda y paginación"""
     query = request.GET.get('q', '')
-    usuarios = Usuario.objects.select_related('rol').all()
+    
+    # Queryset base
+    usuarios_qs = Usuario.objects.select_related('rol').all()
+    
+    # Filtro de búsqueda
     if query:
-        usuarios = usuarios.filter(
+        usuarios_qs = usuarios_qs.filter(
             Q(nombre_usuario__icontains=query) |
             Q(nombres__icontains=query) |
             Q(apellidos__icontains=query) |
             Q(correo_electronico__icontains=query)
         )
-    usuarios = usuarios.order_by('-fecha_registro')
-    paginator = Paginator(usuarios, 10)
+    
+    # --- MÉTRICAS (NUEVO) ---
+    # Calculamos esto ANTES de la paginación
+    total_usuarios = usuarios_qs.count()
+    usuarios_activos = usuarios_qs.filter(esta_activo=True).count()
+    usuarios_inactivos = usuarios_qs.filter(esta_activo=False).count()
+    
+    # Orden y Paginación
+    usuarios_qs = usuarios_qs.order_by('-fecha_registro')
+    paginator = Paginator(usuarios_qs, 10)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
-    context = { 'page_obj': page_obj, 'query': query, }
+    
+    context = {
+        'page_obj': page_obj,
+        'query': query,
+        # Pasamos las métricas al template
+        'total_usuarios': total_usuarios,
+        'usuarios_activos': usuarios_activos,
+        'usuarios_inactivos': usuarios_inactivos,
+    }
     return render(request, 'autenticacion/usuario_lista.html', context)
 
 @admin_required
@@ -331,28 +428,40 @@ def usuario_eliminar(request, pk):
 
 @admin_required
 def operario_lista(request):
+    """Lista de operarios"""
     query = request.GET.get('q', '')
-    operarios = Operario.objects.select_related('usuario').all()
+    
+    operarios_qs = Operario.objects.select_related('usuario').all()
+    
     if query:
-        operarios = operarios.filter(
+        operarios_qs = operarios_qs.filter(
             Q(nombre_completo__icontains=query) |
             Q(cargo__icontains=query) |
             Q(rut__icontains=query)
         )
-    operarios = operarios.order_by('-creado_en')
-    paginator = Paginator(operarios, 10)
-    page_number = request.GET.get('page')
-    page_obj = paginator.get_page(page_number)
     
+    # --- MÉTRICAS (NUEVO) ---
+    total_operarios = operarios_qs.count()
+    operarios_activos = operarios_qs.filter(esta_activo=True).count()
+    
+    # Contar operarios con certificaciones por vencer (RF008)
+    # Esto lo hacemos sobre el total de activos, no solo los de la búsqueda actual
     operarios_por_vencer = Operario.objects.filter(
         fecha_vencimiento_certificacion__lte=timezone.now().date() + timedelta(days=30),
         fecha_vencimiento_certificacion__gte=timezone.now().date(),
         esta_activo=True
     ).count()
+
+    operarios_qs = operarios_qs.order_by('-creado_en')
+    paginator = Paginator(operarios_qs, 10)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
     
     context = {
         'page_obj': page_obj,
         'query': query,
+        'total_operarios': total_operarios,
+        'operarios_activos': operarios_activos,
         'operarios_por_vencer': operarios_por_vencer,
     }
     return render(request, 'autenticacion/operario_lista.html', context)
@@ -394,16 +503,54 @@ def operario_crear(request):
 
 @admin_required
 def operario_editar(request, pk):
+    """Editar operario existente"""
     operario = get_object_or_404(Operario, pk=pk)
+    
     if request.method == 'POST':
         form = OperarioForm(request.POST, request.FILES, instance=operario)
         if form.is_valid():
-            operario = form.save()
+            operario = form.save(commit=False)
+            
+            # Lógica para actualizar el usuario vinculado
+            usuario_id = request.POST.get('usuario_id')
+            if usuario_id:
+                try:
+                    usuario = Usuario.objects.get(id=usuario_id)
+                    operario.usuario = usuario
+                except Usuario.DoesNotExist:
+                    pass
+            elif usuario_id == "": # Si selecciona "Ninguno" (valor vacío)
+                operario.usuario = None
+
+            operario.save()
             messages.success(request, f'Operario "{operario.nombre_completo}" actualizado correctamente.')
             return redirect('operario_lista')
     else:
         form = OperarioForm(instance=operario)
-    context = { 'form': form, 'operario': operario, 'titulo': 'Editar Operario', 'boton_texto': 'Guardar Cambios' }
+    
+    # --- CORRECCIÓN: Obtener usuarios disponibles ---
+    # Incluimos:
+    # 1. Usuarios sin operario asignado.
+    # 2. Y TAMBIÉN el usuario que YA tiene asignado este operario (si tiene uno).
+    if operario.usuario:
+        usuarios_disponibles = Usuario.objects.filter(
+            Q(operario__isnull=True) | Q(id=operario.usuario.id),
+            esta_activo=True
+        )
+    else:
+        usuarios_disponibles = Usuario.objects.filter(
+            esta_activo=True
+        ).exclude(
+            operario__isnull=False
+        )
+    
+    context = {
+        'form': form,
+        'operario': operario,
+        'usuarios_disponibles': usuarios_disponibles, # ¡Ahora sí pasamos esto!
+        'titulo': 'Editar Operario',
+        'boton_texto': 'Guardar Cambios'
+    }
     return render(request, 'autenticacion/operario_form.html', context)
 
 @admin_required

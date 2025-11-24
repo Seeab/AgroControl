@@ -5,14 +5,20 @@ from autenticacion.models import Usuario
 
 class MantenimientoForm(forms.ModelForm):
     """
-    Formulario principal (MODIFICADO con 'cantidad')
+    Formulario principal para crear y editar Mantenimientos.
     """
+
+    # Inicializamos vacío, se llena en __init__
+    operario_responsable = forms.ModelChoiceField(
+        queryset=Usuario.objects.none(),
+        widget=forms.Select(attrs={'class': 'form-select'})
+    )
 
     class Meta:
         model = Mantenimiento
         fields = [
             'maquinaria',
-            'cantidad', # <-- ¡NUEVO!
+            'cantidad', 
             'tipo_mantenimiento',
             'fecha_mantenimiento',
             'operario_responsable',
@@ -20,18 +26,17 @@ class MantenimientoForm(forms.ModelForm):
         ]
         widgets = {
             'maquinaria': forms.Select(attrs={'class': 'form-select'}),
-            'cantidad': forms.NumberInput(attrs={'class': 'form-control', 'min': '1'}), # <-- ¡NUEVO!
+            'cantidad': forms.NumberInput(attrs={'class': 'form-control', 'min': '1'}),
             'tipo_mantenimiento': forms.Select(attrs={'class': 'form-select'}),
             'fecha_mantenimiento': forms.DateTimeInput(
                 attrs={'type': 'datetime-local', 'class': 'form-control'},
                 format='%Y-%m-%dT%H:%M'
             ),
-            'operario_responsable': forms.Select(attrs={'class': 'form-select'}),
             'descripcion_trabajo': forms.Textarea(attrs={'class': 'form-control', 'rows': 4}),
         }
         labels = {
             'maquinaria': 'Maquinaria o Equipo',
-            'cantidad': 'Cantidad a Mantener', # <-- ¡NUEVO!
+            'cantidad': 'Cantidad a Mantener',
             'tipo_mantenimiento': 'Tipo de Tarea',
             'fecha_mantenimiento': 'Fecha y Hora Programada',
             'operario_responsable': 'Responsable Asignado',
@@ -39,9 +44,11 @@ class MantenimientoForm(forms.ModelForm):
         }
 
     def __init__(self, *args, **kwargs):
+        # Extraemos el usuario actual
+        self.usuario_actual = kwargs.pop('usuario_actual', None)
         super().__init__(*args, **kwargs)
 
-        # Lógica de <optgroup> (SIN CAMBIOS)
+        # --- 1. Lógica de Maquinaria (Optgroups) ---
         equipos_operativos = EquipoAgricola.objects.filter(estado='operativo')
         if self.instance and self.instance.pk:
             equipos_actuales = EquipoAgricola.objects.filter(pk=self.instance.maquinaria.pk)
@@ -60,19 +67,34 @@ class MantenimientoForm(forms.ModelForm):
 
         self.fields['maquinaria'].choices = [('', 'Seleccione un equipo')] + grouped_choices
 
-        # Lógica de Operario (SIN CAMBIOS)
-        try:
-            self.fields['operario_responsable'].queryset = Usuario.objects.filter(
-                esta_activo=True,
-                rol__nombre__in=['encargado de mantencion'] 
-            ).order_by('nombres')
-        except Exception:
-            self.fields['operario_responsable'].queryset = Usuario.objects.filter(
-                esta_activo=True
-            ).order_by('nombres')
-        self.fields['operario_responsable'].empty_label = "Seleccione un responsable"
-        # ... (resto de la lógica del operario)
+        # ==========================================================
+        # --- 2. LÓGICA DE FILTRADO DE RESPONSABLES ---
+        # ==========================================================
+        if self.usuario_actual:
+            # Si es Admin: Ve a TODOS los encargados de mantención activos
+            if self.usuario_actual.es_administrador:
+                try:
+                    self.fields['operario_responsable'].queryset = Usuario.objects.filter(
+                        esta_activo=True,
+                        rol__nombre='encargado de mantencion' # Nombre exacto del rol
+                    ).order_by('nombres')
+                except Exception:
+                    # Fallback si el rol no existe
+                    self.fields['operario_responsable'].queryset = Usuario.objects.filter(esta_activo=True)
+            
+            # Si NO es Admin (es Encargado): Solo se ve a sí mismo
+            else:
+                self.fields['operario_responsable'].queryset = Usuario.objects.filter(
+                    pk=self.usuario_actual.pk
+                )
+                # Preseleccionar automáticamente
+                self.fields['operario_responsable'].initial = self.usuario_actual
+        else:
+             self.fields['operario_responsable'].queryset = Usuario.objects.none()
 
+        self.fields['operario_responsable'].empty_label = "Seleccione un responsable"
+
+        # Mostrar nombres completos
         if hasattr(Usuario, 'get_full_name') and callable(getattr(Usuario, 'get_full_name')):
              self.fields['operario_responsable'].label_from_instance = lambda obj: obj.get_full_name()
         elif hasattr(Usuario, 'nombres'):

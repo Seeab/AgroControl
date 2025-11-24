@@ -147,7 +147,7 @@
     <div class="card-body">
         {% if riegos_list %}
         <div class="table-responsive">
-            <table class="table table-hover table-agro">
+            <table class="table table-hover table-agro align-middle">
                 <thead>
                     <tr>
                         <th><i class="bi bi-calendar-event me-1"></i>Fecha y Hora</th>
@@ -222,43 +222,50 @@
                         <td class="text-end">
                             <div class="btn-group btn-group-sm">
                                 
-                                {% if riego.estado == 'PROGRAMADO' %}
-                                    <form action="{% url 'riego:finalizar_riego' riego.id %}" method="POST" class="d-inline">
-                                        {% csrf_token %}
-                                        <button type="submit" class="btn btn-outline-success"
-                                                data-bs-toggle="tooltip" title="Finalizar Riego (Descontar Stock)">
-                                            <i class="bi bi-check-lg"></i>
-                                        </button>
-                                    </form>
+                                {% if request.session.es_administrador or riego.encargado_riego.id == request.session.usuario_id %}
                                     
-                                    <a href="{% url 'riego:editar_riego' riego.id %}" class="btn btn-outline-primary"
-                                       data-bs-toggle="tooltip" title="Editar Riego">
-                                        <i class="bi bi-pencil"></i>
-                                    </a>
+                                    {% if riego.estado == 'PROGRAMADO' %}
+                                        <form action="{% url 'riego:finalizar_riego' riego.id %}" method="POST" class="d-inline">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn btn-outline-success"
+                                                    data-bs-toggle="tooltip" title="Finalizar Riego (Descontar Stock)">
+                                                <i class="bi bi-check-lg"></i>
+                                            </button>
+                                        </form>
+                                        
+                                        <a href="{% url 'riego:editar_riego' riego.id %}" class="btn btn-outline-primary"
+                                           data-bs-toggle="tooltip" title="Editar Riego">
+                                            <i class="bi bi-pencil"></i>
+                                        </a>
+                                        
+                                        <form action="{% url 'riego:cancelar_riego' riego.id %}" method="POST" class="d-inline">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn btn-outline-danger"
+                                                    data-bs-toggle="tooltip" title="Cancelar Riego">
+                                                <i class="bi bi-x-lg"></i>
+                                            </button>
+                                        </form>
                                     
-                                    <form action="{% url 'riego:cancelar_riego' riego.id %}" method="POST" class="d-inline">
-                                        {% csrf_token %}
-                                        <button type="submit" class="btn btn-outline-danger"
-                                                data-bs-toggle="tooltip" title="Cancelar Riego">
-                                            <i class="bi bi-x-lg"></i>
-                                        </button>
-                                    </form>
-                                
+                                    {% else %}
+                                        <a href="{% url 'riego:detalle_riego' riego.id %}" class="btn btn-outline-info"
+                                           data-bs-toggle="tooltip" title="Ver Detalle">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                    {% endif %}
+
                                 {% else %}
-                                    <a href="{% url 'riego:detalle_riego' riego.id %}" class="btn btn-outline-info"
-                                       data-bs-toggle="tooltip" title="Ver Detalle">
+                                    <a href="{% url 'riego:detalle_riego' riego.id %}" class="btn btn-outline-secondary"
+                                       data-bs-toggle="tooltip" title="Ver Detalle (Solo Lectura)">
                                         <i class="bi bi-eye"></i>
                                     </a>
                                 {% endif %}
-                                
-                            </div>
+                                </div>
                         </td>
                     </tr>
                     {% endfor %}
                 </tbody>
             </table>
-
-            </div>
+        </div>
 
         {% else %}
         <div class="text-center py-5">
