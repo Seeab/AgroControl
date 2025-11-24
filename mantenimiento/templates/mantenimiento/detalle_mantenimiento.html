@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% load humanize %}
 
-{% block title %}{{ titulo }} - AgroControl{% endblock %}
+{% block title %}Detalle Mantenimiento #{{ mantenimiento.id }} - AgroControl{% endblock %}
 
 {% block content %}
 <div class="container mt-4">
@@ -111,7 +111,21 @@
                             </div>
                         </div>
                     </div>
+                    
+                    <hr class="my-4">
+                    
+                    <h5 class="text-agro-primary mb-3">
+                        <i class="bi bi-file-text me-2"></i>Descripción del Trabajo
+                    </h5>
 
+                    {% if mantenimiento.descripcion_trabajo %}
+                        <div class="p-3 bg-light rounded border">
+                            {{ mantenimiento.descripcion_trabajo|linebreaks }}
+                        </div>
+                    {% else %}
+                        <p class="text-muted fst-italic px-3">No hay una descripción detallada registrada para este mantenimiento.</p>
+                    {% endif %}
+                    
                 </div>
 
                 <div class="card-footer bg-light text-muted small d-flex justify-content-between">

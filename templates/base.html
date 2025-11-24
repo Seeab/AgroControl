@@ -1,9 +1,6 @@
 {% comment %}
-    PLANTILLA BASE ACTUALIZADA (v2.0)
-    - Se eliminó la barra de navegación superior redundante.
-    - Se implementó una barra lateral colapsable (toggleable).
-    - El diseño ahora es totalmente "responsive" (adaptable a móviles).
-    - En móviles, la barra lateral actúa como un menú "offcanvas" deslizante.
+    PLANTILLA BASE ACTUALIZADA (v2.1)
+    - Se agregó el módulo de Órdenes de Trabajo en la barra lateral (Admin).
 {% endcomment %}
 <!DOCTYPE html>
 <html lang="es" data-bs-theme="light">
@@ -232,6 +229,10 @@
                                 <i class="bi bi-file-text me-2"></i>Reportes
                             </a>
 
+                            <a class="nav-link {% if request.resolver_match.app_name == 'ordenes_trabajo' %}active{% endif %}" 
+                               href="{% url 'ordenes_trabajo:lista_ordenes' %}">
+                                <i class="bi bi-clipboard-check me-2"></i>Ordenes de Trabajo
+                            </a>
                             <div class="nav-item mt-3 mb-2">
                                 <small class="text-muted px-3">GESTIÓN AGRÍCOLA</small>
                             </div>
