@@ -1,0 +1,22 @@
+services:
+  - type: web
+    name: agrocontrol
+    env: docker
+    plan: starter
+    region: ohio # Render usa us-east-2 (Ohio) igual que tu AWS RDS, es ideal para latencia.
+    
+    # Comandos de construcción y arranque
+    buildCommand: docker build -t agrocontrol .
+    startCommand: gunicorn AgroControl.wsgi:application --bind 0.0.0.0:8000
+    
+    # Variables de entorno
+    envVars:
+      - key: SECRET_KEY
+        generateValue: true
+      - key: WEB_CONCURRENCY
+        value: 2
+      - key: RENDER
+        value: true
+      # Aquí conectamos tu base de datos AWS explícitamente
+      - key: DATABASE_URL
+        value: postgres://postgres:agrocontrol@agrocontrol-db.c12msmcq8dsc.us-east-2.rds.amazonaws.com:5432/agrocontrol

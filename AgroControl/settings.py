@@ -11,21 +11,28 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 import os
 from pathlib import Path
+import dj_database_url  # <--- NUEVO: Para conectar la BD
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
+# ==============================================================================
+# SEGURIDAD Y ENTORNO (MODIFICADO PARA RENDER)
+# ==============================================================================
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-!ycll)+ggco424vwsyhs#!v#q=lgc7k@#2acn30#vi6c=z6&mw'
+# Intenta leer de Render, si no, usa la tuya por defecto
+SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-!ycll)+ggco424vwsyhs#!v#q=lgc7k@#2acn30#vi6c=z6&mw')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+# Si estamos en Render, DEBUG será False. En tu PC será True.
+DEBUG = 'RENDER' not in os.environ
 
 ALLOWED_HOSTS = []
+# Agrega el host de Render automáticamente
+RENDER_EXTERNAL_HOSTNAME = os.environ.get('RENDER_EXTERNAL_HOSTNAME')
+if RENDER_EXTERNAL_HOSTNAME:
+    ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME)
 
 
 # Application definition
@@ -50,6 +57,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware', # <--- NUEVO: Para los estilos CSS en Render
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -60,10 +68,12 @@ MIDDLEWARE = [
 
 ROOT_URLCONF = 'AgroControl.urls'
 
+# NOTA: Tenías TEMPLATES duplicado en tu código original. 
+# He dejado solo este bloque, que es el que tiene la configuración correcta de 'DIRS'.
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [os.path.join(BASE_DIR, 'templates')],  
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -78,49 +88,48 @@ TEMPLATES = [
 WSGI_APPLICATION = 'AgroControl.wsgi.application'
 
 
-# Database
-# https://docs.djangoproject.com/en/5.2/ref/settings/#databases
+# ==============================================================================
+# BASE DE DATOS (MODIFICADO PARA RENDER)
+# ==============================================================================
+# Aquí configuramos para que use tu BD de AWS por defecto.
+# Render buscará la variable DATABASE_URL, si no la halla, usa tu string de conexión explícito.
 
 DATABASES = {
-        'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'agrocontrol',
-        'USER': 'postgres',
-        'PASSWORD': 'agrocontrol',
-        'HOST': 'agrocontrol-db.c12msmcq8dsc.us-east-2.rds.amazonaws.com',
-        'PORT': '5432',
-    }
+    'default': dj_database_url.config(
+        default='postgres://postgres:agrocontrol@agrocontrol-db.c12msmcq8dsc.us-east-2.rds.amazonaws.com:5432/agrocontrol',
+        conn_max_age=600
+    )
 }
 
+
 # Configuración para login/logout
-LOGIN_URL = '/login/'  # ⬅️ Tu URL de login
-LOGOUT_REDIRECT_URL = '/login/'  # ⬅️ Donde redirigir después del logout
+LOGIN_URL = '/login/'  
+LOGOUT_REDIRECT_URL = '/login/' 
 
 # ==============================================
 #  CONFIGURACIÓN DE SESIONES (AgroControl)
 # ==============================================
 
 # 1. Duración de la sesión (en segundos)
-# 3600 = 1 hora. 
-# Si el usuario no hace nada en 1 hora, se le cerrará la sesión.
 SESSION_COOKIE_AGE = 3600 
 
 # 2. ¿Cerrar sesión al cerrar el navegador?
-# True = Si cierra Chrome/Edge, tiene que loguearse de nuevo (Más seguro).
-# False = Puede cerrar y abrir el navegador y seguir logueado (Más cómodo).
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 
 # 3. Renovar la sesión con actividad
-# True = Si el usuario hace click, el contador de 1 hora se reinicia.
-# (Es lo ideal para que no se le cierre mientras trabaja).
 SESSION_SAVE_EVERY_REQUEST = True
 
 # 4. Seguridad (Para producción/HTTPS)
-# Ponlos en True cuando subas a Render y tengas HTTPS activado.
-# SESSION_COOKIE_SECURE = True 
-# CSRF_COOKIE_SECURE = True
-# Password validation
-# https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
+# Esto se activa solo si DEBUG es False (es decir, en Render)
+if not DEBUG:
+    SESSION_COOKIE_SECURE = True 
+    CSRF_COOKIE_SECURE = True
+
+# Nombre de cookie
+SESSION_COOKIE_NAME = 'sessionid'
+SESSION_COOKIE_DOMAIN = None  
+SESSION_COOKIE_PATH = '/'
+
 
 # ==========================================
 # CONFIGURACIÓN DE CORREO (Gmail)
@@ -129,8 +138,8 @@ EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
-EMAIL_HOST_USER = 'noreplyagrocontrol@gmail.com'  # <--- PON TU CORREO AQUÍ
-EMAIL_HOST_PASSWORD = 'uzmm flrg qoii hznl'  # <--- PON TU CONTRASEÑA DE APLICACIÓN AQUÍ
+EMAIL_HOST_USER = 'noreplyagrocontrol@gmail.com' 
+EMAIL_HOST_PASSWORD = 'uzmm flrg qoii hznl' 
 DEFAULT_FROM_EMAIL = 'AgroControl <noreplyagrocontrol@gmail.com>'
 
 AUTH_PASSWORD_VALIDATORS = [
@@ -151,45 +160,25 @@ AUTH_PASSWORD_VALIDATORS = [
 # Configuración de archivos media (para certificaciones)
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
+
 # Internationalization
-# https://docs.djangoproject.com/en/5.2/topics/i18n/
-
 LANGUAGE_CODE = 'es-cl'
-
 TIME_ZONE = 'America/Santiago'
-
 USE_I18N = True
-
 USE_TZ = True
 
-# settings.py
-SESSION_COOKIE_NAME = 'sessionid'
-SESSION_COOKIE_DOMAIN = None  # Para desarrollo local
-SESSION_COOKIE_PATH = '/'
-SESSION_SAVE_EVERY_REQUEST = True
 
-# Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/5.2/howto/static-files/
+# ==============================================================================
+# STATIC FILES (MODIFICADO PARA RENDER)
+# ==============================================================================
 
 STATIC_URL = 'static/'
 
+# Esto es necesario para que Render pueda recolectar los estáticos
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+
+# Usamos WhiteNoise para servir los archivos optimizados
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
 # Default primary key field type
-# https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
-
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-
-
-TEMPLATES = [
-    {
-        'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [os.path.join(BASE_DIR, 'templates')],  
-        'APP_DIRS': True,
-        'OPTIONS': {
-            'context_processors': [
-                'django.template.context_processors.request',
-                'django.contrib.auth.context_processors.auth',
-                'django.contrib.messages.context_processors.messages',
-            ],
-        },
-    },
-]
