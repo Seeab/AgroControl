@@ -6,7 +6,7 @@ from django.utils import timezone
 from datetime import timedelta
 from django.db import transaction
 from django.core.exceptions import ValidationError
-from django.views.decorators.http import require_POST # ¡Importante!
+from django.views.decorators.http import require_POST
 
 # Modelos de esta app
 from .models import ControlRiego, FertilizanteRiego
@@ -19,7 +19,7 @@ from inventario.models import MovimientoInventario, DetalleMovimiento, Producto
 # Formularios
 from .forms import ControlRiegoForm, FertilizanteRiegoFormSet, FertilizanteRiegoForm
 
-# --- Decorador de Login (SIN CAMBIOS) ---
+# --- Decorador de Login ---
 def login_required(view_func):
     def wrapper(request, *args, **kwargs):
         if not request.session.get('usuario_id'):
@@ -84,38 +84,33 @@ def _crear_movimiento_salida_riego(riego, usuario_logueado):
         producto.stock_actual = stock_posterior
         producto.save(update_fields=['stock_actual', 'fecha_actualizacion'])
 
-# --- (Función _crear_movimiento_entrada_riego eliminada ya que no se usa) ---
-
 
 # ===============================================================
-#  VISTA PRINCIPAL: dashboard_riego (MODIFICADA)
+#  VISTA PRINCIPAL: dashboard_riego
 # ===============================================================
 @login_required
 def dashboard_riego(request):
     """
     Dashboard principal con filtros (Cuartel y Estado)
-    MODIFICADO: Tarjetas de estadísticas corregidas.
     """
     hoy = timezone.now().date()
     
-    # --- 1. LÓGICA DE ESTADÍSTICAS (TARJETAS) ---
-    # ¡LÓGICA DE TARJETAS ACTUALIZADA!
+    # --- 1. LÓGICA DE ESTADÍSTICAS ---
     todos_los_riegos = ControlRiego.objects.all()
     riegos_realizados = todos_los_riegos.filter(estado='REALIZADO')
 
     total_riegos = todos_los_riegos.count()
     riegos_programados = todos_los_riegos.filter(estado='PROGRAMADO').count()
-    riegos_realizados_count = riegos_realizados.count() # Renombrado para claridad
+    riegos_realizados_count = riegos_realizados.count()
 
-    # --- CÁLCULO DE VOLUMEN MES (RE-AGREGADO) ---
+    # --- CÁLCULO DE VOLUMEN MES ---
     riegos_mes = riegos_realizados.filter(fecha__month=hoy.month, fecha__year=hoy.year)
     volumen_mes = riegos_mes.aggregate(total=Sum('volumen_total_m3'))['total'] or 0
     
-    # --- 2. LÓGICA DE FILTROS (SIMPLIFICADA) ---
+    # --- 2. LÓGICA DE FILTROS ---
     cuartel_id = request.GET.get('cuartel', '')
     estado_filtro = request.GET.get('estado', '')
     
-    # Usamos la lista de 'todos_los_riegos' que ya teníamos
     riegos_list = todos_los_riegos.select_related(
         'cuartel', 'encargado_riego'
     ).order_by('-fecha', '-horario_inicio')
@@ -125,24 +120,16 @@ def dashboard_riego(request):
     if estado_filtro:
         riegos_list = riegos_list.filter(estado=estado_filtro)
     
-    # --- 3. LÓGICA DE PAGINACIÓN (ELIMINADA) ---
-    
     # --- 4. CONTEXTO PARA LA PLANTILLA ---
     context = {
-        # ¡VARIABLES DE TARJETAS ACTUALIZADAS!
         'total_riegos': total_riegos,
         'riegos_programados': riegos_programados,
-        'riegos_realizados': riegos_realizados_count, # Usamos la variable renombrada
-        'volumen_mes': volumen_mes, # Pasamos el volumen del mes
-        
-        # Lista (Sin paginación)
+        'riegos_realizados': riegos_realizados_count,
+        'volumen_mes': volumen_mes,
         'riegos_list': riegos_list, 
-        
-        # Datos para rellenar los filtros
         'cuarteles': Cuartel.objects.all().order_by('nombre'),
         'cuartel_id': cuartel_id,
         'estado_filtro': estado_filtro, 
-        
         'titulo': 'Dashboard - Control de Riego',
         'usuario_nombre': request.session.get('usuario_nombre', 'Usuario')
     }
@@ -157,10 +144,7 @@ def dashboard_riego(request):
 def crear_riego(request):
     """
     Crear nuevo control de riego.
-    Descuenta stock SÓLO SI el estado es 'REALIZADO'.
-    (Sigue la lógica de crear_aplicacion).
     """
-    
     usuario_id = request.session.get('usuario_id')
     try:
         usuario_logueado = Usuario.objects.get(id=usuario_id)
@@ -169,7 +153,8 @@ def crear_riego(request):
         return redirect('login')
     
     if request.method == 'POST':
-        form = ControlRiegoForm(request.POST)
+        # ## <--- CORREGIDO: Se pasa usuario_actual al formulario
+        form = ControlRiegoForm(request.POST, usuario_actual=usuario_logueado)
         formset = FertilizanteRiegoFormSet(request.POST)
         
         form_valid = form.is_valid()
@@ -214,7 +199,8 @@ def crear_riego(request):
             messages.error(request, 'Por favor corrige los errores del formulario.')
 
     else: # request.method == 'GET'
-        form = ControlRiegoForm()
+        # ## <--- CORREGIDO: Se pasa usuario_actual al formulario en GET también
+        form = ControlRiegoForm(usuario_actual=usuario_logueado)
         formset = FertilizanteRiegoFormSet(instance=ControlRiego())
     
     context = {
@@ -231,8 +217,6 @@ def crear_riego(request):
 def editar_riego(request, pk):
     """
     Editar control de riego.
-    1. Solo se editan 'PROGRAMADOS'.
-    2. Si se cambia a 'REALIZADO', descuenta stock.
     """
     riego = get_object_or_404(ControlRiego.objects.prefetch_related('fertilizantes__producto'), pk=pk)
     
@@ -250,7 +234,8 @@ def editar_riego(request, pk):
         return redirect('login')
 
     if request.method == 'POST':
-        form = ControlRiegoForm(request.POST, instance=riego)
+        # ## <--- CORREGIDO: Se pasa usuario_actual junto con instance
+        form = ControlRiegoForm(request.POST, instance=riego, usuario_actual=usuario_logueado)
         formset = FertilizanteRiegoFormSet(request.POST, instance=riego)
         
         form_valid = form.is_valid()
@@ -287,7 +272,8 @@ def editar_riego(request, pk):
         else:
             messages.error(request, 'Por favor corrige los errores del formulario.')
     else:
-        form = ControlRiegoForm(instance=riego)
+        # ## <--- CORREGIDO: Se pasa usuario_actual en GET también
+        form = ControlRiegoForm(instance=riego, usuario_actual=usuario_logueado)
         formset = FertilizanteRiegoFormSet(instance=riego)
     
     context = {
@@ -302,7 +288,7 @@ def editar_riego(request, pk):
 
 @login_required
 def detalle_riego(request, pk):
-    """Detalle de un control de riego (Sin cambios)"""
+    """Detalle de un control de riego"""
     riego = get_object_or_404(
         ControlRiego.objects.select_related('cuartel', 'encargado_riego', 'creado_por'), 
         pk=pk
@@ -318,15 +304,14 @@ def detalle_riego(request, pk):
 
 
 # ===============================================================
-#  VISTAS DE ACCIÓN (Lógica de Aplicaciones)
+#  VISTAS DE ACCIÓN
 # ===============================================================
 
 @login_required
 @require_POST 
 def finalizar_riego(request, pk):
     """
-    Cambia el estado de 'PROGRAMADO' a 'REALIZADO'
-    y DESCUENTA el inventario.
+    Cambia el estado de 'PROGRAMADO' a 'REALIZADO' y DESCUENTA inventario.
     """
     riego = get_object_or_404(ControlRiego, pk=pk)
     
@@ -361,19 +346,17 @@ def finalizar_riego(request, pk):
 @require_POST 
 def cancelar_riego(request, pk):
     """
-    MODIFICADO: Cambia el estado a 'CANCELADO'.
-    NO TOCA EL INVENTARIO.
+    Cambia el estado a 'CANCELADO'.
     """
     riego = get_object_or_404(ControlRiego, pk=pk)
     
     if riego.estado != 'PROGRAMADO':
-        messages.warning(f'Este riego ya no se puede cancelar.', 'warning')
+        messages.warning(request, f'Este riego ya no se puede cancelar.')
         return redirect('riego:dashboard')
 
     try:
         riego.estado = 'CANCELADO'
         riego.save(update_fields=['estado'])
-        
         messages.success(request, f'Riego ID {riego.id} cancelado.')
             
         return redirect('riego:dashboard')
