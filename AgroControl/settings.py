@@ -50,6 +50,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django.contrib.humanize',
+    'storages',
     'autenticacion',
     'cuarteles', 
     'riego',
@@ -162,28 +163,46 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-# Configuración de archivos media (para certificaciones)
-MEDIA_URL = '/media/'
-MEDIA_ROOT = BASE_DIR / 'media'
-
-# Internationalization
-LANGUAGE_CODE = 'es-cl'
-TIME_ZONE = 'America/Santiago'
-USE_I18N = True
-USE_TZ = True
-
-
 # ==============================================================================
-# STATIC FILES (MODIFICADO PARA RENDER)
+# STATIC & MEDIA FILES (CONFIGURACIÓN HÍBRIDA AWS S3 + WHITENOISE)
 # ==============================================================================
 
-STATIC_URL = 'static/'
-
-# Esto es necesario para que Render pueda recolectar los estáticos
+# 1. Archivos Estáticos (CSS, JS, Imágenes del sistema) - Se quedan en Render
+STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
-# Usamos WhiteNoise para servir los archivos optimizados
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+# 2. Configuración de Almacenamiento (Django 4.2+)
+STORAGES = {
+    # Estáticos: Usan WhiteNoise (Rápido y eficiente en Render)
+    "staticfiles": {
+        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+    },
+    # Media (Uploads de usuarios): Se van a AWS S3
+    "default": {
+        "BACKEND": "storages.backends.s3boto3.S3Boto3Storage",
+    },
+}
 
-# Default primary key field type
-DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+# 3. Configuración AWS S3 (Solo se activa si están las variables de entorno)
+AWS_ACCESS_KEY_ID = os.environ.get('AWS_ACCESS_KEY_ID')
+AWS_SECRET_ACCESS_KEY = os.environ.get('AWS_SECRET_ACCESS_KEY')
+AWS_STORAGE_BUCKET_NAME = os.environ.get('AWS_STORAGE_BUCKET_NAME')
+AWS_S3_REGION_NAME = 'us-east-2' # Tu región (Ohio)
+
+if AWS_ACCESS_KEY_ID:
+    # Configuraciones extra para S3
+    AWS_S3_FILE_OVERWRITE = False # No sobrescribir archivos con el mismo nombre
+    AWS_DEFAULT_ACL = None # Usar políticas del bucket (Privado por defecto)
+    AWS_S3_VERIFY = True
+    AWS_S3_SIGNATURE_VERSION = 's3v4'
+    
+    # Esto genera URLs temporales firmadas (seguridad para los certificados)
+    # El enlace caducará después de un tiempo (por defecto 1 hora)
+    AWS_QUERYSTRING_AUTH = True 
+    
+    # Opcional: Límite de tamaño (5MB = 5242880 bytes)
+    AWS_S3_MAX_MEMORY_SIZE = 5242880 
+else:
+    # Fallback para desarrollo local si no has puesto las claves todavía
+    MEDIA_URL = '/media/'
+    MEDIA_ROOT = BASE_DIR / 'media'
