@@ -199,9 +199,11 @@ if AWS_ACCESS_KEY_ID:
     # Esto genera URLs temporales firmadas (seguridad para los certificados)
     # El enlace caducará después de un tiempo (por defecto 1 hora)
     AWS_QUERYSTRING_AUTH = True 
+    AWS_S3_ADDRESSING_STYLE = "virtual"
     
     # Opcional: Límite de tamaño (5MB = 5242880 bytes)
     AWS_S3_MAX_MEMORY_SIZE = 5242880 
+    
 else:
     # Fallback para desarrollo local si no has puesto las claves todavía
     MEDIA_URL = '/media/'
