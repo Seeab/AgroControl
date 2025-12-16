@@ -1,5 +1,5 @@
 from django.shortcuts import render, get_object_or_404, redirect
-from autenticacion.views import login_required, admin_required
+from autenticacion.views import admin_required, admin_required
 from django.contrib import messages
 from django.http import JsonResponse
 from django.db.models import Count
@@ -9,7 +9,7 @@ from .forms import CuartelForm, SeguimientoCuartelForm, RegistroHileraForm, Hile
 from django.forms import inlineformset_factory 
 from django.db import transaction
 
-@login_required 
+@admin_required 
 def lista_cuarteles(request):
     # (Sin cambios, esta vista está bien)
     cuarteles = Cuartel.objects.all().order_by('numero')
@@ -32,7 +32,7 @@ def lista_cuarteles(request):
     return render(request, 'cuarteles/lista_cuarteles.html', context)
 
 
-@login_required 
+@admin_required 
 def detalle_cuartel(request, cuartel_id):
     # --- VISTA SIMPLIFICADA ---
     # (Se eliminó toda la lógica de formularios POST)
@@ -123,7 +123,7 @@ def eliminar_cuartel(request, cuartel_id):
     context = {'cuartel': cuartel, 'page_title': f'Eliminar Cuartel: {cuartel.nombre}'}
     return render(request, 'cuarteles/eliminar_cuartel.html', context)
 
-@login_required
+@admin_required
 def registrar_seguimiento(request, cuartel_id):
     cuartel = get_object_or_404(Cuartel.objects.prefetch_related('hileras'), id=cuartel_id)
     hileras_del_cuartel = cuartel.hileras.all()
@@ -198,7 +198,7 @@ def registrar_seguimiento(request, cuartel_id):
     }
     return render(request, 'cuarteles/registrar_seguimiento.html', context)
 
-@login_required 
+@admin_required 
 def dashboard_cuarteles(request):
     # (Toda tu lógica de dashboard está bien)
     total_cuarteles = Cuartel.objects.count()
@@ -220,7 +220,7 @@ def dashboard_cuarteles(request):
     }
     return render(request, 'cuarteles/dashboard.html', context)
 
-@login_required 
+@admin_required 
 def api_estadisticas_cuarteles(request):
     data = {
         'total': Cuartel.objects.count(),

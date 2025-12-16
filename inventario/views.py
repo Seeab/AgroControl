@@ -13,7 +13,7 @@ from .forms import (
 )
 
 
-@login_required # <-- USA EL DECORADOR DE 'autenticacion.views'
+@admin_required
 def lista_productos(request):
     """(SIN CAMBIOS)"""
     productos = Producto.objects.all().order_by('nombre')
@@ -80,14 +80,14 @@ def crear_producto(request):
     context = {'form': form, 'page_title': 'Crear Producto'} # Añadido page_title
     return render(request, 'inventario/crear_producto.html', context)
 
-@login_required # <-- USA EL DECORADOR DE 'autenticacion.views'
+@admin_required
 def detalle_producto(request, producto_id):
     """(SIN CAMBIOS)"""
     producto = get_object_or_404(Producto, id=producto_id)
     context = {'producto': producto, 'page_title': f'Detalle: {producto.nombre}'} # Añadido page_title
     return render(request, 'inventario/detalle_producto.html', context)
 
-# CAMBIADO: Usamos admin_required en lugar de permission_required
+
 @admin_required
 def editar_producto(request, producto_id):
     """(SIN CAMBIOS)"""
@@ -109,7 +109,7 @@ def editar_producto(request, producto_id):
     }
     return render(request, 'inventario/crear_producto.html', context) # Reusa el template
 
-# CAMBIADO: Usamos admin_required en lugar de permission_required
+
 @admin_required
 @transaction.atomic # Importante para la lógica de stock
 def crear_movimiento(request, producto_id=None):
@@ -192,7 +192,7 @@ def crear_movimiento(request, producto_id=None):
     }
     return render(request, 'inventario/crear_movimiento.html', context)
 
-@login_required # <-- USA EL DECORADOR DE 'autenticacion.views'
+@login_required
 def historial_movimientos(request):
     """(MODIFICADO) Vista de historial con prefetch"""
     
@@ -246,7 +246,7 @@ def historial_movimientos(request):
     return render(request, 'inventario/historial_movimientos.html', context)
 
 
-@login_required
+@admin_required
 def detalle_movimiento(request, movimiento_id):
     """(NUEVA VISTA) Muestra el detalle de un movimiento y todos sus productos"""
     movimiento = get_object_or_404(
@@ -262,7 +262,7 @@ def detalle_movimiento(request, movimiento_id):
     return render(request, 'inventario/detalle_movimiento.html', context)
 
 
-@login_required
+@admin_required
 def lista_maquinaria(request):
     """
     Vista para listar Maquinaria y Herramientas (RF026).

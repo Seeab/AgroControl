@@ -1,8 +1,3 @@
-{% comment %}
-    PLANTILLA BASE CORREGIDA (v3.0)
-    - Fix: Barra lateral fija (position: fixed) para que te siga al bajar.
-    - Fix: Scroll independiente en la barra lateral (overflow-y: auto).
-{% endcomment %}
 <!DOCTYPE html>
 <html lang="es" data-bs-theme="light">
 <head>
@@ -58,7 +53,7 @@
             margin-top: 0; /* El padding del navbar lo maneja Bootstrap sticky-top */
         }
 
-        /* --- Barra Lateral (CORREGIDO) --- */
+        /* --- Barra Lateral --- */
         #sidebar {
             /* FIJA para que te siga siempre */
             position: fixed;
@@ -96,7 +91,7 @@
             color: white;
         }
         
-        /* --- Contenido Principal (CORREGIDO) --- */
+        /* --- Contenido Principal --- */
         #main-content {
             flex-grow: 1;
             padding: 1.5rem;
@@ -123,8 +118,7 @@
             #sidebar {
                 /* En móvil empieza oculto */
                 margin-left: calc(var(--sidebar-width) * -1);
-                /* En móvil ocupa toda la altura o respeta el navbar? 
-                   Respetamos navbar para que el botón toggle siga visible */
+                /* En móvil ocupa toda la altura respetando el navbar */
                 top: var(--navbar-height);
                 height: calc(100vh - var(--navbar-height));
             }
@@ -291,6 +285,14 @@
                                href="{% url 'riego:dashboard' %}">
                                  <i class="bi bi-droplet me-2"></i>Riego
                             </a>
+                            
+                            <div class="nav-item mt-3 mb-2">
+                                <small class="text-muted px-3">INVENTARIO</small>
+                            </div>
+                            <a class="nav-link {% if request.resolver_match.app_name == 'inventario' and 'movimiento' in request.resolver_match.url_name %}active{% endif %}" 
+                               href="{% url 'inventario:historial_movimientos' %}">
+                                <i class="bi bi-clock-history me-2"></i>Movimientos
+                            </a>
 
                         {% elif request.session.usuario_rol == 'aplicador' %}
                             <div class="nav-item mb-2">
@@ -298,6 +300,14 @@
                             </div>
                             <a class="nav-link {% if request.resolver_match.app_name == 'aplicaciones' %}active{% endif %}" href="{% url 'aplicaciones:lista_aplicaciones' %}">
                                 <i class="bi bi-droplet-half me-2"></i>Aplicaciones
+                            </a>
+
+                            <div class="nav-item mt-3 mb-2">
+                                <small class="text-muted px-3">INVENTARIO</small>
+                            </div>
+                            <a class="nav-link {% if request.resolver_match.app_name == 'inventario' and 'movimiento' in request.resolver_match.url_name %}active{% endif %}" 
+                               href="{% url 'inventario:historial_movimientos' %}">
+                                <i class="bi bi-clock-history me-2"></i>Movimientos
                             </a>
 
                         {% elif request.session.usuario_rol == 'encargado de mantencion' %}

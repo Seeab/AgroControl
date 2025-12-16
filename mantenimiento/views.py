@@ -10,20 +10,13 @@ from .models import Mantenimiento
 from autenticacion.models import Usuario 
 from inventario.models import EquipoAgricola
 from .forms import MantenimientoForm
+from autenticacion.views import mantencion_required
 
-# --- Decorador de Login ---
-def login_required(view_func):
-    def wrapper(request, *args, **kwargs):
-        if not request.session.get('usuario_id'):
-            messages.warning(request, 'Debe iniciar sesión para acceder a esta página.')
-            return redirect('login') 
-        return view_func(request, *args, **kwargs)
-    return wrapper
 
 # ===============================================================
 #  VISTA PRINCIPAL: dashboard_mantencion
 # ===============================================================
-@login_required
+@mantencion_required
 def dashboard_mantencion(request):
     """
     Dashboard principal con filtros para TIPO DE EQUIPO y Estado.
@@ -63,7 +56,7 @@ def dashboard_mantencion(request):
 #  VISTAS CRUD (CON SEGURIDAD Y STOCK)
 # ===============================================================
 
-@login_required
+@mantencion_required
 def crear_mantenimiento(request):
     """
     Crea una nueva mantención.
@@ -124,7 +117,7 @@ def crear_mantenimiento(request):
     return render(request, 'mantenimiento/mantenimiento_form.html', context)
 
 
-@login_required
+@mantencion_required
 def editar_mantenimiento(request, pk):
     """
     Edita una mantención 'PROGRAMADA'.
@@ -205,7 +198,7 @@ def editar_mantenimiento(request, pk):
     return render(request, 'mantenimiento/mantenimiento_form.html', context)
 
 
-@login_required
+@mantencion_required
 def detalle_mantenimiento(request, pk):
     mantenimiento = get_object_or_404(
         Mantenimiento.objects.select_related(
@@ -224,7 +217,7 @@ def detalle_mantenimiento(request, pk):
 #  VISTAS DE ACCIÓN (CON SEGURIDAD Y STOCK)
 # ===============================================================
 
-@login_required
+@mantencion_required
 @require_POST 
 def finalizar_mantenimiento(request, pk):
     """
@@ -264,7 +257,7 @@ def finalizar_mantenimiento(request, pk):
     return redirect('mantenimiento:dashboard')
 
 
-@login_required
+@mantencion_required
 @require_POST 
 def cancelar_mantenimiento(request, pk):
     """

@@ -15,22 +15,10 @@ from .models import ControlRiego, FertilizanteRiego
 from autenticacion.models import Usuario 
 from cuarteles.models import Cuartel
 from inventario.models import MovimientoInventario, DetalleMovimiento, Producto
+from autenticacion.views import regador_required
 
 # Formularios
 from .forms import ControlRiegoForm, FertilizanteRiegoFormSet, FertilizanteRiegoForm
-
-# --- Decorador de Login ---
-def login_required(view_func):
-    def wrapper(request, *args, **kwargs):
-        if not request.session.get('usuario_id'):
-            messages.warning(request, 'Debe iniciar sesión para acceder a esta página.')
-            return redirect('login') 
-        return view_func(request, *args, **kwargs)
-    return wrapper
-
-# ===============================================================
-#  FUNCIONES AUXILIARES DE INVENTARIO
-# ===============================================================
 
 def _crear_movimiento_salida_riego(riego, usuario_logueado):
     """
@@ -88,7 +76,7 @@ def _crear_movimiento_salida_riego(riego, usuario_logueado):
 # ===============================================================
 #  VISTA PRINCIPAL: dashboard_riego
 # ===============================================================
-@login_required
+@regador_required
 def dashboard_riego(request):
     """
     Dashboard principal con filtros (Cuartel y Estado)
@@ -140,7 +128,7 @@ def dashboard_riego(request):
 #  VISTAS CRUD (Lógica de Aplicaciones)
 # ===============================================================
 
-@login_required
+@regador_required
 def crear_riego(request):
     """
     Crear nuevo control de riego.
@@ -213,7 +201,7 @@ def crear_riego(request):
     return render(request, 'riego/riego_form.html', context)
 
 
-@login_required
+@regador_required
 def editar_riego(request, pk):
     """
     Editar control de riego.
@@ -286,7 +274,7 @@ def editar_riego(request, pk):
     return render(request, 'riego/riego_form.html', context)
 
 
-@login_required
+@regador_required
 def detalle_riego(request, pk):
     """Detalle de un control de riego"""
     riego = get_object_or_404(
@@ -307,7 +295,7 @@ def detalle_riego(request, pk):
 #  VISTAS DE ACCIÓN
 # ===============================================================
 
-@login_required
+@regador_required
 @require_POST 
 def finalizar_riego(request, pk):
     """
@@ -342,7 +330,7 @@ def finalizar_riego(request, pk):
     return redirect('riego:dashboard')
 
 
-@login_required
+@regador_required
 @require_POST 
 def cancelar_riego(request, pk):
     """

@@ -115,16 +115,83 @@ def login_required(view_func):
     return wrapper
 
 def admin_required(view_func):
-    """Decorador para requerir permisos de administrador"""
+    """
+    Decorador para requerir permisos de administrador.
+    Si no es admin, redirige a la página de Acceso Denegado.
+    """
     def wrapper(request, *args, **kwargs):
+        # 1. Verificar si está logueado
         if not request.session.get('usuario_id'):
-            messages.warning(request, 'Debe iniciar sesión para acceder a esta página.')
+            messages.warning(request, 'Debe iniciar sesión.')
             return redirect('login')
+        
+        # 2. Verificar si es administrador
         if not request.session.get('es_administrador'):
-            messages.error(request, 'No tiene permisos para acceder a esta página.')
-            return redirect('dashboard')
+            # CORRECCIÓN DE SEGURIDAD: Redirigir a pantalla de error
+            return redirect('acceso_denegado')
+            
         return view_func(request, *args, **kwargs)
     return wrapper
+
+def role_required(allowed_roles):
+    """
+    Decorador genérico que permite el acceso si:
+    1. El usuario es Administrador.
+    2. O el usuario tiene uno de los roles permitidos en 'allowed_roles'.
+    """
+    def decorator(view_func):
+        def wrapper(request, *args, **kwargs):
+            # 1. Verificar Login
+            if not request.session.get('usuario_id'):
+                messages.warning(request, 'Debe iniciar sesión.')
+                return redirect('login')
+            
+            # 2. Verificar Admin (Pase libre)
+            if request.session.get('es_administrador'):
+                return view_func(request, *args, **kwargs)
+            
+            # 3. Verificar Rol Específico
+            user_rol = request.session.get('usuario_rol', '').strip().lower()
+            # Normalizamos la lista de permitidos a minúsculas
+            allowed_roles_norm = [r.lower() for r in allowed_roles]
+            
+            if user_rol in allowed_roles_norm:
+                return view_func(request, *args, **kwargs)
+            
+            # 4. Si falla todo -> Acceso Denegado
+            return redirect('acceso_denegado')
+            
+        return wrapper
+    return decorator
+
+# --- Decoradores Específicos (Según area del usuario) ---
+
+def admin_required(view_func):
+    """Solo para Administradores"""
+    return role_required([])(view_func) # Lista vacía = nadie pasa salvo el Admin (que se chequea dentro)
+
+def aplicador_required(view_func):
+    """Para Aplicadores y Administradores"""
+    return role_required(['aplicador'])(view_func)
+
+def regador_required(view_func):
+    """Para Regadores y Administradores"""
+    return role_required(['regador'])(view_func)
+
+def mantencion_required(view_func):
+    """Para Encargados de Mantención y Administradores"""
+    return role_required(['encargado de mantencion'])(view_func)
+
+# ==================== Vista de error de permisos ====================
+
+@login_required
+def acceso_denegado(request):
+    """Muestra la página de error 403 personalizada"""
+    context = {
+        'titulo': 'Acceso Denegado',
+        'usuario_rol': request.session.get('usuario_rol', 'Usuario')
+    }
+    return render(request, 'autenticacion/acceso_denegado.html', context)
 
 
 @login_required
@@ -175,7 +242,7 @@ def editar_perfil(request):
 
 # En autenticacion/views.py
 
-@login_required
+@admin_required
 def dashboard(request):
     """
     Vista principal del dashboard (COMBINADA).

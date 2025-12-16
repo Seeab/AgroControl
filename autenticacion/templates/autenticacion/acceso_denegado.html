@@ -1,0 +1,71 @@
+{% extends 'base.html' %}
+
+{% block title %}Acceso Restringido - AgroControl{% endblock %}
+
+{% block content %}
+<div class="container d-flex flex-column justify-content-center" style="min-height: 70vh;">
+    <div class="row justify-content-center">
+        <div class="col-lg-6 col-md-8">
+            
+            <div class="card card-agro shadow-lg border-0 border-top border-danger border-4">
+                
+                <div class="card-header bg-agro-light text-center py-4 border-0">
+                    <div class="mb-3">
+                        <span class="d-inline-block rounded-circle bg-white p-3 shadow-sm">
+                            <i class="bi bi-shield-lock-fill text-danger" style="font-size: 3rem;"></i>
+                        </span>
+                    </div>
+                    <h2 class="h4 text-agro-primary fw-bold mb-0">Acceso Restringido</h2>
+                </div>
+
+                <div class="card-body text-center p-4 p-md-5">
+                    
+                    <h1 class="display-1 fw-bold text-secondary opacity-25 mb-3" style="font-size: 6rem;">403</h1>
+                    
+                    <h4 class="card-title text-dark mb-3">No tienes permisos suficientes</h4>
+                    
+                    <p class="card-text text-muted mb-4">
+                        Hola, <strong>{{ request.session.usuario_nombre }}</strong>. 
+                        Tu perfil actual es <span class="badge bg-warning text-dark border border-warning-subtle">{{ request.session.usuario_rol|default:"Usuario"|upper }}</span>, 
+                        pero esta sección es exclusiva para <strong>Administradores</strong>.
+                    </p>
+
+                    <hr class="my-4 opacity-10">
+
+                    <div class="d-grid gap-2 col-md-8 mx-auto">
+                        {% if request.session.usuario_rol == 'aplicador' %}
+                            <a href="{% url 'aplicaciones:lista_aplicaciones' %}" class="btn btn-agro-primary btn-lg shadow-sm">
+                                <i class="bi bi-droplet-half me-2"></i>Ir a mis Aplicaciones
+                            </a>
+                        {% elif request.session.usuario_rol == 'regador' %}
+                            <a href="{% url 'riego:dashboard' %}" class="btn btn-agro-primary btn-lg shadow-sm">
+                                <i class="bi bi-droplet-fill me-2"></i>Ir a Riego
+                            </a>
+                        {% elif request.session.usuario_rol == 'encargado de mantencion' %}
+                            <a href="{% url 'mantenimiento:dashboard' %}" class="btn btn-agro-primary btn-lg shadow-sm">
+                                <i class="bi bi-tools me-2"></i>Ir a Mantenimiento
+                            </a>
+                        {% else %}
+                            <a href="{% url 'dashboard' %}" class="btn btn-agro-primary btn-lg shadow-sm">
+                                <i class="bi bi-house-door-fill me-2"></i>Volver al Inicio
+                            </a>
+                        {% endif %}
+                        
+                        <a href="javascript:history.back()" class="btn btn-outline-secondary mt-2 border-0">
+                            <i class="bi bi-arrow-left me-1"></i> Regresar a la página anterior
+                        </a>
+                    </div>
+                </div>
+                
+                <div class="card-footer bg-white text-center py-3 border-top-0">
+                    <small class="text-muted">
+                        <i class="bi bi-info-circle me-1"></i>
+                        Si crees que esto es un error, contacta al administrador del sistema.
+                    </small>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+{% endblock %}

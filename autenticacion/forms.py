@@ -48,6 +48,22 @@ class UsuarioForm(forms.ModelForm):
                 raise forms.ValidationError('Este nombre de usuario ya está en uso.')
         return nombre_usuario
 
+    # --- NUEVA VALIDACIÓN DE CORREO ---
+    def clean_correo_electronico(self):
+        correo = self.cleaned_data.get('correo_electronico')
+        if correo:
+            # Validamos sin importar mayúsculas/minúsculas con __iexact
+            qs = Usuario.objects.filter(correo_electronico__iexact=correo)
+            
+            if self.instance.pk:
+                # Si estamos editando, nos excluimos a nosotros mismos
+                qs = qs.exclude(pk=self.instance.pk)
+            
+            if qs.exists():
+                raise forms.ValidationError('Este correo electrónico ya está registrado por otro usuario.')
+        return correo
+    # -----------------------------------
+
     def clean(self):
         cleaned_data = super().clean()
         password = cleaned_data.get('password')
@@ -102,11 +118,6 @@ class OperarioForm(forms.ModelForm):
                 'title': 'Formato: 12345678-9'
             }),
             'telefono': forms.TextInput(attrs={'class': 'form-control', 'placeholder': '+56 9 1234 5678'}),
-            
-            # ==========================================================
-            # --- ¡AQUÍ ESTÁ LA CORRECCIÓN! ---
-            # Agregamos format='%Y-%m-%d' para que el navegador entienda la fecha
-            # ==========================================================
             'fecha_emision_certificacion': forms.DateInput(
                 attrs={'class': 'form-control', 'type': 'date'},
                 format='%Y-%m-%d'
@@ -115,7 +126,6 @@ class OperarioForm(forms.ModelForm):
                 attrs={'class': 'form-control', 'type': 'date'},
                 format='%Y-%m-%d'
             ),
-            
             'certificacion_documento': forms.FileInput(attrs={
                 'class': 'form-control',
                 'accept': '.pdf,.jpg,.jpeg,.png,.gif'
@@ -192,14 +202,21 @@ class LoginForm(forms.Form):
 
         if correo_electronico and password:
             try:
+                # Nota: Si aún tienes duplicados en la BD, esto lanzará error.
+                # Debes limpiar los usuarios duplicados en el admin o por base de datos.
                 usuario = Usuario.objects.get(correo_electronico=correo_electronico)
+                
                 if not usuario.check_password(password):
                     raise forms.ValidationError('Credenciales incorrectas.')
                 if not usuario.esta_activo:
                     raise forms.ValidationError('Esta cuenta ha sido desactivada.')
                 cleaned_data['usuario'] = usuario
+                
             except Usuario.DoesNotExist:
                 raise forms.ValidationError('Credenciales incorrectas.')
+            except Usuario.MultipleObjectsReturned:
+                # Esto captura el error si ya hay duplicados previos y muestra un mensaje más amigable
+                raise forms.ValidationError('Error de sistema: Existen múltiples cuentas con este correo. Contacte al administrador.')
 
         return cleaned_data
 
@@ -220,6 +237,8 @@ class RecuperarPasswordForm(forms.Form):
             Usuario.objects.get(correo_electronico=correo, esta_activo=True)
         except Usuario.DoesNotExist:
             raise forms.ValidationError('No existe una cuenta activa con este correo.')
+        except Usuario.MultipleObjectsReturned:
+             raise forms.ValidationError('Existen múltiples cuentas con este correo. Contacte soporte.')
         return correo
 
 
@@ -275,6 +294,21 @@ class PerfilForm(forms.ModelForm):
             'nombres': forms.TextInput(attrs={'class': 'form-control'}),
             'apellidos': forms.TextInput(attrs={'class': 'form-control'}),
         }
+
+    # --- NUEVA VALIDACIÓN DE CORREO TAMBIÉN EN PERFIL ---
+    def clean_correo_electronico(self):
+        correo = self.cleaned_data.get('correo_electronico')
+        if correo:
+            qs = Usuario.objects.filter(correo_electronico__iexact=correo)
+            
+            # Como PerfilForm siempre es edición, self.instance siempre existe
+            if self.instance.pk:
+                qs = qs.exclude(pk=self.instance.pk)
+            
+            if qs.exists():
+                raise forms.ValidationError('Este correo electrónico ya está asociado a otra cuenta.')
+        return correo
+    # ---------------------------------------------------
 
     def clean(self):
         cleaned_data = super().clean()

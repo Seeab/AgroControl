@@ -3,10 +3,8 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib import messages
 from django.core.exceptions import ValidationError
-from django.db import transaction # Importante para transacciones
-
-# --- CORRECCIÓN 2: Importar 'admin_required' de tu app autenticacion ---
-from autenticacion.views import login_required, admin_required 
+from django.db import transaction 
+from autenticacion.views import aplicador_required
 
 # Models and Forms
 from .models import AplicacionFitosanitaria, AplicacionProducto
@@ -19,7 +17,7 @@ from autenticacion.models import Usuario # Necesario para obtener el usuario
 # VISTAS PRINCIPALES
 # -----------------------------------------------------------------------------
 
-@login_required
+@aplicador_required
 def lista_aplicaciones(request):
     """Muestra un listado de todas las aplicaciones"""
     
@@ -55,7 +53,7 @@ def lista_aplicaciones(request):
     return render(request, 'aplicaciones/lista_aplicaciones.html', context)
 
 
-@login_required
+@aplicador_required
 @transaction.atomic 
 def crear_aplicacion(request):
     """Vista para crear una aplicación (MODIFICADA PARA FILTRAR APLICADOR)"""
@@ -109,7 +107,7 @@ def crear_aplicacion(request):
     }
     return render(request, 'aplicaciones/crear_aplicacion.html', context)
 
-@login_required
+@aplicador_required
 def detalle_aplicacion(request, aplicacion_id):
     """Muestra el detalle de una aplicación específica"""
     aplicacion = get_object_or_404(
@@ -132,7 +130,7 @@ def detalle_aplicacion(request, aplicacion_id):
 # VISTAS DE ACCIONES (CRUD) - CON SEGURIDAD DE PROPIEDAD
 # =============================================================================
 
-@login_required
+@aplicador_required
 @transaction.atomic
 def editar_aplicacion(request, app_id):
     """Vista para editar una aplicación"""
@@ -191,7 +189,7 @@ def editar_aplicacion(request, app_id):
     return render(request, 'aplicaciones/crear_aplicacion.html', context)
 
 
-@login_required
+@aplicador_required
 @transaction.atomic 
 def finalizar_aplicacion(request, app_id):
     """Marca una aplicación 'programada' como 'realizada'"""
@@ -226,7 +224,7 @@ def finalizar_aplicacion(request, app_id):
     return redirect('aplicaciones:lista_aplicaciones')
 
 
-@login_required
+@aplicador_required
 def cancelar_aplicacion(request, app_id):
     """Marca una aplicación 'programada' como 'cancelada'."""
     if request.method != 'POST':
