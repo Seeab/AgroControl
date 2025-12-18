@@ -1,5 +1,5 @@
 from django.shortcuts import render, get_object_or_404, redirect
-from autenticacion.views import admin_required, admin_required
+from autenticacion.views import admin_required, login_required
 from django.contrib import messages
 from django.http import JsonResponse
 from django.db.models import Count
@@ -9,7 +9,7 @@ from .forms import CuartelForm, SeguimientoCuartelForm, RegistroHileraForm, Hile
 from django.forms import inlineformset_factory 
 from django.db import transaction
 
-@admin_required 
+@login_required 
 def lista_cuarteles(request):
     # (Sin cambios, esta vista está bien)
     cuarteles = Cuartel.objects.all().order_by('numero')
@@ -32,7 +32,7 @@ def lista_cuarteles(request):
     return render(request, 'cuarteles/lista_cuarteles.html', context)
 
 
-@admin_required 
+@login_required 
 def detalle_cuartel(request, cuartel_id):
     # --- VISTA SIMPLIFICADA ---
     # (Se eliminó toda la lógica de formularios POST)
